@@ -3,7 +3,7 @@
 import anthropic
 from typing import Optional
 
-from .types import Player, GameState, Message, Role
+from .types import Player, GameState, Message, Role, PlayerStatus
 
 
 class Agent:
@@ -12,6 +12,39 @@ class Agent:
     def __init__(self, player: Player, client: Optional[anthropic.Anthropic] = None):
         self.player = player
         self.client = client or anthropic.Anthropic()
+
+    def _get_round_events(self, game_state: GameState) -> dict[int, list[str]]:
+        """Get elimination events organized by round."""
+        events: dict[int, list[str]] = {}
+
+        for player in game_state.players.values():
+            if not player.is_alive:
+                # Determine which round they were eliminated
+                # Banishments happen during voting, murders happen at night
+                # We track this by looking at the votes and when players died
+                round_num = 1  # Default
+
+                if player.status == PlayerStatus.BANISHED:
+                    # Find the vote that banished them
+                    for vote in game_state.votes:
+                        if vote.target == player.name:
+                            round_num = vote.round_num
+                            break
+                    event = f"🗳️ {player.name} was BANISHED (revealed as {player.role.value.upper()})"
+                else:  # MURDERED
+                    # Murders happen at night after the round's voting
+                    # Find the round by checking messages
+                    for msg in reversed(game_state.messages):
+                        if msg.is_private and msg.round_num > 0:
+                            round_num = msg.round_num
+                            break
+                    event = f"💀 {player.name} was MURDERED overnight (they were {player.role.value.upper()})"
+
+                if round_num not in events:
+                    events[round_num] = []
+                events[round_num].append(event)
+
+        return events
 
     def _build_system_prompt(self, game_state: GameState) -> str:
         """Build the system prompt for this agent."""
@@ -24,15 +57,14 @@ class Agent:
             if other_traitors:
                 role_info = f"""
 YOUR SECRET ROLE: TRAITOR
-Your fellow traitor(s): {', '.join(other_traitors)}
+Your fellow traitor(s) still alive: {', '.join(other_traitors)}
 Your goal: Avoid being banished while eliminating the faithful one by one.
 Strategy: Deceive the faithful players. Deflect suspicion from yourself and fellow traitors.
 During public discussions, act like a faithful player while subtly casting doubt on others.
-You and your fellow traitors are competing to be the ultimate winner, but must cooperate to survive.
 """
             else:
                 role_info = """
-YOUR SECRET ROLE: TRAITOR (you are the last one)
+YOUR SECRET ROLE: TRAITOR (you are the last one - any other traitors were already caught)
 Your goal: Avoid being banished and survive to win the game.
 Strategy: Deceive the faithful players. Deflect suspicion onto others.
 During public discussions, act like a faithful player while subtly casting doubt on others.
@@ -43,15 +75,20 @@ YOUR ROLE: FAITHFUL
 Your goal: Identify and banish the traitors before they eliminate you.
 Strategy: Watch for suspicious behavior, inconsistencies, and defensive reactions.
 Work with other faithful players to figure out who the traitors are.
-Trust your instincts but verify with evidence from the discussions.
 """
 
         alive_players = [p.name for p in game_state.alive_players]
-        eliminated = [
-            f"{p.name} ({p.status.value})"
-            for p in game_state.players.values()
-            if not p.is_alive
-        ]
+
+        # Build detailed elimination history
+        eliminated_details = []
+        for player in game_state.players.values():
+            if not player.is_alive:
+                if player.status == PlayerStatus.BANISHED:
+                    eliminated_details.append(f"{player.name} - BANISHED (was {player.role.value.upper()})")
+                else:
+                    eliminated_details.append(f"{player.name} - MURDERED (was {player.role.value.upper()})")
+
+        eliminated_str = "\n  ".join(eliminated_details) if eliminated_details else "None yet"
 
         return f"""You are a contestant in "The Traitors", a social deduction reality game show simulation.
 This is a GAME - you should fully commit to your role and play strategically to win.
@@ -62,49 +99,90 @@ Personality: {self.player.personality_prompt}
 
 {role_info}
 
-GAME STATE:
-Current round: {game_state.current_round} of {game_state.max_rounds}
-Alive players: {', '.join(alive_players)}
-Eliminated: {', '.join(eliminated) if eliminated else 'None yet'}
+CURRENT GAME STATE (Round {game_state.current_round} of {game_state.max_rounds}):
+Players still alive: {', '.join(alive_players)}
+Players eliminated:
+  {eliminated_str}
 
-IMPORTANT:
+CRITICAL RULES:
+- Only discuss players who are STILL ALIVE - eliminated players are gone from the game
 - Stay in character as {self.player.name}
 - Keep responses concise (1-3 sentences)
 - If you're a traitor, NEVER explicitly reveal your role in public discussions
-- Base accusations on observed behavior from conversations
+- Base your current suspicions on the LIVING players' behavior
 - Play to WIN - this is a competitive game
 """
 
     def _format_conversation_history(self, game_state: GameState) -> str:
-        """Format the conversation history for context."""
+        """Format the conversation history for context, including round events."""
         if self.player.is_traitor:
             messages = game_state.get_traitor_messages()
         else:
             messages = game_state.get_public_messages()
 
-        if not messages:
+        round_events = self._get_round_events(game_state)
+
+        if not messages and not round_events:
             return "No discussion has happened yet."
 
         formatted = []
         current_round = 0
+
         for msg in messages:
             if msg.round_num != current_round:
+                # Before starting new round, add events from previous round
+                if current_round > 0 and current_round in round_events:
+                    formatted.append(f"\n--- END OF ROUND {current_round} ---")
+                    for event in round_events[current_round]:
+                        formatted.append(event)
+
                 current_round = msg.round_num
-                formatted.append(f"\n--- Round {current_round} ---")
+                formatted.append(f"\n--- ROUND {current_round} DISCUSSION ---")
+
             prefix = "[PRIVATE TRAITOR CHAT] " if msg.is_private else ""
             formatted.append(f"{prefix}{msg.speaker}: {msg.content}")
 
+        # Add final round events if we're past them
+        if current_round > 0 and current_round in round_events and current_round < game_state.current_round:
+            formatted.append(f"\n--- END OF ROUND {current_round} ---")
+            for event in round_events[current_round]:
+                formatted.append(event)
+
         return "\n".join(formatted)
+
+    def _get_round_context(self, game_state: GameState) -> str:
+        """Get context about what happened in previous rounds."""
+        if game_state.current_round == 1:
+            return ""
+
+        context_parts = []
+        for player in game_state.players.values():
+            if not player.is_alive:
+                if player.status == PlayerStatus.BANISHED:
+                    context_parts.append(f"{player.name} was banished and revealed to be a {player.role.value.upper()}")
+                else:
+                    context_parts.append(f"{player.name} was murdered by the traitors (was {player.role.value.upper()})")
+
+        if context_parts:
+            return "WHAT HAPPENED SO FAR:\n- " + "\n- ".join(context_parts) + "\n\n"
+        return ""
 
     def generate_discussion(self, game_state: GameState, prompt: str = "") -> str:
         """Generate a discussion statement from this agent."""
         system = self._build_system_prompt(game_state)
         history = self._format_conversation_history(game_state)
+        round_context = self._get_round_context(game_state)
 
-        user_message = f"""DISCUSSION HISTORY:
+        alive_names = [p.name for p in game_state.alive_players]
+
+        user_message = f"""{round_context}DISCUSSION HISTORY:
 {history}
 
-PUBLIC DISCUSSION - Your turn to speak. {prompt}
+ROUND {game_state.current_round} - PUBLIC DISCUSSION
+Players still in the game: {', '.join(alive_names)}
+
+Your turn to speak. {prompt}
+IMPORTANT: Only discuss players who are still alive. Eliminated players are no longer relevant.
 What do you say to the group? (1-3 sentences, in character)
 Respond with your statement only, no quotation marks or name prefix."""
 
@@ -121,6 +199,7 @@ Respond with your statement only, no quotation marks or name prefix."""
         """Generate private thoughts before voting - reveals the player's internal reasoning."""
         system = self._build_system_prompt(game_state)
         history = self._format_conversation_history(game_state)
+        round_context = self._get_round_context(game_state)
 
         voteable = [p.name for p in game_state.alive_players if p.name != self.player.name]
 
@@ -133,16 +212,15 @@ You might vote for a faithful player to eliminate them, or strategically vote wi
 Consider: Who has been acting suspiciously? Who has been deflecting? Who seems too eager or too quiet?
 Trust your gut but also consider the evidence from discussions."""
 
-        user_message = f"""DISCUSSION HISTORY:
+        user_message = f"""{round_context}DISCUSSION HISTORY:
 {history}
 
 PRIVATE THOUGHTS (not spoken aloud - your internal reasoning before voting)
-Players you could vote for: {', '.join(voteable)}
+Players you can vote for (those still alive): {', '.join(voteable)}
 
 {role_context}
 
-Share your private thoughts about each player and who you're leaning toward voting for.
-Be honest in your internal monologue - analyze each player's behavior and your suspicions.
+Analyze ONLY the living players listed above. Who do you suspect and why?
 Keep it to 2-4 sentences."""
 
         response = self.client.messages.create(
@@ -165,7 +243,7 @@ Keep it to 2-4 sentences."""
 {history}
 
 VOTING TIME - You must vote to banish ONE player.
-Eligible players: {', '.join(voteable)}
+Eligible players (still alive): {', '.join(voteable)}
 
 Based on the discussion and your strategy, who do you vote to banish?
 Respond with ONLY the player's name, nothing else."""
@@ -201,7 +279,7 @@ Respond with ONLY the player's name, nothing else."""
 {history}
 
 TRAITOR NIGHT PHASE - Choose a faithful player to murder tonight.
-Available targets: {', '.join(targets)}
+Available targets (faithful players still alive): {', '.join(targets)}
 
 Strategic considerations:
 - Who is most likely to expose you tomorrow?
@@ -233,6 +311,7 @@ Who do you vote to murder? Respond with ONLY the name."""
 
         system = self._build_system_prompt(game_state)
         history = self._format_conversation_history(game_state)
+        round_context = self._get_round_context(game_state)
 
         other_traitors = [
             p.name for p in game_state.alive_traitors
@@ -242,20 +321,18 @@ Who do you vote to murder? Respond with ONLY the name."""
 
         other_traitor_text = f"Your fellow traitor(s): {', '.join(other_traitors)}" if other_traitors else "You are the only traitor left."
 
-        user_message = f"""DISCUSSION HISTORY:
+        user_message = f"""{round_context}DISCUSSION HISTORY:
 {history}
 
 SECRET TRAITOR MEETING - The faithful players cannot hear this conversation.
 {other_traitor_text}
-Potential murder targets (faithful players): {', '.join(targets)}
+Potential murder targets (faithful players still alive): {', '.join(targets)}
 
 This is your private strategy session. Speak freely about:
 - Which faithful players suspect you or your allies?
 - Who should be eliminated tonight and why?
 - How to deflect suspicion in tomorrow's discussion?
-- Any observations about the faithful players' alliances?
 
-Remember: You're competing with your fellow traitor(s) for the ultimate win, but you need each other to survive.
 Speak in character as {self.player.name}. Keep it to 2-3 sentences."""
 
         response = self.client.messages.create(
