@@ -118,6 +118,7 @@ def generate_html(results: dict, game_log: list[str], used_real_llm: bool = Fals
     # Build round summary with messages and private thoughts
     rounds_html = ""
     current_round = 0
+    in_night_phase = False  # Track if we've entered night phase for this round
 
     # Get private thoughts indexed by round
     thoughts_by_round = {}
@@ -129,6 +130,11 @@ def generate_html(results: dict, game_log: list[str], used_real_llm: bool = Fals
     # Track which messages are discussion vs traitor night chat
     for msg in results["messages"]:
         if msg.round_num != current_round:
+            # Close night phase section if we were in one
+            if in_night_phase:
+                rounds_html += "</div>"  # Close night-phase-section
+                in_night_phase = False
+
             # Add private thoughts from previous round before closing it
             if current_round > 0 and current_round in thoughts_by_round:
                 rounds_html += "<div class='phase-header'>Private Thoughts Before Voting</div>"
@@ -149,19 +155,31 @@ def generate_html(results: dict, game_log: list[str], used_real_llm: bool = Fals
 
             current_round = msg.round_num
             rounds_html += f"<div class='round-section'><h4>Round {current_round}</h4>"
-            rounds_html += "<div class='phase-header'>Discussion Phase</div>"
+            rounds_html += "<div class='phase-header'>☀️ Discussion Phase</div>"
+
+        # Check if we're transitioning to night phase (private traitor messages)
+        if msg.is_private and not in_night_phase:
+            rounds_html += """
+            <div class='night-phase-section'>
+                <div class='phase-header night-header'>🌙 Night Phase - Traitor Meeting</div>
+                <div class='night-subtext'>The traitors meet in secret while the faithful sleep...</div>
+            """
+            in_night_phase = True
 
         private_class = "private-msg" if msg.is_private else ""
-        private_label = "[TRAITOR SECRET] " if msg.is_private else ""
         rounds_html += f"""
         <div class="message {private_class}">
             <span class="speaker">{html.escape(msg.speaker)}:</span>
-            <span class="content">{html.escape(private_label)}{html.escape(msg.content)}</span>
+            <span class="content">{html.escape(msg.content)}</span>
         </div>
         """
 
-    # Handle final round's private thoughts
+    # Handle final round - close any open sections
     if current_round > 0:
+        # Close night phase section if still open
+        if in_night_phase:
+            rounds_html += "</div>"  # Close night-phase-section
+
         if current_round in thoughts_by_round:
             rounds_html += "<div class='phase-header'>Private Thoughts Before Voting</div>"
             for thought in thoughts_by_round[current_round]:
@@ -428,6 +446,26 @@ def generate_html(results: dict, game_log: list[str], used_real_llm: bool = Fals
         .private-msg {{
             background: rgba(233, 69, 96, 0.15);
             border-left: 3px solid var(--accent-red);
+        }}
+
+        .night-phase-section {{
+            background: rgba(20, 10, 30, 0.6);
+            border: 2px solid rgba(233, 69, 96, 0.4);
+            border-radius: 8px;
+            padding: 1rem;
+            margin: 1.5rem 0;
+        }}
+
+        .night-header {{
+            color: var(--accent-red) !important;
+            font-size: 1.1rem;
+        }}
+
+        .night-subtext {{
+            color: var(--text-muted);
+            font-style: italic;
+            font-size: 0.9rem;
+            margin-bottom: 1rem;
         }}
 
         .thought {{
