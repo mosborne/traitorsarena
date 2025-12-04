@@ -752,8 +752,8 @@ def main():
 
         game = TraitorsGame(
             contestants=EXAMPLE_CONTESTANTS,
-            num_traitors=2,
-            num_rounds=3,
+            num_traitors=3,  # 3 traitors among 12 players
+            num_rounds=5,    # 5 rounds for more gameplay
             client=client,
             log_callback=log_capture,
         )
@@ -762,8 +762,8 @@ def main():
         print("No API key found, running in demo mode...\n")
         game = DemoGame(
             contestants=EXAMPLE_CONTESTANTS,
-            num_traitors=2,
-            num_rounds=3,
+            num_traitors=3,  # 3 traitors among 12 players
+            num_rounds=5,    # 5 rounds for more gameplay
             log_callback=log_capture,
             seed=42,
         )

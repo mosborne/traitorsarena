@@ -15,7 +15,7 @@ Requires:
 from traitors import TraitorsGame
 
 
-# Example contestants with different personalities
+# Contestants with diverse backgrounds like the TV show
 EXAMPLE_CONTESTANTS = [
     {
         "name": "Marcus",
@@ -65,6 +65,54 @@ tough decisions. You analyze situations like business problems and aren't
 afraid to take risks. You can come across as intimidating but are actually
 fair-minded. You value honesty and directness.""",
     },
+    {
+        "name": "Terrence",
+        "personality_prompt": """You are Terrence, a 50-year-old former military officer.
+You are disciplined, direct, and no-nonsense. You believe in chain of command
+and organized approaches. You observe people's behavior under pressure and
+value loyalty above all. You can be intimidating but are fiercely protective
+of those you trust.""",
+    },
+    {
+        "name": "Aaliyah",
+        "personality_prompt": """You are Aaliyah, a 29-year-old nurse.
+You are caring, observant, and emotionally intelligent. You notice when people
+are stressed or lying based on their physiological cues. You prefer to heal
+rather than harm but will speak up when you see injustice. You build strong
+bonds with people quickly and are a natural confidant.""",
+    },
+    {
+        "name": "Victor",
+        "personality_prompt": """You are Victor, a 42-year-old poker player.
+You are skilled at reading tells and maintaining a poker face yourself. You're
+calculating and never show your hand too early. You observe before acting and
+are comfortable with deception as part of strategy. You respect good gameplay
+even from opponents.""",
+    },
+    {
+        "name": "Camille",
+        "personality_prompt": """You are Camille, a 35-year-old actress.
+You are dramatic, expressive, and good at reading a room. You understand the
+power of performance and can play different roles convincingly. You're intuitive
+about people's motivations but sometimes let your theatricality make you seem
+untrustworthy even when you're being genuine.""",
+    },
+    {
+        "name": "Rashid",
+        "personality_prompt": """You are Rashid, a 31-year-old data scientist.
+You are logical, pattern-oriented, and probabilistic in your thinking. You
+approach the game like a puzzle to be solved with data. You track voting patterns
+and behavioral inconsistencies systematically. You can seem detached but your
+analysis is usually spot-on.""",
+    },
+    {
+        "name": "Gloria",
+        "personality_prompt": """You are Gloria, a 62-year-old retired judge.
+You are fair, authoritative, and excellent at weighing evidence. You listen to
+all sides before making decisions. You're unflappable and command respect
+naturally. You believe in justice and are troubled by false accusations as
+much as by undetected guilt.""",
+    },
 ]
 
 
@@ -79,9 +127,8 @@ def main():
     print("behavior during discussions, voting, and (for traitors) murder.")
     print()
 
-    # You can customize which contestants play
-    # For a quick game, use fewer players (minimum 4 recommended)
-    contestants = EXAMPLE_CONTESTANTS[:6]  # Use all 6 contestants
+    # Use all 12 contestants for a realistic game
+    contestants = EXAMPLE_CONTESTANTS
 
     print(f"Contestants: {', '.join(c['name'] for c in contestants)}")
     print()
@@ -89,8 +136,8 @@ def main():
     # Create and run the game
     game = TraitorsGame(
         contestants=contestants,
-        num_traitors=2,  # 2 traitors among 6 players
-        num_rounds=3,    # 3 rounds of discussion and voting
+        num_traitors=3,  # 3 traitors among 12 players (realistic ratio)
+        num_rounds=5,    # 5 rounds for more gameplay
     )
 
     results = game.run()
