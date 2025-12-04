@@ -3,6 +3,7 @@
 from .types import Role, PlayerStatus, Player, GamePhase, GameState
 from .agent import Agent
 from .game import TraitorsGame
+from .demo import DemoGame
 
 __all__ = [
     "Role",
@@ -12,4 +13,5 @@ __all__ = [
     "GameState",
     "Agent",
     "TraitorsGame",
+    "DemoGame",
 ]
