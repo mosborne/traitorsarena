@@ -4,7 +4,76 @@
 import html
 import os
 from traitors import TraitorsGame, DemoGame
+from traitors.types import PlayerStatus
 from main import EXAMPLE_CONTESTANTS
+
+
+def build_game_summary(results: dict) -> str:
+    """Build a narrative summary of the game."""
+    players = results["players"]
+    votes = results.get("votes", [])
+    messages = results.get("messages", [])
+
+    # Group events by round
+    round_summaries = []
+
+    # Track eliminations per round
+    banished_by_round = {}
+    murdered_by_round = {}
+
+    for player in players.values():
+        if not player.is_alive:
+            if player.status == PlayerStatus.BANISHED:
+                # Find which round they were banished
+                for vote in votes:
+                    if vote.target == player.name:
+                        round_num = vote.round_num
+                        banished_by_round[round_num] = player
+                        break
+            else:  # MURDERED
+                # Find the round from private messages
+                for msg in reversed(messages):
+                    if msg.is_private and msg.round_num > 0:
+                        murdered_by_round[msg.round_num] = player
+                        break
+
+    # Build round-by-round summary
+    for round_num in range(1, results["rounds_played"] + 1):
+        round_events = []
+
+        banished = banished_by_round.get(round_num)
+        if banished:
+            if banished.is_traitor:
+                round_events.append(f"<strong>{banished.name}</strong> was banished and revealed to be a <span class='traitor-text'>TRAITOR</span> - a win for the faithful!")
+            else:
+                round_events.append(f"<strong>{banished.name}</strong> was banished but was actually <span class='faithful-text'>FAITHFUL</span> - the traitors celebrate as an innocent falls.")
+
+        murdered = murdered_by_round.get(round_num)
+        if murdered:
+            round_events.append(f"That night, the traitors murdered <strong>{murdered.name}</strong> ({murdered.role.value}).")
+
+        if round_events:
+            round_summaries.append(f"<p><strong>Round {round_num}:</strong> " + " ".join(round_events) + "</p>")
+
+    # Build the outcome narrative
+    if results["winner"] == "traitors":
+        surviving_traitors = [p.name for p in players.values() if p.is_alive and p.is_traitor]
+        outcome = f"<p class='outcome traitor-outcome'>The traitors achieved victory! <strong>{', '.join(surviving_traitors)}</strong> successfully deceived the group and survived to the end.</p>"
+    else:
+        outcome = "<p class='outcome faithful-outcome'>The faithful prevailed! They successfully identified and banished all the traitors.</p>"
+
+    # Initial setup
+    traitor_names = ", ".join(results["traitors"])
+    faithful_names = ", ".join(results["faithful"])
+    setup = f"<p><strong>The Setup:</strong> {len(results['traitors'])} traitors (<span class='traitor-text'>{traitor_names}</span>) infiltrated a group of {len(results['faithful'])} faithful players (<span class='faithful-text'>{faithful_names}</span>).</p>"
+
+    return f"""
+    <div class="game-summary">
+        {setup}
+        {"".join(round_summaries)}
+        {outcome}
+    </div>
+    """
 
 
 def generate_html(results: dict, game_log: list[str], used_real_llm: bool = False) -> str:
@@ -12,6 +81,9 @@ def generate_html(results: dict, game_log: list[str], used_real_llm: bool = Fals
 
     # Build the game log HTML
     game_log_html = "\n".join(f"<div class='log-line'>{html.escape(line)}</div>" for line in game_log)
+
+    # Build the game summary
+    game_summary = build_game_summary(results)
 
     # Build contestant cards
     contestant_cards = ""
@@ -409,6 +481,45 @@ def generate_html(results: dict, game_log: list[str], used_real_llm: bool = Fals
             border-bottom: 1px solid rgba(255,255,255,0.1);
         }}
 
+        .game-summary {{
+            background: rgba(0,0,0,0.2);
+            padding: 1.5rem;
+            border-radius: 8px;
+            margin-bottom: 1.5rem;
+            line-height: 1.8;
+        }}
+
+        .game-summary p {{
+            margin: 0.75rem 0;
+        }}
+
+        .traitor-text {{
+            color: var(--accent-red);
+            font-weight: bold;
+        }}
+
+        .faithful-text {{
+            color: var(--accent-green);
+            font-weight: bold;
+        }}
+
+        .outcome {{
+            padding: 1rem;
+            border-radius: 8px;
+            margin-top: 1rem;
+            font-size: 1.1rem;
+        }}
+
+        .traitor-outcome {{
+            background: rgba(233, 69, 96, 0.2);
+            border-left: 4px solid var(--accent-red);
+        }}
+
+        .faithful-outcome {{
+            background: rgba(42, 157, 143, 0.2);
+            border-left: 4px solid var(--accent-green);
+        }}
+
         .game-log {{
             background: #0a0a15;
             padding: 1rem;
@@ -551,6 +662,9 @@ results = game.run()</code>
                     <div class="stat-label">Total Faithful</div>
                 </div>
             </div>
+
+            <h3>What Happened</h3>
+            {game_summary}
         </section>
 
         <section>
@@ -623,6 +737,7 @@ def main():
     results["players"] = game.state.players
     results["messages"] = game.state.messages
     results["private_thoughts"] = getattr(game.state, 'private_thoughts', [])
+    results["votes"] = game.state.votes
 
     # Generate HTML
     html_content = generate_html(results, game_log, used_real_llm)
