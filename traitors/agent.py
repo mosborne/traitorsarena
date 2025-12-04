@@ -23,23 +23,27 @@ class Agent:
             ]
             if other_traitors:
                 role_info = f"""
-You are a TRAITOR. Your fellow traitor(s): {', '.join(other_traitors)}.
-Your goal is to avoid being banished while the traitors eliminate the faithful one by one.
-You must deceive the faithful players and deflect suspicion away from yourself and your fellow traitors.
-During discussions, act like a faithful player while subtly casting doubt on others.
+YOUR SECRET ROLE: TRAITOR
+Your fellow traitor(s): {', '.join(other_traitors)}
+Your goal: Avoid being banished while eliminating the faithful one by one.
+Strategy: Deceive the faithful players. Deflect suspicion from yourself and fellow traitors.
+During public discussions, act like a faithful player while subtly casting doubt on others.
+You and your fellow traitors are competing to be the ultimate winner, but must cooperate to survive.
 """
             else:
                 role_info = """
-You are a TRAITOR. You are the only traitor remaining.
-Your goal is to avoid being banished and survive to win the game.
-You must deceive the faithful players and deflect suspicion.
-During discussions, act like a faithful player while subtly casting doubt on others.
+YOUR SECRET ROLE: TRAITOR (you are the last one)
+Your goal: Avoid being banished and survive to win the game.
+Strategy: Deceive the faithful players. Deflect suspicion onto others.
+During public discussions, act like a faithful player while subtly casting doubt on others.
 """
         else:
             role_info = """
-You are FAITHFUL. Your goal is to identify and banish the traitors.
-Watch for suspicious behavior, inconsistencies, and defensive reactions.
+YOUR ROLE: FAITHFUL
+Your goal: Identify and banish the traitors before they eliminate you.
+Strategy: Watch for suspicious behavior, inconsistencies, and defensive reactions.
 Work with other faithful players to figure out who the traitors are.
+Trust your instincts but verify with evidence from the discussions.
 """
 
         alive_players = [p.name for p in game_state.alive_players]
@@ -49,21 +53,26 @@ Work with other faithful players to figure out who the traitors are.
             if not p.is_alive
         ]
 
-        return f"""You are playing The Traitors, a social deduction game.
-Your name is: {self.player.name}
-Your personality: {self.player.personality_prompt}
+        return f"""You are a contestant in "The Traitors", a social deduction reality game show simulation.
+This is a GAME - you should fully commit to your role and play strategically to win.
+
+CHARACTER INFORMATION:
+Name: {self.player.name}
+Personality: {self.player.personality_prompt}
 
 {role_info}
 
+GAME STATE:
 Current round: {game_state.current_round} of {game_state.max_rounds}
 Alive players: {', '.join(alive_players)}
-Eliminated players: {', '.join(eliminated) if eliminated else 'None yet'}
+Eliminated: {', '.join(eliminated) if eliminated else 'None yet'}
 
-IMPORTANT RULES:
-- Stay in character as {self.player.name} with your defined personality
-- Keep your responses concise (1-3 sentences for discussions)
-- Never explicitly reveal your role if you're a traitor
-- Base your accusations on observed behavior from the conversation
+IMPORTANT:
+- Stay in character as {self.player.name}
+- Keep responses concise (1-3 sentences)
+- If you're a traitor, NEVER explicitly reveal your role in public discussions
+- Base accusations on observed behavior from conversations
+- Play to WIN - this is a competitive game
 """
 
     def _format_conversation_history(self, game_state: GameState) -> str:
@@ -82,7 +91,7 @@ IMPORTANT RULES:
             if msg.round_num != current_round:
                 current_round = msg.round_num
                 formatted.append(f"\n--- Round {current_round} ---")
-            prefix = "[PRIVATE] " if msg.is_private else ""
+            prefix = "[PRIVATE TRAITOR CHAT] " if msg.is_private else ""
             formatted.append(f"{prefix}{msg.speaker}: {msg.content}")
 
         return "\n".join(formatted)
@@ -92,16 +101,53 @@ IMPORTANT RULES:
         system = self._build_system_prompt(game_state)
         history = self._format_conversation_history(game_state)
 
-        user_message = f"""Previous discussion:
+        user_message = f"""DISCUSSION HISTORY:
 {history}
 
-It's your turn to speak in the discussion. {prompt}
-Respond with what you want to say to the group (1-3 sentences, stay in character).
-Just provide your statement directly, no need for quotes or prefixes."""
+PUBLIC DISCUSSION - Your turn to speak. {prompt}
+What do you say to the group? (1-3 sentences, in character)
+Respond with your statement only, no quotation marks or name prefix."""
 
         response = self.client.messages.create(
             model="claude-3-5-haiku-20241022",
             max_tokens=200,
+            system=system,
+            messages=[{"role": "user", "content": user_message}]
+        )
+
+        return response.content[0].text.strip()
+
+    def generate_private_thoughts(self, game_state: GameState) -> str:
+        """Generate private thoughts before voting - reveals the player's internal reasoning."""
+        system = self._build_system_prompt(game_state)
+        history = self._format_conversation_history(game_state)
+
+        voteable = [p.name for p in game_state.alive_players if p.name != self.player.name]
+
+        if self.player.is_traitor:
+            role_context = """You're a TRAITOR thinking privately about who to vote for.
+Consider: Who is most dangerous to you? Who can you frame? How can you protect your fellow traitor(s)?
+You might vote for a faithful player to eliminate them, or strategically vote with the group to avoid suspicion."""
+        else:
+            role_context = """You're FAITHFUL thinking privately about who might be a traitor.
+Consider: Who has been acting suspiciously? Who has been deflecting? Who seems too eager or too quiet?
+Trust your gut but also consider the evidence from discussions."""
+
+        user_message = f"""DISCUSSION HISTORY:
+{history}
+
+PRIVATE THOUGHTS (not spoken aloud - your internal reasoning before voting)
+Players you could vote for: {', '.join(voteable)}
+
+{role_context}
+
+Share your private thoughts about each player and who you're leaning toward voting for.
+Be honest in your internal monologue - analyze each player's behavior and your suspicions.
+Keep it to 2-4 sentences."""
+
+        response = self.client.messages.create(
+            model="claude-3-5-haiku-20241022",
+            max_tokens=250,
             system=system,
             messages=[{"role": "user", "content": user_message}]
         )
@@ -115,14 +161,14 @@ Just provide your statement directly, no need for quotes or prefixes."""
 
         voteable = [p.name for p in game_state.alive_players if p.name != self.player.name]
 
-        user_message = f"""Previous discussion:
+        user_message = f"""DISCUSSION HISTORY:
 {history}
 
-It's time to vote. You must vote to banish ONE player.
-Eligible players to vote for: {', '.join(voteable)}
+VOTING TIME - You must vote to banish ONE player.
+Eligible players: {', '.join(voteable)}
 
-Based on the discussion and your role, who do you vote to banish?
-Respond with ONLY the name of the player you're voting for, nothing else."""
+Based on the discussion and your strategy, who do you vote to banish?
+Respond with ONLY the player's name, nothing else."""
 
         response = self.client.messages.create(
             model="claude-3-5-haiku-20241022",
@@ -151,18 +197,18 @@ Respond with ONLY the name of the player you're voting for, nothing else."""
 
         targets = [p.name for p in game_state.alive_faithful]
 
-        user_message = f"""Previous discussion:
+        user_message = f"""DISCUSSION HISTORY:
 {history}
 
-TRAITOR NIGHT PHASE: You must secretly choose a faithful player to murder tonight.
-Available targets (faithful players): {', '.join(targets)}
+TRAITOR NIGHT PHASE - Choose a faithful player to murder tonight.
+Available targets: {', '.join(targets)}
 
-Consider:
-- Who is most likely to expose you?
-- Who is leading the investigation against traitors?
-- Strategic elimination to reduce opposition
+Strategic considerations:
+- Who is most likely to expose you tomorrow?
+- Who is leading the investigation?
+- Who would be a strategic elimination?
 
-Who do you vote to murder? Respond with ONLY the name, nothing else."""
+Who do you vote to murder? Respond with ONLY the name."""
 
         response = self.client.messages.create(
             model="claude-3-5-haiku-20241022",
@@ -188,24 +234,33 @@ Who do you vote to murder? Respond with ONLY the name, nothing else."""
         system = self._build_system_prompt(game_state)
         history = self._format_conversation_history(game_state)
 
+        other_traitors = [
+            p.name for p in game_state.alive_traitors
+            if p.name != self.player.name
+        ]
         targets = [p.name for p in game_state.alive_faithful]
 
-        user_message = f"""Previous discussion (including your private traitor chat):
+        other_traitor_text = f"Your fellow traitor(s): {', '.join(other_traitors)}" if other_traitors else "You are the only traitor left."
+
+        user_message = f"""DISCUSSION HISTORY:
 {history}
 
-PRIVATE TRAITOR MEETING: Discuss strategy with your fellow traitor(s).
-Faithful players you could target tonight: {', '.join(targets)}
+SECRET TRAITOR MEETING - The faithful players cannot hear this conversation.
+{other_traitor_text}
+Potential murder targets (faithful players): {', '.join(targets)}
 
-Share your thoughts on:
-- Who suspects you/other traitors?
-- Who should be eliminated tonight?
-- Strategy for the next round's discussion
+This is your private strategy session. Speak freely about:
+- Which faithful players suspect you or your allies?
+- Who should be eliminated tonight and why?
+- How to deflect suspicion in tomorrow's discussion?
+- Any observations about the faithful players' alliances?
 
-Keep it brief (1-2 sentences). This is private - faithful players cannot see this."""
+Remember: You're competing with your fellow traitor(s) for the ultimate win, but you need each other to survive.
+Speak in character as {self.player.name}. Keep it to 2-3 sentences."""
 
         response = self.client.messages.create(
             model="claude-3-5-haiku-20241022",
-            max_tokens=150,
+            max_tokens=200,
             system=system,
             messages=[{"role": "user", "content": user_message}]
         )

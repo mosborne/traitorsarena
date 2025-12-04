@@ -62,11 +62,20 @@ class Vote:
 
 
 @dataclass
+class PrivateThought:
+    """A player's private thoughts before voting."""
+    player: str
+    content: str
+    round_num: int
+
+
+@dataclass
 class GameState:
     """Current state of the game."""
     players: dict[str, Player] = field(default_factory=dict)
     messages: list[Message] = field(default_factory=list)
     votes: list[Vote] = field(default_factory=list)
+    private_thoughts: list[PrivateThought] = field(default_factory=list)
     current_round: int = 1
     current_phase: GamePhase = GamePhase.SETUP
     max_rounds: int = 3

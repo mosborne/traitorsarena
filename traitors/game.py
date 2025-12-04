@@ -6,7 +6,7 @@ from typing import Callable, Optional
 
 import anthropic
 
-from .types import Player, GameState, GamePhase, Role, PlayerStatus, Message, Vote
+from .types import Player, GameState, GamePhase, Role, PlayerStatus, Message, Vote, PrivateThought
 from .agent import Agent
 
 
@@ -119,9 +119,34 @@ class TraitorsGame:
 
             self.log(f"\n{player.name}: {statement}")
 
+    def _run_private_thoughts_phase(self) -> None:
+        """Run the private thoughts phase where each player thinks before voting."""
+        self.log("\n" + "-" * 40)
+        self.log("PRIVATE THOUGHTS - What are the players thinking?")
+        self.log("-" * 40)
+
+        alive_players = self.state.alive_players
+
+        for player in alive_players:
+            agent = self.agents[player.name]
+            thoughts = agent.generate_private_thoughts(self.state)
+
+            thought = PrivateThought(
+                player=player.name,
+                content=thoughts,
+                round_num=self.state.current_round,
+            )
+            self.state.private_thoughts.append(thought)
+
+            role_tag = "[TRAITOR]" if player.is_traitor else "[FAITHFUL]"
+            self.log(f"\n{role_tag} {player.name}'s thoughts: {thoughts}")
+
     def _run_voting_phase(self) -> Optional[str]:
         """Run the voting phase. Returns name of banished player or None."""
         self.state.current_phase = GamePhase.VOTING
+
+        # First, private thoughts
+        self._run_private_thoughts_phase()
 
         self.log("\n" + "-" * 40)
         self.log("VOTING PHASE - Who will be banished?")

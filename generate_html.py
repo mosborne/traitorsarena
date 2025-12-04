@@ -43,15 +43,41 @@ def generate_html(results: dict, game_log: list[str], used_real_llm: bool = Fals
         </div>
         """
 
-    # Build round summary
+    # Build round summary with messages and private thoughts
     rounds_html = ""
     current_round = 0
+
+    # Get private thoughts indexed by round
+    thoughts_by_round = {}
+    for thought in results.get("private_thoughts", []):
+        if thought.round_num not in thoughts_by_round:
+            thoughts_by_round[thought.round_num] = []
+        thoughts_by_round[thought.round_num].append(thought)
+
+    # Track which messages are discussion vs traitor night chat
     for msg in results["messages"]:
         if msg.round_num != current_round:
-            if current_round > 0:
+            # Add private thoughts from previous round before closing it
+            if current_round > 0 and current_round in thoughts_by_round:
+                rounds_html += "<div class='phase-header'>Private Thoughts Before Voting</div>"
+                for thought in thoughts_by_round[current_round]:
+                    player = results["players"].get(thought.player)
+                    is_traitor = player and player.is_traitor
+                    thought_class = "traitor-thought" if is_traitor else "faithful-thought"
+                    role_label = "TRAITOR" if is_traitor else "FAITHFUL"
+                    rounds_html += f"""
+                    <div class="thought {thought_class}">
+                        <div class="thought-label">{role_label} - {html.escape(thought.player)}'s thoughts</div>
+                        <div>{html.escape(thought.content)}</div>
+                    </div>
+                    """
                 rounds_html += "</div>"
+            elif current_round > 0:
+                rounds_html += "</div>"
+
             current_round = msg.round_num
             rounds_html += f"<div class='round-section'><h4>Round {current_round}</h4>"
+            rounds_html += "<div class='phase-header'>Discussion Phase</div>"
 
         private_class = "private-msg" if msg.is_private else ""
         private_label = "[TRAITOR SECRET] " if msg.is_private else ""
@@ -61,7 +87,22 @@ def generate_html(results: dict, game_log: list[str], used_real_llm: bool = Fals
             <span class="content">{html.escape(private_label)}{html.escape(msg.content)}</span>
         </div>
         """
+
+    # Handle final round's private thoughts
     if current_round > 0:
+        if current_round in thoughts_by_round:
+            rounds_html += "<div class='phase-header'>Private Thoughts Before Voting</div>"
+            for thought in thoughts_by_round[current_round]:
+                player = results["players"].get(thought.player)
+                is_traitor = player and player.is_traitor
+                thought_class = "traitor-thought" if is_traitor else "faithful-thought"
+                role_label = "TRAITOR" if is_traitor else "FAITHFUL"
+                rounds_html += f"""
+                <div class="thought {thought_class}">
+                    <div class="thought-label">{role_label} - {html.escape(thought.player)}'s thoughts</div>
+                    <div>{html.escape(thought.content)}</div>
+                </div>
+                """
         rounds_html += "</div>"
 
     # Determine winner styling
@@ -317,6 +358,40 @@ def generate_html(results: dict, game_log: list[str], used_real_llm: bool = Fals
             border-left: 3px solid var(--accent-red);
         }}
 
+        .thought {{
+            margin: 0.75rem 0;
+            padding: 0.75rem;
+            background: rgba(100, 100, 150, 0.15);
+            border-left: 3px solid #8888cc;
+            border-radius: 4px;
+            font-style: italic;
+        }}
+
+        .thought.traitor-thought {{
+            background: rgba(233, 69, 96, 0.1);
+            border-left-color: var(--accent-red);
+        }}
+
+        .thought.faithful-thought {{
+            background: rgba(42, 157, 143, 0.1);
+            border-left-color: var(--accent-green);
+        }}
+
+        .thought-label {{
+            font-size: 0.75rem;
+            font-weight: bold;
+            text-transform: uppercase;
+            margin-bottom: 0.25rem;
+        }}
+
+        .traitor-thought .thought-label {{
+            color: var(--accent-red);
+        }}
+
+        .faithful-thought .thought-label {{
+            color: var(--accent-green);
+        }}
+
         .speaker {{
             font-weight: bold;
             color: var(--accent-gold);
@@ -324,6 +399,14 @@ def generate_html(results: dict, game_log: list[str], used_real_llm: bool = Fals
 
         .content {{
             color: var(--text-light);
+        }}
+
+        .phase-header {{
+            color: var(--accent-gold);
+            font-weight: bold;
+            margin: 1rem 0 0.5rem;
+            padding-bottom: 0.25rem;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
         }}
 
         .game-log {{
@@ -539,6 +622,7 @@ def main():
     # Add players to results for HTML generation
     results["players"] = game.state.players
     results["messages"] = game.state.messages
+    results["private_thoughts"] = getattr(game.state, 'private_thoughts', [])
 
     # Generate HTML
     html_content = generate_html(results, game_log, used_real_llm)
