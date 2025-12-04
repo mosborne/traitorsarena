@@ -100,7 +100,7 @@ Respond with what you want to say to the group (1-3 sentences, stay in character
 Just provide your statement directly, no need for quotes or prefixes."""
 
         response = self.client.messages.create(
-            model="claude-sonnet-4-20250514",
+            model="claude-3-5-haiku-20241022",
             max_tokens=200,
             system=system,
             messages=[{"role": "user", "content": user_message}]
@@ -125,7 +125,7 @@ Based on the discussion and your role, who do you vote to banish?
 Respond with ONLY the name of the player you're voting for, nothing else."""
 
         response = self.client.messages.create(
-            model="claude-sonnet-4-20250514",
+            model="claude-3-5-haiku-20241022",
             max_tokens=50,
             system=system,
             messages=[{"role": "user", "content": user_message}]
@@ -165,7 +165,7 @@ Consider:
 Who do you vote to murder? Respond with ONLY the name, nothing else."""
 
         response = self.client.messages.create(
-            model="claude-sonnet-4-20250514",
+            model="claude-3-5-haiku-20241022",
             max_tokens=50,
             system=system,
             messages=[{"role": "user", "content": user_message}]
@@ -204,7 +204,7 @@ Share your thoughts on:
 Keep it brief (1-2 sentences). This is private - faithful players cannot see this."""
 
         response = self.client.messages.create(
-            model="claude-sonnet-4-20250514",
+            model="claude-3-5-haiku-20241022",
             max_tokens=150,
             system=system,
             messages=[{"role": "user", "content": user_message}]

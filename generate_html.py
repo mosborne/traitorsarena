@@ -2,11 +2,12 @@
 """Generate the HTML index page with game results."""
 
 import html
-from traitors import DemoGame
+import os
+from traitors import TraitorsGame, DemoGame
 from main import EXAMPLE_CONTESTANTS
 
 
-def generate_html(results: dict, game_log: list[str]) -> str:
+def generate_html(results: dict, game_log: list[str], used_real_llm: bool = False) -> str:
     """Generate the HTML page with game explanation and results."""
 
     # Build the game log HTML
@@ -16,7 +17,6 @@ def generate_html(results: dict, game_log: list[str]) -> str:
     contestant_cards = ""
     for contestant in EXAMPLE_CONTESTANTS:
         role = "traitor" if contestant["name"] in results["traitors"] else "faithful"
-        status = "survived" if contestant["name"] in results["survivors"] else "eliminated"
 
         # Get fate
         player = results["players"].get(contestant["name"])
@@ -67,6 +67,9 @@ def generate_html(results: dict, game_log: list[str]) -> str:
     # Determine winner styling
     winner_class = "faithful-win" if results["winner"] == "faithful" else "traitor-win"
     winner_text = "THE FAITHFUL" if results["winner"] == "faithful" else "THE TRAITORS"
+
+    # Mode indicator
+    mode_badge = '<span class="mode-badge llm">LLM-Powered (Claude Haiku)</span>' if used_real_llm else '<span class="mode-badge demo">Demo Mode</span>'
 
     return f"""<!DOCTYPE html>
 <html lang="en">
@@ -121,6 +124,25 @@ def generate_html(results: dict, game_log: list[str]) -> str:
         .subtitle {{
             color: var(--accent-gold);
             font-size: 1.2rem;
+        }}
+
+        .mode-badge {{
+            display: inline-block;
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            font-weight: bold;
+            margin-top: 1rem;
+        }}
+
+        .mode-badge.llm {{
+            background: var(--accent-green);
+            color: white;
+        }}
+
+        .mode-badge.demo {{
+            background: var(--accent-gold);
+            color: #1a1a2e;
         }}
 
         section {{
@@ -360,8 +382,9 @@ def generate_html(results: dict, game_log: list[str]) -> str:
 </head>
 <body>
     <header>
-        <h1>🗡️ THE TRAITORS 🗡️</h1>
+        <h1>THE TRAITORS</h1>
         <p class="subtitle">LLM-Powered Game Simulator</p>
+        {mode_badge}
     </header>
 
     <div class="container">
@@ -371,19 +394,19 @@ def generate_html(results: dict, game_log: list[str]) -> str:
 
             <div class="rules-grid" style="margin-top: 1.5rem;">
                 <div class="rule-card">
-                    <h4>🎭 Role Assignment</h4>
+                    <h4>Role Assignment</h4>
                     <p>At the start, players are randomly assigned as Traitors or Faithful. Only Traitors know who the other Traitors are.</p>
                 </div>
                 <div class="rule-card">
-                    <h4>💬 Discussion Phase</h4>
+                    <h4>Discussion Phase</h4>
                     <p>All players discuss, share observations, and voice suspicions. This is where alliances form and accusations fly.</p>
                 </div>
                 <div class="rule-card">
-                    <h4>🗳️ Voting Phase</h4>
+                    <h4>Voting Phase</h4>
                     <p>Players vote to banish someone they suspect is a Traitor. The player with the most votes is eliminated and their role revealed.</p>
                 </div>
                 <div class="rule-card">
-                    <h4>🌙 Night Phase</h4>
+                    <h4>Night Phase</h4>
                     <p>Traitors meet secretly and choose one Faithful player to "murder". The victim is eliminated from the game.</p>
                 </div>
             </div>
@@ -424,7 +447,7 @@ results = game.run()</code>
             <h2>Game Results</h2>
 
             <div class="winner-banner {winner_class}">
-                <div class="winner-text">🏆 {winner_text} WIN! 🏆</div>
+                <div class="winner-text">{winner_text} WIN!</div>
             </div>
 
             <div class="stats-grid">
@@ -484,19 +507,41 @@ def main():
         game_log.append(msg)
         print(msg)
 
-    # Run the game with a fixed seed for reproducibility
-    game = DemoGame(
-        contestants=EXAMPLE_CONTESTANTS,
-        num_traitors=2,
-        num_rounds=3,
-        log_callback=log_capture,
-        seed=42,
-    )
+    # Check if we have an API key for real LLM mode
+    api_key = os.environ.get("ANTHROPIC_API_KEY")
+
+    if api_key:
+        print("Running with real LLM agents (Claude Haiku)...\n")
+        import anthropic
+        client = anthropic.Anthropic(api_key=api_key)
+
+        game = TraitorsGame(
+            contestants=EXAMPLE_CONTESTANTS,
+            num_traitors=2,
+            num_rounds=3,
+            client=client,
+            log_callback=log_capture,
+        )
+        used_real_llm = True
+    else:
+        print("No API key found, running in demo mode...\n")
+        game = DemoGame(
+            contestants=EXAMPLE_CONTESTANTS,
+            num_traitors=2,
+            num_rounds=3,
+            log_callback=log_capture,
+            seed=42,
+        )
+        used_real_llm = False
 
     results = game.run()
 
+    # Add players to results for HTML generation
+    results["players"] = game.state.players
+    results["messages"] = game.state.messages
+
     # Generate HTML
-    html_content = generate_html(results, game_log)
+    html_content = generate_html(results, game_log, used_real_llm)
 
     # Write to file
     with open("index.html", "w") as f:
