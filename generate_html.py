@@ -279,6 +279,8 @@ def generate_html(results: dict, game_log: list[str]) -> str:
     rounds_html = ""
     current_round = 0
     in_night_phase = False  # Track if we've entered night phase for this round
+    shown_banishment_for_round = set()  # Track which rounds we've shown banishment for
+    shown_murder_for_round = set()  # Track which rounds we've shown murder for
 
     # Get private thoughts indexed by round
     thoughts_by_round = {}
@@ -287,11 +289,132 @@ def generate_html(results: dict, game_log: list[str]) -> str:
             thoughts_by_round[thought.round_num] = []
         thoughts_by_round[thought.round_num].append(thought)
 
+    # Pre-calculate banishments and murders by round (same logic as build_rounds_table)
+    players = results["players"]
+    votes = results.get("votes", [])
+    messages = results.get("messages", [])
+
+    # Group votes by round
+    votes_by_round = {}
+    for vote in votes:
+        if vote.round_num not in votes_by_round:
+            votes_by_round[vote.round_num] = []
+        votes_by_round[vote.round_num].append(vote)
+
+    # Track banishments by round
+    banished_by_round = {}
+    banished_players = {p.name: p for p in players.values() if p.status == PlayerStatus.BANISHED}
+
+    for round_num, round_votes in votes_by_round.items():
+        vote_counts = {}
+        for v in round_votes:
+            vote_counts[v.target] = vote_counts.get(v.target, 0) + 1
+
+        if vote_counts:
+            max_votes = max(vote_counts.values())
+            top_voted = [name for name, count in vote_counts.items() if count == max_votes]
+
+            for name in top_voted:
+                if name in banished_players:
+                    banished_by_round[round_num] = banished_players[name]
+                    break
+
+    # Track murders by round
+    murdered_players = {p.name: p for p in players.values() if p.status == PlayerStatus.MURDERED}
+    murdered_by_round = {}
+
+    traitor_msgs_by_round = {}
+    for msg in messages:
+        if msg.is_private:
+            if msg.round_num not in traitor_msgs_by_round:
+                traitor_msgs_by_round[msg.round_num] = []
+            traitor_msgs_by_round[msg.round_num].append(msg.content)
+
+    for round_num, msg_contents in traitor_msgs_by_round.items():
+        combined_text = " ".join(msg_contents).lower()
+        for victim_name, victim in murdered_players.items():
+            if victim_name.lower() in combined_text and victim_name not in [p.name for p in murdered_by_round.values()]:
+                murdered_by_round[round_num] = victim
+                break
+
+    # Fallback for unassigned murders
+    unassigned_victims = [p for p in murdered_players.values() if p not in murdered_by_round.values()]
+    for round_num in range(1, results["rounds_played"] + 1):
+        if round_num not in murdered_by_round and unassigned_victims:
+            murdered_by_round[round_num] = unassigned_victims.pop(0)
+
+    # Helper function to build voting outcome HTML
+    def build_voting_outcome(round_num):
+        round_votes = votes_by_round.get(round_num, [])
+        if not round_votes:
+            return ""
+
+        # Count votes
+        vote_counts = {}
+        for v in round_votes:
+            vote_counts[v.target] = vote_counts.get(v.target, 0) + 1
+
+        # Sort by vote count
+        sorted_votes = sorted(vote_counts.items(), key=lambda x: -x[1])
+
+        # Build vote breakdown
+        vote_lines = []
+        for name, count in sorted_votes:
+            vote_lines.append(f"<span class='vote-target'>{html.escape(name)}</span>: {count} vote{'s' if count != 1 else ''}")
+
+        banished = banished_by_round.get(round_num)
+        banishment_html = ""
+        if banished:
+            role_class = "traitor-text" if banished.is_traitor else "faithful-text"
+            role = "TRAITOR" if banished.is_traitor else "FAITHFUL"
+            icon = "🎭" if banished.is_traitor else "😇"
+            result_text = "The group caught a traitor!" if banished.is_traitor else "An innocent was wrongly banished..."
+            banishment_html = f"""
+            <div class="banishment-announcement {'traitor-caught' if banished.is_traitor else 'faithful-lost'}">
+                <div class="banishment-icon">{icon}</div>
+                <div class="banishment-text">
+                    <strong class="{role_class}">{html.escape(banished.name)}</strong> has been banished!
+                    <br><span class="role-reveal">Revealed as: <span class="{role_class}">{role}</span></span>
+                    <br><em class="result-text">{result_text}</em>
+                </div>
+            </div>
+            """
+
+        return f"""
+        <div class="voting-outcome">
+            <div class="phase-header">🗳️ Voting Results</div>
+            <div class="vote-breakdown">
+                {' &nbsp;|&nbsp; '.join(vote_lines)}
+            </div>
+            {banishment_html}
+        </div>
+        """
+
+    # Helper function to build murder outcome HTML
+    def build_murder_outcome(round_num):
+        murdered = murdered_by_round.get(round_num)
+        if not murdered:
+            return ""
+
+        return f"""
+        <div class="murder-announcement">
+            <div class="murder-icon">💀</div>
+            <div class="murder-text">
+                <strong class="faithful-text">{html.escape(murdered.name)}</strong> was found murdered.
+                <br><em class="murder-subtext">The traitors struck under cover of darkness...</em>
+            </div>
+        </div>
+        """
+
     # Track which messages are discussion vs traitor night chat
     for msg in results["messages"]:
         if msg.round_num != current_round:
             # Close night phase section if we were in one
             if in_night_phase:
+                # Add murder announcement at end of night phase
+                if current_round not in shown_murder_for_round:
+                    rounds_html += build_murder_outcome(current_round)
+                    shown_murder_for_round.add(current_round)
                 rounds_html += "</div>"  # Close night-phase-section
                 in_night_phase = False
 
@@ -309,8 +432,16 @@ def generate_html(results: dict, game_log: list[str]) -> str:
                         <div>{html.escape(thought.content)}</div>
                     </div>
                     """
+                # Add voting outcome after private thoughts
+                if current_round not in shown_banishment_for_round:
+                    rounds_html += build_voting_outcome(current_round)
+                    shown_banishment_for_round.add(current_round)
                 rounds_html += "</div>"
             elif current_round > 0:
+                # Still add voting outcome even without private thoughts
+                if current_round not in shown_banishment_for_round:
+                    rounds_html += build_voting_outcome(current_round)
+                    shown_banishment_for_round.add(current_round)
                 rounds_html += "</div>"
 
             current_round = msg.round_num
@@ -338,6 +469,10 @@ def generate_html(results: dict, game_log: list[str]) -> str:
     if current_round > 0:
         # Close night phase section if still open
         if in_night_phase:
+            # Add murder announcement at end of night phase
+            if current_round not in shown_murder_for_round:
+                rounds_html += build_murder_outcome(current_round)
+                shown_murder_for_round.add(current_round)
             rounds_html += "</div>"  # Close night-phase-section
 
         if current_round in thoughts_by_round:
@@ -353,6 +488,10 @@ def generate_html(results: dict, game_log: list[str]) -> str:
                     <div>{html.escape(thought.content)}</div>
                 </div>
                 """
+        # Add voting outcome after private thoughts
+        if current_round not in shown_banishment_for_round:
+            rounds_html += build_voting_outcome(current_round)
+            shown_banishment_for_round.add(current_round)
         rounds_html += "</div>"
 
     # Determine winner styling
@@ -711,6 +850,90 @@ def generate_html(results: dict, game_log: list[str]) -> str:
         .faithful-outcome {{
             background: rgba(42, 157, 143, 0.2);
             border-left: 4px solid var(--accent-green);
+        }}
+
+        .voting-outcome {{
+            margin: 1.5rem 0;
+            padding: 1rem;
+            background: rgba(244, 162, 97, 0.1);
+            border-radius: 8px;
+            border: 1px solid rgba(244, 162, 97, 0.3);
+        }}
+
+        .vote-breakdown {{
+            margin: 0.75rem 0;
+            padding: 0.75rem;
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 4px;
+            font-size: 0.9rem;
+        }}
+
+        .vote-target {{
+            color: var(--accent-gold);
+            font-weight: bold;
+        }}
+
+        .banishment-announcement {{
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-top: 1rem;
+            padding: 1rem;
+            border-radius: 8px;
+        }}
+
+        .banishment-announcement.traitor-caught {{
+            background: rgba(42, 157, 143, 0.2);
+            border: 2px solid var(--accent-green);
+        }}
+
+        .banishment-announcement.faithful-lost {{
+            background: rgba(233, 69, 96, 0.2);
+            border: 2px solid var(--accent-red);
+        }}
+
+        .banishment-icon {{
+            font-size: 2.5rem;
+        }}
+
+        .banishment-text {{
+            flex: 1;
+        }}
+
+        .role-reveal {{
+            font-size: 0.9rem;
+            margin-top: 0.25rem;
+        }}
+
+        .result-text {{
+            font-size: 0.85rem;
+            color: var(--text-muted);
+        }}
+
+        .murder-announcement {{
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin: 1rem 0;
+            padding: 1rem;
+            background: rgba(233, 69, 96, 0.15);
+            border: 2px solid var(--accent-red);
+            border-radius: 8px;
+        }}
+
+        .murder-icon {{
+            font-size: 2.5rem;
+        }}
+
+        .murder-text {{
+            flex: 1;
+        }}
+
+        .murder-subtext {{
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            display: block;
+            margin-top: 0.25rem;
         }}
 
         .game-log {{
