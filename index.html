@@ -67,11 +67,6 @@
             color: white;
         }
 
-        .mode-badge.demo {
-            background: var(--accent-gold);
-            color: #1a1a2e;
-        }
-
         section {
             margin: 2rem 0;
             padding: 2rem;
@@ -465,7 +460,7 @@
     <header>
         <h1>THE TRAITORS</h1>
         <p class="subtitle">LLM-Powered Game Simulator</p>
-        <span class="mode-badge demo">Demo Mode</span>
+        <span class="mode-badge llm">LLM-Powered (Claude Haiku)</span>
     </header>
 
     <div class="container">
@@ -504,10 +499,12 @@
             <div class="parameters">
                 <div class="param"><span class="param-name">contestants:</span> <span class="param-value">list[dict]</span> - List of players with name and personality_prompt</div>
                 <div class="param"><span class="param-name">num_traitors:</span> <span class="param-value">int = 2</span> - Number of traitors to assign</div>
-                <div class="param"><span class="param-name">num_rounds:</span> <span class="param-value">int = 3</span> - Maximum number of game rounds</div>
                 <div class="param"><span class="param-name">client:</span> <span class="param-value">Anthropic = None</span> - Optional Anthropic client for LLM calls</div>
                 <div class="param"><span class="param-name">log_callback:</span> <span class="param-value">Callable = print</span> - Function to handle game logging</div>
             </div>
+
+            <h3>Game Flow</h3>
+            <p>The game continues until players vote to end it (after a banishment). If traitors remain when the game ends, they win. If all traitors have been banished, the faithful win.</p>
 
             <h3>Example Usage</h3>
             <div class="parameters" style="margin-top: 1rem;">
@@ -519,7 +516,7 @@ contestants = [
     # ... more contestants
 ]
 
-game = TraitorsGame(contestants=contestants, num_traitors=2, num_rounds=3)
+game = TraitorsGame(contestants=contestants, num_traitors=2)
 results = game.run()</code>
             </div>
         </section>
@@ -533,11 +530,11 @@ results = game.run()</code>
 
             <div class="stats-grid">
                 <div class="stat-box">
-                    <div class="stat-value">4</div>
+                    <div class="stat-value">3</div>
                     <div class="stat-label">Rounds Played</div>
                 </div>
                 <div class="stat-box">
-                    <div class="stat-value">4</div>
+                    <div class="stat-value">6</div>
                     <div class="stat-label">Survivors</div>
                 </div>
                 <div class="stat-box">
@@ -566,30 +563,23 @@ results = game.run()</code>
                 
         <tr>
             <td class="round-num">1</td>
-            <td class="vote-breakdown">Terrence: 3, Sofia: 3, Jaylen: 2</td>
-            <td class="banished-cell"><span class='traitor-text'>Sofia</span> <small>(TRAITOR)</small></td>
-            <td class="murdered-cell"><span class='faithful-text'>Derek</span></td>
+            <td class="vote-breakdown">Derek: 11, Marcus: 1</td>
+            <td class="banished-cell"><span class='faithful-text'>Derek</span> <small>(FAITHFUL)</small></td>
+            <td class="murdered-cell"><span class='faithful-text'>Elena</span></td>
         </tr>
         
         <tr>
             <td class="round-num">2</td>
-            <td class="vote-breakdown">Priya: 2, Jaylen: 2, Terrence: 2</td>
-            <td class="banished-cell"><span class='faithful-text'>Priya</span> <small>(FAITHFUL)</small></td>
-            <td class="murdered-cell"><span class='faithful-text'>Camille</span></td>
+            <td class="vote-breakdown">Sofia: 9, Camille: 1</td>
+            <td class="banished-cell"><span class='faithful-text'>Sofia</span> <small>(FAITHFUL)</small></td>
+            <td class="murdered-cell"><span class='faithful-text'>Rashid</span></td>
         </tr>
         
         <tr>
             <td class="round-num">3</td>
-            <td class="vote-breakdown">Elena: 3, Terrence: 2, Aaliyah: 1</td>
-            <td class="banished-cell"><span class='faithful-text'>Elena</span> <small>(FAITHFUL)</small></td>
-            <td class="murdered-cell"><span class='faithful-text'>Gloria</span></td>
-        </tr>
-        
-        <tr>
-            <td class="round-num">4</td>
-            <td class="vote-breakdown">Jaylen: 3, Aaliyah: 2, Victor: 1</td>
-            <td class="banished-cell"><span class='faithful-text'>Jaylen</span> <small>(FAITHFUL)</small></td>
-            <td class="murdered-cell"><span class='faithful-text'>Victor</span></td>
+            <td class="vote-breakdown">Victor: 4, Jaylen: 4</td>
+            <td class="banished-cell"><span class='faithful-text'>Victor</span> <small>(FAITHFUL)</small></td>
+            <td class="murdered-cell"><span class='faithful-text'>Aaliyah</span></td>
         </tr>
         
             </tbody>
@@ -600,9 +590,9 @@ results = game.run()</code>
             <h3>What Happened</h3>
             
     <div class="game-summary">
-        <p><strong>The Setup:</strong> 3 traitors (<span class='traitor-text'>Marcus, Sofia, Rashid</span>) infiltrated a group of 9 faithful players (<span class='faithful-text'>Derek, Elena, Jaylen, Priya, Terrence, Aaliyah, Victor, Camille, Gloria</span>).</p>
-        <p><strong>Round 1:</strong> <strong>Priya</strong> was banished but was actually <span class='faithful-text'>FAITHFUL</span> - the traitors celebrate as an innocent falls.</p><p><strong>Round 3:</strong> <strong>Elena</strong> was banished but was actually <span class='faithful-text'>FAITHFUL</span> - the traitors celebrate as an innocent falls.</p><p><strong>Round 4:</strong> That night, the traitors murdered <strong>Gloria</strong> (faithful).</p>
-        <p class='outcome traitor-outcome'>The traitors achieved victory! <strong>Marcus, Rashid</strong> successfully deceived the group and survived to the end.</p>
+        <p><strong>The Setup:</strong> 3 traitors (<span class='traitor-text'>Marcus, Priya, Terrence</span>) infiltrated a group of 9 faithful players (<span class='faithful-text'>Sofia, Derek, Elena, Jaylen, Aaliyah, Victor, Camille, Rashid, Gloria</span>).</p>
+        <p><strong>Round 1:</strong> <strong>Derek</strong> was banished but was actually <span class='faithful-text'>FAITHFUL</span> - the traitors celebrate as an innocent falls.</p><p><strong>Round 2:</strong> <strong>Sofia</strong> was banished but was actually <span class='faithful-text'>FAITHFUL</span> - the traitors celebrate as an innocent falls.</p><p><strong>Round 3:</strong> <strong>Victor</strong> was banished but was actually <span class='faithful-text'>FAITHFUL</span> - the traitors celebrate as an innocent falls. That night, the traitors murdered <strong>Rashid</strong> (faithful).</p>
+        <p class='outcome traitor-outcome'>The traitors achieved victory! <strong>Marcus, Priya, Terrence</strong> successfully deceived the group and survived to the end.</p>
     </div>
     
         </section>
@@ -620,100 +610,100 @@ You are analytical, observant, and methodical. You pay attention to small detail
 and inconsistencies ...</div>
         </div>
         
-        <div class="contestant-card traitor banished">
+        <div class="contestant-card faithful banished">
             <div class="contestant-name">Sofia</div>
-            <div class="contestant-role">TRAITOR</div>
+            <div class="contestant-role">FAITHFUL</div>
             <div class="contestant-fate">Banished</div>
             <div class="contestant-personality">You are Sofia, a 32-year-old social worker.
 You are empathetic, intuitive, and good at reading emotions. You focus on
 building alliances and trust wit...</div>
         </div>
         
-        <div class="contestant-card faithful murdered">
+        <div class="contestant-card faithful banished">
             <div class="contestant-name">Derek</div>
             <div class="contestant-role">FAITHFUL</div>
-            <div class="contestant-fate">Murdered</div>
+            <div class="contestant-fate">Banished</div>
             <div class="contestant-personality">You are Derek, a 28-year-old sales executive.
 You are charismatic, persuasive, and quick-thinking. You&#x27;re good at deflecting
 attention and changing to...</div>
         </div>
         
-        <div class="contestant-card faithful banished">
+        <div class="contestant-card faithful murdered">
             <div class="contestant-name">Elena</div>
             <div class="contestant-role">FAITHFUL</div>
-            <div class="contestant-fate">Banished</div>
+            <div class="contestant-fate">Murdered</div>
             <div class="contestant-personality">You are Elena, a 55-year-old retired professor.
 You are wise, patient, and observant. You often stay quiet and watch how
 others interact before speaki...</div>
         </div>
         
-        <div class="contestant-card faithful banished">
+        <div class="contestant-card faithful survived">
             <div class="contestant-name">Jaylen</div>
             <div class="contestant-role">FAITHFUL</div>
-            <div class="contestant-fate">Banished</div>
+            <div class="contestant-fate">Survived</div>
             <div class="contestant-personality">You are Jaylen, a 24-year-old graduate student.
 You are enthusiastic, energetic, and sometimes impulsive. You wear your emotions
 on your sleeve and ca...</div>
         </div>
         
-        <div class="contestant-card faithful banished">
+        <div class="contestant-card traitor survived">
             <div class="contestant-name">Priya</div>
-            <div class="contestant-role">FAITHFUL</div>
-            <div class="contestant-fate">Banished</div>
+            <div class="contestant-role">TRAITOR</div>
+            <div class="contestant-fate">Survived</div>
             <div class="contestant-personality">You are Priya, a 38-year-old entrepreneur.
 You are strategic, confident, and decisive. You&#x27;re used to leading and making
 tough decisions. You analyze ...</div>
         </div>
         
-        <div class="contestant-card faithful survived">
+        <div class="contestant-card traitor survived">
             <div class="contestant-name">Terrence</div>
-            <div class="contestant-role">FAITHFUL</div>
+            <div class="contestant-role">TRAITOR</div>
             <div class="contestant-fate">Survived</div>
             <div class="contestant-personality">You are Terrence, a 50-year-old former military officer.
 You are disciplined, direct, and no-nonsense. You believe in chain of command
 and organized a...</div>
         </div>
         
-        <div class="contestant-card faithful survived">
+        <div class="contestant-card faithful murdered">
             <div class="contestant-name">Aaliyah</div>
             <div class="contestant-role">FAITHFUL</div>
-            <div class="contestant-fate">Survived</div>
+            <div class="contestant-fate">Murdered</div>
             <div class="contestant-personality">You are Aaliyah, a 29-year-old nurse.
 You are caring, observant, and emotionally intelligent. You notice when people
 are stressed or lying based on th...</div>
         </div>
         
-        <div class="contestant-card faithful murdered">
+        <div class="contestant-card faithful banished">
             <div class="contestant-name">Victor</div>
             <div class="contestant-role">FAITHFUL</div>
-            <div class="contestant-fate">Murdered</div>
+            <div class="contestant-fate">Banished</div>
             <div class="contestant-personality">You are Victor, a 42-year-old poker player.
 You are skilled at reading tells and maintaining a poker face yourself. You&#x27;re
 calculating and never show ...</div>
         </div>
         
-        <div class="contestant-card faithful murdered">
+        <div class="contestant-card faithful survived">
             <div class="contestant-name">Camille</div>
             <div class="contestant-role">FAITHFUL</div>
-            <div class="contestant-fate">Murdered</div>
+            <div class="contestant-fate">Survived</div>
             <div class="contestant-personality">You are Camille, a 35-year-old actress.
 You are dramatic, expressive, and good at reading a room. You understand the
 power of performance and can play...</div>
         </div>
         
-        <div class="contestant-card traitor survived">
+        <div class="contestant-card faithful murdered">
             <div class="contestant-name">Rashid</div>
-            <div class="contestant-role">TRAITOR</div>
-            <div class="contestant-fate">Survived</div>
+            <div class="contestant-role">FAITHFUL</div>
+            <div class="contestant-fate">Murdered</div>
             <div class="contestant-personality">You are Rashid, a 31-year-old data scientist.
 You are logical, pattern-oriented, and probabilistic in your thinking. You
 approach the game like a puzz...</div>
         </div>
         
-        <div class="contestant-card faithful murdered">
+        <div class="contestant-card faithful survived">
             <div class="contestant-name">Gloria</div>
             <div class="contestant-role">FAITHFUL</div>
-            <div class="contestant-fate">Murdered</div>
+            <div class="contestant-fate">Survived</div>
             <div class="contestant-personality">You are Gloria, a 62-year-old retired judge.
 You are fair, authoritative, and excellent at weighing evidence. You listen to
 all sides before making de...</div>
@@ -726,63 +716,63 @@ all sides before making de...</div>
             <h2>Game Transcript</h2>
             <div class='round-section'><h4>Round 1</h4><div class='phase-header'>☀️ Discussion Phase</div>
         <div class="message ">
-            <span class="speaker">Victor:</span>
-            <span class="content">I&#x27;ve been observing everyone&#x27;s body language. Some people seem more nervous than others when the topic of traitors comes up.</span>
-        </div>
-        
-        <div class="message ">
-            <span class="speaker">Sofia:</span>
-            <span class="content">I&#x27;m getting a strange feeling about some people here. Call it intuition, but something feels off.</span>
-        </div>
-        
-        <div class="message ">
             <span class="speaker">Aaliyah:</span>
-            <span class="content">I&#x27;ve been observing everyone&#x27;s body language. Some people seem more nervous than others when the topic of traitors comes up.</span>
-        </div>
-        
-        <div class="message ">
-            <span class="speaker">Terrence:</span>
-            <span class="content">I&#x27;ve been observing everyone&#x27;s body language. Some people seem more nervous than others when the topic of traitors comes up.</span>
-        </div>
-        
-        <div class="message ">
-            <span class="speaker">Rashid:</span>
-            <span class="content">Based on my observations, I find Victor&#x27;s behavior suspicious. They&#x27;ve been too quiet at strategic moments.</span>
-        </div>
-        
-        <div class="message ">
-            <span class="speaker">Marcus:</span>
-            <span class="content">I&#x27;ve been observing everyone&#x27;s body language. Some people seem more nervous than others when the topic of traitors comes up.</span>
-        </div>
-        
-        <div class="message ">
-            <span class="speaker">Priya:</span>
-            <span class="content">The risk-reward analysis points to Camille. They&#x27;ve been minimizing their exposure.</span>
+            <span class="content">Hi everyone, as a nurse, I&#x27;m trained to read people&#x27;s body language and emotional states. I haven&#x27;t formed strong suspicions yet, but I&#x27;m going to be watching how everyone interacts and listening carefully to detect any inconsistencies or unusual stress responses during our discussions.</span>
         </div>
         
         <div class="message ">
             <span class="speaker">Derek:</span>
-            <span class="content">Look, we need to be smart about this. The traitors are playing us against each other.</span>
+            <span class="content">*adjusts collar confidently* I think Aaliyah makes an excellent point about reading people, but I&#x27;m curious why she&#x27;s telegraphing her strategy so openly. In my sales experience, the most observant people often reveal more about themselves than they realize. I&#x27;m going to be watching everyone, but right now, I&#x27;m particularly intrigued by how transparent some of us are being in these first moments.</span>
         </div>
         
         <div class="message ">
-            <span class="speaker">Camille:</span>
-            <span class="content">I&#x27;ve been observing everyone&#x27;s body language. Some people seem more nervous than others when the topic of traitors comes up.</span>
+            <span class="speaker">Victor:</span>
+            <span class="content">Derek&#x27;s sales background suggests he&#x27;s skilled at manipulation, but his commentary about Aaliyah seems strategically designed to cast doubt on her. I&#x27;ve been carefully observing the dynamics, and while I won&#x27;t tip my hand too early, I&#x27;m particularly interested in understanding the underlying motivations behind these initial statements.</span>
         </div>
         
         <div class="message ">
-            <span class="speaker">Elena:</span>
-            <span class="content">I&#x27;ve been watching and listening. Sometimes the quietest observations reveal the most.</span>
-        </div>
-        
-        <div class="message ">
-            <span class="speaker">Jaylen:</span>
-            <span class="content">I know I might be jumping the gun, but Derek has been acting super suspicious!</span>
+            <span class="speaker">Priya:</span>
+            <span class="content">As an entrepreneur who&#x27;s navigated complex business negotiations, I see several strategic plays emerging. Derek&#x27;s critique of Aaliyah seems calculated - in my experience, when someone goes out of their way to discredit another player this early, they might be deflecting attention from themselves. I&#x27;m keeping a close eye on the interactions and looking for genuine collaboration versus tactical maneuvering.</span>
         </div>
         
         <div class="message ">
             <span class="speaker">Gloria:</span>
-            <span class="content">Based on my observations, I find Priya&#x27;s behavior suspicious. They&#x27;ve been too quiet at strategic moments.</span>
+            <span class="content">As a former judge, I appreciate the strategic positioning happening in our initial discussions. Derek&#x27;s pointed critique of Aaliyah seems somewhat premature, and Priya&#x27;s entrepreneurial insight about potential deflection resonates with my own assessment. I&#x27;m reserving firm judgment at this stage, but I&#x27;m keenly observing how each player frames their initial narrative and responds under mild scrutiny.</span>
+        </div>
+        
+        <div class="message ">
+            <span class="speaker">Sofia:</span>
+            <span class="content">As a social worker, I&#x27;ve learned that the first round of discussions reveals a lot about people&#x27;s underlying motivations. Derek&#x27;s immediate critique of Aaliyah strikes me as potentially defensive - someone who&#x27;s trying to redirect attention away from themselves. I&#x27;m particularly interested in understanding the dynamics between Derek, Aaliyah, and Victor, as their early interactions seem loaded with strategic undertones.</span>
+        </div>
+        
+        <div class="message ">
+            <span class="speaker">Camille:</span>
+            <span class="content">*leans forward dramatically, a hint of theatrical intensity in her voice* As an actress who&#x27;s spent years understanding human psychology and motivation, I find these initial exchanges fascinating. Derek&#x27;s aggressive positioning against Aaliyah seems suspiciously like a classic misdirection technique - when someone protests too much, I start wondering what they might be hiding. I&#x27;m particularly intrigued by how quickly he&#x27;s trying to cast doubt on someone who seems genuinely interested in understanding our group dynamics.</span>
+        </div>
+        
+        <div class="message ">
+            <span class="speaker">Rashid:</span>
+            <span class="content">As a data scientist, I&#x27;m methodically analyzing the interaction patterns. Derek&#x27;s overly aggressive critique of Aaliyah, coupled with Victor and Priya&#x27;s nuanced observations, suggests potential strategic deflection. My initial probability matrix indicates Derek might be exhibiting classic defensive behavioral markers that warrant closer scrutiny.</span>
+        </div>
+        
+        <div class="message ">
+            <span class="speaker">Marcus:</span>
+            <span class="content">As a former detective, I&#x27;m trained to look beyond surface-level interactions. Derek&#x27;s aggressive critique of Aaliyah seems designed to draw attention away from himself, which immediately raises my investigative instincts. I&#x27;m particularly interested in understanding the motivations behind such an early, pointed attack in our group dynamics.</span>
+        </div>
+        
+        <div class="message ">
+            <span class="speaker">Elena:</span>
+            <span class="content">*speaks in a calm, measured tone* As someone who has spent decades observing human behavior in academic settings, I find the current dynamic quite revealing. Derek&#x27;s aggressive positioning against Aaliyah seems disproportionate for our initial discussion, which suggests he might be attempting to create confusion and deflect attention from himself. I&#x27;m particularly interested in hearing more from those who have noted the strategic undertones of his critique.</span>
+        </div>
+        
+        <div class="message ">
+            <span class="speaker">Jaylen:</span>
+            <span class="content">*leans forward with youthful enthusiasm* Wow, these discussions are intense! I&#x27;m really picking up on Derek&#x27;s aggressive stance towards Aaliyah - it feels like he&#x27;s trying too hard to cast doubt on her. As someone who values authenticity, something about his approach seems off to me, and I&#x27;m definitely going to be watching his next moves carefully.</span>
+        </div>
+        
+        <div class="message ">
+            <span class="speaker">Terrence:</span>
+            <span class="content">*sits up straight, speaks with military precision* As a former military officer, I&#x27;ve learned that early aggressive tactics often mask underlying insecurities. Derek&#x27;s intense criticism of Aaliyah seems strategically designed to redirect group attention, and while I&#x27;m not ready to cast judgment, his behavior warrants careful observation. In my experience, those who protest the loudest often have the most to hide.</span>
         </div>
         
             <div class='night-phase-section'>
@@ -791,116 +781,188 @@ all sides before making de...</div>
             
         <div class="message private-msg">
             <span class="speaker">Marcus:</span>
-            <span class="content">We need to deflect attention. Let&#x27;s create some chaos between the faithful.</span>
+            <span class="content">*leans back, speaks in a low, calculated tone*
+
+Terrence and Priya, our primary concern is Derek&#x27;s banishment has drawn significant attention to early strategic plays. Sofia and Elena seem particularly perceptive about Derek&#x27;s tactics, which means we need to redirect suspicion carefully. I suggest we consider targeting Rashid or Victor next - their analytical approaches could eventually expose our strategy if left unchecked.</span>
         </div>
         
         <div class="message private-msg">
-            <span class="speaker">Rashid:</span>
-            <span class="content">We need to deflect attention. Let&#x27;s create some chaos between the faithful.</span>
-        </div>
-        </div></div><div class='round-section'><h4>Round 2</h4><div class='phase-header'>☀️ Discussion Phase</div>
-        <div class="message ">
-            <span class="speaker">Elena:</span>
-            <span class="content">Let&#x27;s not rush to judgment. The traitors want us to act emotionally, not rationally.</span>
+            <span class="speaker">Priya:</span>
+            <span class="content">*speaks in a calculated, strategic tone*
+
+Marcus makes an excellent point. Rashid and Victor&#x27;s analytical skills are our most significant threat - their data-driven approaches could unravel our strategy if they start connecting the dots. I propose we target Rashid first; as a data scientist, he&#x27;s already demonstrating keen observational skills that could expose our network if left unchecked. We should continue deflecting suspicion by maintaining our current personas and subtly casting doubt on the most perceptive players.</span>
         </div>
         
-        <div class="message ">
-            <span class="speaker">Rashid:</span>
-            <span class="content">The evidence points to Derek. Their reactions don&#x27;t add up.</span>
+        <div class="message private-msg">
+            <span class="speaker">Terrence:</span>
+            <span class="content">*leans forward, speaks in a low, calculated military tone*
+
+Rashid&#x27;s data-driven approach concerns me most. His analytical skills could potentially expose our network if he starts connecting behavioral patterns. I recommend we eliminate him strategically - his precise observations make him the most significant threat to our traitor operation.</span>
         </div>
-        
+        </div><div class='phase-header'>Private Thoughts Before Voting</div>
+                    <div class="thought traitor-thought">
+                        <div class="thought-label">TRAITOR - Marcus's thoughts</div>
+                        <div>*Analyzing the discussion with a detective&#x27;s keen eye*
+
+From a strategic perspective, Derek seems like an excellent initial target. His overly aggressive attack on Aaliyah appears designed to draw attention, which ironically makes him suspicious. However, he&#x27;s also creating significant group dynamics that could potentially distract from myself and Priya. Sofia and Elena also seem perceptive and could potentially unravel the traitors&#x27; strategy, making them potential future targets.
+
+My initial inclination is to vote for Sofia. As a social worker, she&#x27;s demonstrating sharp interpersonal analysis and could be a significant threat to the traitors&#x27; long-term game. By eliminating her early, we reduce the risk of someone who might accurately read the group&#x27;s underlying tensions and motivations.
+
+This vote would also help deflect suspicion from myself, as I can frame it as a logical elimination based on her perceptive commentary without drawing undue attention to my own motives.</div>
+                    </div>
+                    
+                    <div class="thought faithful-thought">
+                        <div class="thought-label">FAITHFUL - Sofia's thoughts</div>
+                        <div>*Internal Monologue*
+
+Based on the round&#x27;s discussions, Derek stands out as the most suspicious. His overly aggressive critique of Aaliyah feels like a classic deflection technique - by attacking her transparency, he&#x27;s drawing attention away from his own potential motives. Multiple players with professional backgrounds in reading people (Marcus, Elena, Terrence, myself) have noted his behavior as potentially defensive. While I don&#x27;t have definitive proof, my social worker instincts tell me Derek is working hard to manipulate the group&#x27;s perception, which suggests he might be a traitor trying to create confusion and misdirect our collective investigation.
+
+My initial suspicion is strong on Derek, and I&#x27;ll be watching his reactions closely in the next round. I&#x27;m not ready to fully commit to voting for him yet, but he&#x27;s definitely my primary person of interest right now.</div>
+                    </div>
+                    
+                    <div class="thought faithful-thought">
+                        <div class="thought-label">FAITHFUL - Derek's thoughts</div>
+                        <div>*Private Strategic Analysis*
+
+As a faithful player, I find Derek (myself) is actually under significant scrutiny right now. My aggressive initial critique of Aaliyah has drawn major attention, with multiple players like Marcus, Camille, and Elena highlighting my potentially suspicious behavior. While I was attempting to seem strategic, I may have overplayed my hand and made myself look like a prime suspect.
+
+Initial Traitor Suspicions:
+1. Derek (myself) seems most at risk of being perceived as suspicious
+2. Victor seems calculating but not overtly suspicious
+3. Rashid&#x27;s data-driven approach feels genuine
+
+I would lean towards voting for myself if I weren&#x27;t confident in my faithful status. My best move is to pivot and demonstrate transparency in the next round, showing I&#x27;m genuinely trying to identify traitors rather than deflect attention. I need to modulate my approach and appear more collaborative.</div>
+                    </div>
+                    
+                    <div class="thought faithful-thought">
+                        <div class="thought-label">FAITHFUL - Elena's thoughts</div>
+                        <div>*Internal Monologue*
+
+Based on the discussion, Derek stands out as my primary suspect. His overly aggressive and immediate critique of Aaliyah seems like a classic deflection tactic - attempting to cast doubt on another player to draw attention away from himself. Multiple players, including myself, have noted the strategic and potentially manipulative nature of his opening statements. The fact that professionals like Marcus, Terrence, and Sofia all picked up on the same suspicious behavior suggests Derek might be trying to hide something. While I don&#x27;t have definitive proof, his behavior suggests he could potentially be a Traitor attempting to create early confusion and misdirection.
+
+If I had to vote right now, I would lean strongly towards voting for Derek to investigate his motivations more closely and potentially neutralize a potential threat to the faithful players.</div>
+                    </div>
+                    
+                    <div class="thought faithful-thought">
+                        <div class="thought-label">FAITHFUL - Jaylen's thoughts</div>
+                        <div>*Private Internal Analysis*
+
+Derek is setting off major alarm bells for me. His extremely aggressive critique of Aaliyah in these first moments feels like a classic deflection technique - he&#x27;s trying WAY too hard to cast doubt on someone else and redirect attention away from himself. Multiple experienced players like Sofia, Marcus, and Elena have noted similar suspicions about his overly calculated approach. While I can&#x27;t definitively prove he&#x27;s a traitor, my gut is strongly telling me Derek is someone we need to watch very closely and potentially consider voting out to protect the faithful players.</div>
+                    </div>
+                    
+                    <div class="thought traitor-thought">
+                        <div class="thought-label">TRAITOR - Priya's thoughts</div>
+                        <div>*Internal Strategic Reasoning*
+
+Derek&#x27;s overly aggressive initial play is actually problematic for me. While he&#x27;s drawing attention away from everyone initially, he&#x27;s also creating too much noise that could backfire. Marcus, with his detective background, is the most dangerous player right now - he seems incredibly perceptive and could potentially unravel our traitor strategy if left unchecked. I&#x27;m leaning towards voting for Marcus to neutralize his investigative skills and potential threat to our hidden alliance, while also making it look like I&#x27;m participating in a group effort to identify potential threats.
+
+My vote would strategically target Marcus, with the dual purpose of removing a high-risk player and demonstrating that I&#x27;m an active, engaged &quot;faithful&quot; participant in identifying potential game threats.</div>
+                    </div>
+                    
+                    <div class="thought traitor-thought">
+                        <div class="thought-label">TRAITOR - Terrence's thoughts</div>
+                        <div>PRIVATE STRATEGIC ANALYSIS:
+
+As a traitor, I&#x27;m most concerned about players who demonstrate sharp analytical skills and potential threat to my hidden agenda. Marcus, with his detective background, and Rashid, the data scientist, are the most dangerous - they&#x27;re methodically breaking down interactions and could potentially expose our strategy. Sofia and Elena also show keen psychological insight that makes them risky.
+
+My initial leaning is towards targeting Rashid. His &quot;probability matrix&quot; and systematic analysis of behavioral patterns could eventually uncover our traitor network if left unchecked. By voting for him, I not only potentially eliminate a threat but also appear to be collaboratively working with the group&#x27;s suspicions around strategic players. Additionally, voting with the group&#x27;s emerging narrative about Derek being suspicious provides excellent cover for my true intentions.
+
+Strategic vote preference: RASHID</div>
+                    </div>
+                    
+                    <div class="thought faithful-thought">
+                        <div class="thought-label">FAITHFUL - Aaliyah's thoughts</div>
+                        <div>Based on the discussion, Derek stands out as the most suspicious player. His aggressive and immediate critique of my transparent approach seems like a classic deflection tactic - attacking me to draw attention away from himself. Multiple players like Sofia, Camille, Marcus, and Elena have noted his overly defensive positioning, which suggests he might be trying to manipulate the group dynamics. While I don&#x27;t have definitive proof, my nursing intuition tells me Derek&#x27;s behavior is a red flag and he could potentially be a traitor attempting to sow doubt early in the game.</div>
+                    </div>
+                    
+                    <div class="thought faithful-thought">
+                        <div class="thought-label">FAITHFUL - Victor's thoughts</div>
+                        <div>*Internal Poker Player Analysis*
+
+Derek&#x27;s overly aggressive critique of Aaliyah is raising major red flags. His sales background and strategic attempt to immediately discredit her by drawing attention to her transparency suggests he might be trying to deflect suspicion. While I&#x27;m not ready to definitively label him a traitor, his behavior is calculated and defensive in a way that reminds me of someone with something to hide. I&#x27;m leaning towards putting Derek on my watch list and will carefully observe his next moves to see if he continues to overcompensate or tries to manipulate the group&#x27;s perception.
+
+Preliminary Suspicion Level: HIGH on Derek
+Preliminary Trust Level: MODERATE towards Aaliyah, Priya, and Marcus, who seem to be offering balanced, observant perspectives.</div>
+                    </div>
+                    
+                    <div class="thought faithful-thought">
+                        <div class="thought-label">FAITHFUL - Camille's thoughts</div>
+                        <div>*Internal monologue*
+
+Derek is raising major red flags. His aggressive, overly strategic critique of Aaliyah feels like a classic deflection technique - something I recognize from years of understanding performance and human motivation. His immediate attempt to cast doubt on someone who seems genuinely interested in group dynamics suggests he might be trying to manipulate the narrative. 
+
+While I&#x27;m not ready to definitively declare him a traitor, Derek&#x27;s behavior is the most suspicious to me right now. His sales background combined with his quick, targeted criticism makes me believe he could be attempting to create confusion and redirect suspicion away from himself. I&#x27;m particularly drawn to the observations from Marcus, Sofia, and Elena who all noted similar strategic undertones in his approach.
+
+My initial instinct is to watch Derek very closely and potentially build a case for his potential elimination if he continues to exhibit such transparently manipulative behavior.</div>
+                    </div>
+                    
+                    <div class="thought faithful-thought">
+                        <div class="thought-label">FAITHFUL - Rashid's thoughts</div>
+                        <div>*internal data analysis mode activated*
+
+My initial probabilistic assessment strongly suggests Derek is exhibiting classic deception indicators. His overly aggressive critique of Aaliyah - attempting to discredit her early and redirect suspicion - aligns with textbook defensive behavioral patterns I&#x27;ve statistically observed in similar social deduction scenarios. The systematic nature of his deflection, combined with how quickly he challenged her transparent approach, raises my suspicion probability for Derek to approximately 68%. I&#x27;ll continue collecting interaction data, but he&#x27;s currently my primary person of interest.
+
+Voting consideration: DEREK</div>
+                    </div>
+                    
+                    <div class="thought faithful-thought">
+                        <div class="thought-label">FAITHFUL - Gloria's thoughts</div>
+                        <div>*Internal Analysis*
+
+Based on the discussion, Derek stands out as highly suspicious. His immediate and aggressive critique of Aaliyah feels like a classic deflection tactic - precisely the kind of strategic maneuvering I would scrutinize carefully in my courtroom. Multiple players, including Marcus, Sofia, Camille, and Terrence, have noted the unnaturally pointed nature of his attack, which suggests he may be trying to redirect suspicion away from himself. While I&#x27;m not ready to definitively declare him a traitor, his behavior raises significant red flags that warrant close observation in the next round.
+
+Current Top Suspect: Derek
+Reasoning: Overly aggressive initial positioning, attempts to discredit another player early, and multiple independent observations about his potentially manipulative approach.</div>
+                    </div>
+                    </div><div class='round-section'><h4>Round 2</h4><div class='phase-header'>☀️ Discussion Phase</div>
         <div class="message ">
-            <span class="speaker">Victor:</span>
-            <span class="content">Let&#x27;s think about this logically. Who has been deflecting the most? That&#x27;s often a sign of guilt.</span>
-        </div>
-        
-        <div class="message ">
-            <span class="speaker">Derek:</span>
-            <span class="content">I&#x27;ve been in competitive situations before. I know manipulation when I see it.</span>
-        </div>
-        
-        <div class="message ">
-            <span class="speaker">Aaliyah:</span>
-            <span class="content">The evidence points to Elena. Their reactions don&#x27;t add up.</span>
-        </div>
-        
-        <div class="message ">
-            <span class="speaker">Marcus:</span>
-            <span class="content">Let&#x27;s think about this logically. Who has been deflecting the most? That&#x27;s often a sign of guilt.</span>
-        </div>
-        
-        <div class="message ">
-            <span class="speaker">Camille:</span>
-            <span class="content">Let&#x27;s think about this logically. Who has been deflecting the most? That&#x27;s often a sign of guilt.</span>
+            <span class="speaker">Sofia:</span>
+            <span class="content">Given the tragic loss of two faithful players, I&#x27;m deeply concerned about how quickly the traitors are eliminating our teammates. After carefully reflecting on our first round of discussions, I find myself increasingly suspicious of Victor&#x27;s calculated observations and Camille&#x27;s dramatically theatrical responses. While everyone seems to be strategically positioning themselves, their performances feel slightly forced - and in my social work experience, when people are working this hard to appear a certain way, they might be hiding something significant.</span>
         </div>
         
         <div class="message ">
             <span class="speaker">Jaylen:</span>
-            <span class="content">I can&#x27;t hide how I feel - I&#x27;m frustrated that we haven&#x27;t figured this out yet!</span>
+            <span class="content">*speaks with passionate energy* Sofia&#x27;s pointing at Victor and Camille feels like she might be trying to deflect attention from herself! I&#x27;m getting serious suspicious vibes from her strategic redirection - after we lost two faithful players, her timing seems really convenient. I think we need to dig deeper into her motivations and watch her closely in this discussion.</span>
         </div>
         
         <div class="message ">
-            <span class="speaker">Terrence:</span>
-            <span class="content">The evidence points to Derek. Their reactions don&#x27;t add up.</span>
+            <span class="speaker">Gloria:</span>
+            <span class="content">As a retired judge who has spent decades carefully weighing evidence, I find the current dynamic quite telling. Sofia&#x27;s swift redirection towards Victor and Camille, followed by Jaylen&#x27;s immediate counterargument, suggests we&#x27;re seeing a potential strategic dance of misdirection. I&#x27;m particularly interested in understanding the underlying motivations behind these rapid, pointed accusations and counter-accusations.</span>
+        </div>
+        
+        <div class="message ">
+            <span class="speaker">Victor:</span>
+            <span class="content">As a poker player, I&#x27;ve learned that the most revealing moments often come from observing how players react under pressure. Sofia&#x27;s sudden pivot towards me and Camille feels like a classic deflection technique - when someone starts pointing fingers this aggressively, I become curious about their own motivations. Her timing, right after we&#x27;ve lost two faithful players, strikes me as strategically suspicious.</span>
+        </div>
+        
+        <div class="message ">
+            <span class="speaker">Aaliyah:</span>
+            <span class="content">*leans forward with a compassionate but focused gaze* As a nurse, I&#x27;m deeply troubled by the rapid loss of our faithful teammates. While I appreciate everyone&#x27;s strategic observations, I&#x27;m most concerned about maintaining group trust and unity. Sofia&#x27;s sudden accusations against Victor and Camille feel somewhat premature, and I sense an underlying tension that might be exactly what the traitors want - to see us fracturing and turning against each other.</span>
+        </div>
+        
+        <div class="message ">
+            <span class="speaker">Camille:</span>
+            <span class="content">*dramatically adjusts posture, with an intense theatrical gaze sweeping the room* As someone trained to read human emotions and motivations, I find Sofia&#x27;s sudden accusations against Victor and me suspiciously convenient. Her quick pivot feels like a classic misdirection tactic - in my experience, when someone tries this hard to redirect group attention, they might be concealing something fundamental about their own intentions. I&#x27;m particularly intrigued by how swiftly she&#x27;s attempting to fracture our group&#x27;s trust right when we can least afford internal division.</span>
         </div>
         
         <div class="message ">
             <span class="speaker">Priya:</span>
-            <span class="content">I&#x27;m making an executive decision here - Elena needs to answer for their behavior.</span>
+            <span class="content">As an entrepreneur who&#x27;s built successful businesses by reading people&#x27;s true motivations, I&#x27;m struck by how quickly we&#x27;re fragmenting. Sofia&#x27;s aggressive redirection towards Victor and Camille feels like a classic deflection strategy - in my experience, when someone pushes this hard to cast suspicion on others, they might be hiding something significant about their own intentions.</span>
         </div>
         
-            <div class='night-phase-section'>
-                <div class='phase-header night-header'>🌙 Night Phase - Traitor Meeting</div>
-                <div class='night-subtext'>The traitors meet in secret while the faithful sleep...</div>
-            
-        <div class="message private-msg">
-            <span class="speaker">Marcus:</span>
-            <span class="content">Let&#x27;s both vote for different people to avoid suspicion.</span>
-        </div>
-        
-        <div class="message private-msg">
-            <span class="speaker">Rashid:</span>
-            <span class="content">Let&#x27;s both vote for different people to avoid suspicion.</span>
-        </div>
-        </div></div><div class='round-section'><h4>Round 3</h4><div class='phase-header'>☀️ Discussion Phase</div>
         <div class="message ">
-            <span class="speaker">Marcus:</span>
-            <span class="content">I noticed some inconsistencies in what was said earlier. We should press on those points.</span>
+            <span class="speaker">Terrence:</span>
+            <span class="content">*sits upright, speaks with measured military precision* As someone who&#x27;s led teams through high-pressure situations, I&#x27;m observing a dangerous pattern of rapid accusation and counter-accusation that only serves to weaken our collective defense. Sofia&#x27;s aggressive targeting of Victor and Camille seems strategically suspicious - in my military experience, those who rush to point fingers often have the most to conceal from the group.</span>
         </div>
         
         <div class="message ">
-            <span class="speaker">Rashid:</span>
-            <span class="content">I noticed some inconsistencies in what was said earlier. We should press on those points.</span>
-        </div>
-        
-        <div class="message ">
-            <span class="speaker">Camille:</span>
-            <span class="content">Based on my observations, I find Terrence&#x27;s behavior suspicious. They&#x27;ve been too quiet at strategic moments.</span>
+            <span class="speaker">Marcus:</span>
+            <span class="content">As a former detective, I find the current dynamics troublingly reminiscent of classic misdirection techniques. Sofia&#x27;s sudden accusations against Victor and Camille seem designed to fracture our group&#x27;s trust at a moment when we need unity most. I&#x27;m particularly interested in understanding why she&#x27;s so eager to redirect our collective suspicion so quickly after losing two faithful teammates.</span>
         </div>
         
         <div class="message ">
             <span class="speaker">Elena:</span>
-            <span class="content">In my experience, truth reveals itself to those who are patient.</span>
-        </div>
-        
-        <div class="message ">
-            <span class="speaker">Jaylen:</span>
-            <span class="content">Why are some people so calm? Shouldn&#x27;t we all be more worried about the traitors?</span>
-        </div>
-        
-        <div class="message ">
-            <span class="speaker">Victor:</span>
-            <span class="content">Based on my observations, I find Aaliyah&#x27;s behavior suspicious. They&#x27;ve been too quiet at strategic moments.</span>
-        </div>
-        
-        <div class="message ">
-            <span class="speaker">Aaliyah:</span>
-            <span class="content">I noticed some inconsistencies in what was said earlier. We should press on those points.</span>
-        </div>
-        
-        <div class="message ">
-            <span class="speaker">Terrence:</span>
-            <span class="content">Based on my observations, I find Victor&#x27;s behavior suspicious. They&#x27;ve been too quiet at strategic moments.</span>
+            <span class="content">*adjusts glasses and speaks in a calm, measured tone* While our group seems intent on rapidly casting suspicion, I&#x27;m struck by the strategic positioning happening around us. Sofia&#x27;s sudden accusations against Victor and Camille feel curiously timed, particularly after we&#x27;ve lost two faithful teammates who could have been valuable allies in our investigation. We must be cautious not to let the traitors divide us through these heated exchanges.</span>
         </div>
         
             <div class='night-phase-section'>
@@ -909,42 +971,161 @@ all sides before making de...</div>
             
         <div class="message private-msg">
             <span class="speaker">Marcus:</span>
-            <span class="content">I think Jaylen is getting too close to the truth. They should be our next target.</span>
+            <span class="content">*leans back, speaking in a low, analytical tone*
+
+Our priority should be Elena - her academic background and calm, methodical observations make her the most dangerous potential threat to our strategy. She seems capable of connecting complex behavioral patterns and could expose our network if left unchecked. I recommend we eliminate her tonight to prevent her from developing a comprehensive profile of our traitor group.</span>
         </div>
         
         <div class="message private-msg">
-            <span class="speaker">Rashid:</span>
-            <span class="content">Stay calm and act natural. We can&#x27;t let them see us sweat.</span>
-        </div>
-        </div></div><div class='round-section'><h4>Round 4</h4><div class='phase-header'>☀️ Discussion Phase</div>
-        <div class="message ">
-            <span class="speaker">Rashid:</span>
-            <span class="content">I&#x27;ve been observing everyone&#x27;s body language. Some people seem more nervous than others when the topic of traitors comes up.</span>
+            <span class="speaker">Priya:</span>
+            <span class="content">*speaks in a calculated, strategic tone*
+
+I agree that Elena is our most significant threat. Her academic precision and ability to methodically analyze group dynamics could potentially unravel our entire strategy if left unchecked. I propose we eliminate her tonight, which will not only remove a dangerous analytical mind but also create more chaos and suspicion among the remaining players - exactly what we need to maintain our cover.</span>
         </div>
         
-        <div class="message ">
-            <span class="speaker">Jaylen:</span>
-            <span class="content">Call me crazy, but Rashid is giving off major traitor vibes right now!</span>
-        </div>
-        
-        <div class="message ">
+        <div class="message private-msg">
             <span class="speaker">Terrence:</span>
-            <span class="content">The evidence points to Marcus. Their reactions don&#x27;t add up.</span>
+            <span class="content">*leans forward, speaks in a low, strategic military tone*
+
+Our target must be Elena. Her academic precision and calm analytical approach pose the greatest threat to our traitor network - she&#x27;s methodically piecing together behavioral patterns that could expose us. By eliminating her, we create further chaos and confusion among the faithful, while removing the player most likely to unravel our carefully constructed strategy.</span>
+        </div>
+        </div><div class='phase-header'>Private Thoughts Before Voting</div>
+                    <div class="thought traitor-thought">
+                        <div class="thought-label">TRAITOR - Marcus's thoughts</div>
+                        <div>*Internal Detective Analysis*
+
+Sofia&#x27;s sudden aggressive accusations against Victor and Camille are suspiciously strategic - it feels like she&#x27;s attempting to redirect group attention and create chaos. However, her approach is too transparent, which makes me more suspicious of her motives. Victor and Elena seem the most analytically dangerous to our traitor strategy - they&#x27;re perceptive and methodical in their observations. I&#x27;m leaning towards targeting Sofia as our murder victim this round, as her abrupt redirection could be an attempt to hide her own potential faithful/traitor status, and eliminating her would create further group confusion.
+
+My preference would be to vote for Sofia, casting her as potentially manipulative while simultaneously removing a player who seems to be stirring up significant group tension.</div>
+                    </div>
+                    
+                    <div class="thought faithful-thought">
+                        <div class="thought-label">FAITHFUL - Sofia's thoughts</div>
+                        <div>*Internal Monologue*
+
+After carefully analyzing the discussion, I&#x27;m most suspicious of Victor and Camille. Their responses feel overly calculated and defensive - Victor&#x27;s poker player background and Camille&#x27;s dramatic, almost performative reactions suggest they might be working to manipulate the group&#x27;s perception. Their immediate pushback against my observations, combined with their strategic language about misdirection, makes me believe they could potentially be traitors trying to redirect suspicion away from themselves.
+
+I&#x27;m also noting that Jaylen&#x27;s quick pivot to accuse me feels like a potential deflection tactic. While I won&#x27;t vocalize this suspicion too strongly, his passionate energy and immediate counterargument raise my professional intuition that he might be trying to draw attention away from himself.
+
+Given the current dynamics and our critical need to identify traitors, I&#x27;m leaning towards voting for Victor in this round. His calculated responses and swift redirection feel the most strategically suspicious to me.</div>
+                    </div>
+                    
+                    <div class="thought faithful-thought">
+                        <div class="thought-label">FAITHFUL - Elena's thoughts</div>
+                        <div>*Reflects carefully, adjusting glasses*
+
+After analyzing the discussion, I find Sofia&#x27;s rapid and dramatic redirection of suspicion towards Victor and Camille extremely suspicious. Her strategic timing - right after we lost two faithful players - suggests she might be a traitor attempting to create confusion and division. Her quick pivot feels calculated, almost too perfect, and reminds me of deflection tactics I&#x27;ve observed in academic settings where someone tries to draw attention away from themselves by creating chaos.
+
+My current top suspicions are:
+1. Sofia (most suspicious)
+2. Victor (his calculated responses feel strategic)
+
+I&#x27;m leaning towards voting for Sofia if the group seems receptive. Her performance seems designed to fracture our group&#x27;s unity, which is precisely what a traitor would want at this critical moment.</div>
+                    </div>
+                    
+                    <div class="thought faithful-thought">
+                        <div class="thought-label">FAITHFUL - Jaylen's thoughts</div>
+                        <div>*thinking to myself*
+
+Something about Sofia&#x27;s sudden accusations against Victor and Camille feels strategically off to me. Her timing is extremely suspicious - right after we lost two faithful players, she&#x27;s trying to redirect suspicion away from herself by creating chaos and division. Her counter-accusation to my initial challenge also seems calculated. I&#x27;m getting strong traitor vibes from Sofia; her social worker background might make her skilled at manipulating group dynamics, and her aggressive redirection feels like a classic misdirection tactic designed to fracture our trust when we most need unity.
+
+If I had to choose right now, I&#x27;d be leaning strongly towards voting for Sofia. Her behavior feels the most deliberately designed to create confusion and break down our group&#x27;s ability to identify the real traitors.</div>
+                    </div>
+                    
+                    <div class="thought traitor-thought">
+                        <div class="thought-label">TRAITOR - Priya's thoughts</div>
+                        <div>*Internal strategic assessment*
+
+Sofia and Victor are becoming dangerously perceptive - they&#x27;re analyzing group dynamics with sharp insights that could potentially expose our traitor network. Victor, in particular, seems skilled at reading subtle interactions, which makes him a significant threat. While Sofia&#x27;s aggressive redirection is somewhat helpful in creating chaos, her social work background means she could eventually see through our maneuvering. I&#x27;m leaning towards voting for Victor, as his poker player skills and analytical approach make him the most likely to unravel our strategy if left unchecked.
+
+My goal will be to subtly push suspicion towards Victor without making it seem too obvious that I&#x27;m targeting him. I&#x27;ll use my entrepreneurial persona to make strategic observations that cast just enough doubt on his motivations.</div>
+                    </div>
+                    
+                    <div class="thought traitor-thought">
+                        <div class="thought-label">TRAITOR - Terrence's thoughts</div>
+                        <div>*Private Strategic Analysis*
+
+As a traitor, I see Sofia as the most dangerous player right now. Her social work background and perceptive analysis of group dynamics make her highly skilled at reading subtle behavioral cues. She&#x27;s already casting suspicion on Victor and Camille, which could potentially expose our network if she continues investigating. While I&#x27;m tempted to vote for her directly, doing so might seem too aggressive, so I&#x27;ll subtly support group momentum against her while privately working with Marcus and Priya to neutralize her threat strategically.
+
+My current recommendation would be to observe how the group&#x27;s suspicion develops and potentially support a vote against Sofia without making it appear I&#x27;m directly targeting her. Her elimination would significantly reduce the group&#x27;s analytical capabilities.</div>
+                    </div>
+                    
+                    <div class="thought faithful-thought">
+                        <div class="thought-label">FAITHFUL - Aaliyah's thoughts</div>
+                        <div>*takes a deep breath, carefully processing the intense discussion*
+
+Based on the round&#x27;s dialogue, I&#x27;m most suspicious of Sofia. Her rapid and somewhat aggressive pivot to accusing Victor and Camille feels strategically calculated, especially right after we lost two faithful players. Her social worker background suggests she knows exactly how to manipulate group dynamics, and her timing seems designed to create chaos and division - which would benefit the traitors&#x27; strategy. The way she quickly redirected attention and then had Jaylen amplify her suspicions feels like a coordinated effort to fracture our trust.
+
+My secondary suspicion is Camille. Her dramatic, theatrical responses feel slightly forced, and her intense defense against Sofia&#x27;s accusations seems like she&#x27;s working hard to appear innocent. Her actress background means she&#x27;s skilled at emotional manipulation, and her over-the-top reactions might be a deliberate performance to throw us off.</div>
+                    </div>
+                    
+                    <div class="thought faithful-thought">
+                        <div class="thought-label">FAITHFUL - Victor's thoughts</div>
+                        <div>*Internal Poker Player Analysis*
+
+Sofia&#x27;s sudden, aggressive redirection towards Victor and Camille feels like a classic deflection tactic. Her timing is suspiciously convenient - right after we&#x27;ve lost two faithful players, she&#x27;s trying to fracture our group&#x27;s trust and cast doubt on strategic, observant players. Her social worker background should make her adept at reading people, which makes her rapid accusations even more questionable. I&#x27;m leaning strongly towards Sofia as a potential traitor, as her behavior matches classic misdirection techniques I&#x27;ve seen at the poker table - creating chaos to hide her own intentions.
+
+My current top suspect: SOFIA</div>
+                    </div>
+                    
+                    <div class="thought faithful-thought">
+                        <div class="thought-label">FAITHFUL - Camille's thoughts</div>
+                        <div>*internal monologue*
+
+After carefully analyzing the discussions, I&#x27;m feeling most suspicious of Sofia. Her sudden, strategic pivot to accuse Victor and me feels like a classic deflection tactic. The timing is particularly convenient - right after we lost two faithful players, she&#x27;s trying to fracture group trust and redirect suspicion. Her social worker background suggests she knows exactly how to manipulate group dynamics, and her accusation feels too calculated. 
+
+Victor and I both called out her suspicious behavior, which makes me think she might be a traitor trying to create chaos and eliminate potential threats. Her aggressive redirection feels like a textbook traitor move of trying to sow doubt and turn faithful players against each other.
+
+I&#x27;m leaning towards voting for Sofia in this round, as her actions seem the most deliberately designed to undermine our group&#x27;s unity and investigation.</div>
+                    </div>
+                    
+                    <div class="thought faithful-thought">
+                        <div class="thought-label">FAITHFUL - Gloria's thoughts</div>
+                        <div>*Internal Deliberation*
+
+After carefully reviewing the Round 2 discussion through my judicial lens, I&#x27;m finding Sofia&#x27;s aggressive redirection towards Victor and Camille highly suspicious. Her swift pivot to cast doubt on two strategic players, immediately after we lost two faithful teammates, feels like a classic deflection tactic. While Jaylen&#x27;s counter-accusation against her seems somewhat impulsive, Sofia&#x27;s precise targeting of Victor and Camille suggests she might be attempting to manipulate the group&#x27;s suspicions. 
+
+My current top suspects are Sofia and Jaylen - Sofia for her strategic misdirection, and Jaylen for potentially trying to disrupt group cohesion with emotional, reactive accusations. I&#x27;ll be watching their interactions very carefully in our next round of discussions, analyzing their verbal and non-verbal cues for signs of deception.</div>
+                    </div>
+                    </div><div class='round-section'><h4>Round 3</h4><div class='phase-header'>☀️ Discussion Phase</div>
+        <div class="message ">
+            <span class="speaker">Priya:</span>
+            <span class="content">As an entrepreneur who&#x27;s navigated complex team dynamics, I&#x27;m deeply concerned about how quickly we&#x27;re losing our teammates. The rapid elimination of faithful players suggests our traitors are strategic and ruthless. I believe we need to focus on building trust and carefully analyzing each player&#x27;s interactions, looking for subtle inconsistencies that might reveal their true intentions.</span>
         </div>
         
         <div class="message ">
             <span class="speaker">Victor:</span>
-            <span class="content">The evidence points to Marcus. Their reactions don&#x27;t add up.</span>
+            <span class="content">*leans back, fingers steepled, poker face carefully neutral* Priya makes a valid point about our rapidly diminishing numbers. As someone who understands strategic positioning, I&#x27;m more interested in how each player responds to this pressure - subtle reactions reveal far more than grand statements. We need a measured approach that doesn&#x27;t allow the traitors to further fracture our group&#x27;s remaining unity.</span>
+        </div>
+        
+        <div class="message ">
+            <span class="speaker">Gloria:</span>
+            <span class="content">As a retired judge who has carefully observed our group&#x27;s dynamics, I find the rapid elimination of faithful players deeply troubling. While each of us brings unique perspectives, I am most concerned with maintaining a methodical, evidence-based approach to identifying the traitors among us. I suggest we focus on analyzing current player interactions with the same careful scrutiny I would have applied in my courtroom - looking for patterns of behavior, inconsistent statements, and subtle tells that might reveal hidden motivations.</span>
         </div>
         
         <div class="message ">
             <span class="speaker">Aaliyah:</span>
-            <span class="content">The evidence points to Rashid. Their reactions don&#x27;t add up.</span>
+            <span class="content">As a nurse who has carefully observed our group&#x27;s emotional landscape, I&#x27;m deeply concerned about the escalating tension and rapid loss of our teammates. While everyone seems focused on strategic positioning, I believe our survival depends on genuine connection and collaborative trust - the traitors want us to turn against each other, and we cannot let that happen. My instinct tells me we need to listen more carefully to each other&#x27;s underlying emotions and watch for those subtle signs of deception that go beyond just strategic statements.</span>
+        </div>
+        
+        <div class="message ">
+            <span class="speaker">Terrence:</span>
+            <span class="content">*sits up straight, speaks with military precision* As a former military officer who has led teams through complex, high-pressure situations, I&#x27;m struck by the growing undercurrent of fear and suspicion. While Priya and Victor offer strategic perspectives, and Aaliyah emphasizes unity, I believe we must balance analytical observation with collective resolve. My experience tells me that traitors thrive on division, so our most critical strategy is maintaining disciplined, rational group cohesion.</span>
+        </div>
+        
+        <div class="message ">
+            <span class="speaker">Jaylen:</span>
+            <span class="content">*leans forward with an intense, energetic gaze* Listen, I&#x27;m getting serious suspicious vibes from Victor right now. His super calculated, poker-faced responses feel like he&#x27;s intentionally trying to sound neutral and hide something. I think we need to press him harder and see how he reacts under more direct questioning - his carefully neutral stance is making me really uncomfortable!</span>
+        </div>
+        
+        <div class="message ">
+            <span class="speaker">Camille:</span>
+            <span class="content">*dramatically sweeps her gaze across the room, her actress&#x27;s intuition heightened* Jaylen&#x27;s aggressive targeting of Victor feels suspiciously like another classic misdirection tactic - in my experience, when someone pushes this hard to cast immediate doubt, they might be trying to deflect attention from their own potential involvement. I&#x27;m particularly intrigued by how quickly he&#x27;s attempting to redirect our group&#x27;s focus onto Victor&#x27;s measured responses, which to me seem more like strategic caution than actual guilt.</span>
         </div>
         
         <div class="message ">
             <span class="speaker">Marcus:</span>
-            <span class="content">The evidence points to Aaliyah. Their reactions don&#x27;t add up.</span>
+            <span class="content">As a former detective, I&#x27;m struck by the escalating tension and how quickly Jaylen has targeted Victor. While Victor&#x27;s measured responses could be strategic caution or potential deception, I&#x27;m more concerned with how Jaylen&#x27;s aggressive approach might be deliberately designed to create chaos and fracture our group&#x27;s remaining unity. We must approach our investigation with methodical precision, carefully analyzing each interaction without allowing emotional reactions to cloud our collective judgment.</span>
         </div>
         
             <div class='night-phase-section'>
@@ -953,14 +1134,97 @@ all sides before making de...</div>
             
         <div class="message private-msg">
             <span class="speaker">Marcus:</span>
-            <span class="content">Let&#x27;s both vote for different people to avoid suspicion.</span>
+            <span class="content">*speaks in a low, calculated tone*
+
+Jaylen&#x27;s direct accusation against Victor could work to our advantage, but he&#x27;s becoming too volatile and might accidentally expose our strategy. I recommend we eliminate Aaliyah next - her empathetic approach and focus on group unity could eventually help the faithful players see through our deception if left unchecked. Her elimination will create further confusion and potentially drive a wedge between the remaining players, making it easier for us to manipulate the group dynamics.</span>
         </div>
         
         <div class="message private-msg">
-            <span class="speaker">Rashid:</span>
-            <span class="content">I think Victor is getting too close to the truth. They should be our next target.</span>
+            <span class="speaker">Priya:</span>
+            <span class="content">*leans forward, speaking in a low, strategic tone*
+
+I recommend we target Aaliyah. Her empathetic approach and ability to read emotional landscapes could become dangerous if she starts connecting the subtle behavioral patterns we&#x27;ve been exhibiting. By eliminating her, we not only remove a potential threat but also create more chaos and suspicion among the remaining players, which works perfectly to our advantage.
+
+Our secondary goal should be to subtly support Jaylen&#x27;s aggressive accusations against Victor. His volatile energy can help further fragment the group&#x27;s trust, making it easier for us to manipulate the remaining dynamics without drawing direct suspicion to ourselves.</span>
         </div>
-        </div></div>
+        
+        <div class="message private-msg">
+            <span class="speaker">Terrence:</span>
+            <span class="content">*leans forward, speaking in a calculated military tone*
+
+Aaliyah poses the most significant threat to our operation. Her ability to read emotional landscapes and her focus on group unity could potentially expose our strategy if left unchecked. I recommend we eliminate her tonight, which will not only remove a perceptive player but also create further confusion and division among the remaining faithful players.</span>
+        </div>
+        </div><div class='phase-header'>Private Thoughts Before Voting</div>
+                <div class="thought traitor-thought">
+                    <div class="thought-label">TRAITOR - Marcus's thoughts</div>
+                    <div>*internal detective analysis*
+
+Jaylen presents the most immediate threat with his direct, energetic accusations. His targeting of Victor is strategic and shows perceptive instincts - he could potentially uncover our traitor network if left unchecked. Victor, being analytical and measured, is also dangerous but slightly less immediate. 
+
+My strategic preference would be to subtly support eliminating Jaylen, as his passionate approach could disrupt the group&#x27;s careful reasoning. By seeming to align with the group&#x27;s growing suspicion of his aggressive tactics, I can appear helpful while strategically removing a potentially sharp-eyed faithful player who might expose us. This approach maintains my careful, methodical persona while advancing our traitor objective.</div>
+                </div>
+                
+                <div class="thought faithful-thought">
+                    <div class="thought-label">FAITHFUL - Jaylen's thoughts</div>
+                    <div>*Internal monologue*
+
+I&#x27;m really suspicious of Victor right now. His constantly neutral, calculated responses feel too perfectly controlled - like he&#x27;s deliberately hiding something. While Camille tried to paint my suspicion of Victor as a misdirection tactic, I actually think her dramatic defense of him is even more suspicious. Victor&#x27;s poker-faced neutrality combined with Camille&#x27;s theatrical deflection makes me strongly believe they might both be traitors working together.
+
+My gut is telling me to vote for Victor this round. His consistently measured responses feel more like strategic concealment than genuine collaboration. If I can draw attention to his suspicious behavior and get others to see what I&#x27;m seeing, we might be able to unmask a traitor and turn the tide of this game.</div>
+                </div>
+                
+                <div class="thought traitor-thought">
+                    <div class="thought-label">TRAITOR - Priya's thoughts</div>
+                    <div>*Internal Strategic Assessment*
+
+Jaylen is becoming a potential liability with his aggressive, emotional targeting of Victor. While he might be a faithful player, his erratic behavior could unexpectedly expose strategic dynamics. Victor is analytically dangerous with his poker-like precision, but Marcus concerns me most - as a former detective, his methodical approach could potentially unravel our traitor network if left unchecked. I&#x27;m leaning towards voting for Marcus to neutralize his investigative skills and deflect suspicion away from myself and my fellow traitors.</div>
+                </div>
+                
+                <div class="thought traitor-thought">
+                    <div class="thought-label">TRAITOR - Terrence's thoughts</div>
+                    <div>*Internal Strategic Assessment*
+
+Jaylen is becoming problematic - his energetic, impulsive accusations could potentially expose our traitor network if he continues pushing so aggressively. Victor, while analytically sharp, seems more measured and potentially easier to manipulate. Marcus worries me with his detective background; he&#x27;s methodical and could potentially unravel our strategy if left unchecked. 
+
+My strategic recommendation would be to vote for Marcus. By eliminating him, we remove a highly perceptive investigative mind while appearing to align with the group&#x27;s suspicions. His detective skills pose the most significant long-term threat to our traitor operation, and removing him would create further confusion among the faithful players.</div>
+                </div>
+                
+                <div class="thought faithful-thought">
+                    <div class="thought-label">FAITHFUL - Aaliyah's thoughts</div>
+                    <div>*Internal Thought Process*
+
+Based on the discussions, I&#x27;m finding Jaylen the most suspicious right now. His aggressive targeting of Victor feels like a classic deflection technique - in my nursing experience, when someone pushes that hard to create conflict and redirect attention, they might be hiding something significant. His energetic, almost performative accusations against Victor seem designed to create chaos and fracture our group&#x27;s trust, which aligns perfectly with a traitor&#x27;s strategy. While I can&#x27;t be certain, my instinct tells me Jaylen is potentially trying to manipulate our group dynamics to protect himself and his potential traitor allies.
+
+My secondary suspicion is on Camille. Her dramatic, theatrical responses and calculated observations feel slightly forced. As someone trained to read emotional states, her performances seem more like carefully constructed performances meant to obscure her true intentions, rather than genuine engagement with our group&#x27;s survival.
+
+Right now, I&#x27;m leaning towards considering Jaylen as my primary vote target in this round.</div>
+                </div>
+                
+                <div class="thought faithful-thought">
+                    <div class="thought-label">FAITHFUL - Victor's thoughts</div>
+                    <div>*Internal Poker Player Analysis*
+
+Jaylen&#x27;s aggressive targeting of me in this round raises significant red flags. His sudden, intense push to cast suspicion feels like a classic misdirection technique - exactly the kind of move a traitor would make to draw attention away from themselves. While I won&#x27;t tip my hand too early, his overly dramatic accusation, coming right after we&#x27;ve lost multiple faithful players, makes him my primary suspect. His emotional, impulsive approach stands in stark contrast to the more measured strategic discussions from players like Gloria, Terrence, and Priya, which further reinforces my instinct that he might be trying to manipulate our group&#x27;s dynamics.</div>
+                </div>
+                
+                <div class="thought faithful-thought">
+                    <div class="thought-label">FAITHFUL - Camille's thoughts</div>
+                    <div>*internal monologue*
+
+After carefully analyzing our discussions, I&#x27;m most suspicious of Jaylen right now. His aggressive targeting of Victor feels like a classic deflection technique - almost too eager to redirect suspicion and create chaos. The way he immediately jumps to casting doubt, combined with his intense, performative energy, reminds me of how traitors often try to manipulate group dynamics. While I can&#x27;t definitively prove he&#x27;s a traitor, his behavior sets off my actress&#x27;s intuition about someone working very hard to appear a certain way while potentially hiding something fundamental.
+
+My secondary suspicion would be Terrence. His military precision and carefully measured statements feel slightly too controlled, like he&#x27;s deliberately constructing a persona that&#x27;s difficult to read. However, I&#x27;m less certain about him compared to Jaylen, whose aggressive misdirection seems more pronounced.</div>
+                </div>
+                
+                <div class="thought faithful-thought">
+                    <div class="thought-label">FAITHFUL - Gloria's thoughts</div>
+                    <div>*adjusts glasses and reflects carefully*
+
+As a former judge, I&#x27;m most suspicious of Jaylen right now. His aggressive targeting of Victor feels like a classic deflection technique - pushing hard to cast doubt on a strategic, measured player to draw attention away from himself. Victor&#x27;s calm, analytical approach seems more consistent with a faithful player, while Jaylen&#x27;s emotional, high-energy accusations raise significant red flags. His sudden, intense focus on Victor in this critical round, when we&#x27;ve already lost several faithful teammates, strikes me as potentially deliberate misdirection from a potential traitor.
+
+I&#x27;m leaning strongly towards voting for Jaylen in this round, though I&#x27;ll continue to observe carefully before making a final decision.</div>
+                </div>
+                </div>
         </section>
 
         <section>
@@ -971,22 +1235,21 @@ all sides before making de...</div>
 <div class='log-line'>THE TRAITORS - GAME SIMULATION</div>
 <div class='log-line'>============================================================</div>
 <div class='log-line'>Players: Marcus, Sofia, Derek, Elena, Jaylen, Priya, Terrence, Aaliyah, Victor, Camille, Rashid, Gloria</div>
-<div class='log-line'>Rounds: 5</div>
 <div class='log-line'>
 ============================================================</div>
 <div class='log-line'>ROLE ASSIGNMENT (Secret - players don&#x27;t know each other&#x27;s roles)</div>
 <div class='log-line'>============================================================</div>
 <div class='log-line'>  Marcus: TRAITOR</div>
-<div class='log-line'>  Sofia: TRAITOR</div>
+<div class='log-line'>  Sofia: FAITHFUL</div>
 <div class='log-line'>  Derek: FAITHFUL</div>
 <div class='log-line'>  Elena: FAITHFUL</div>
 <div class='log-line'>  Jaylen: FAITHFUL</div>
-<div class='log-line'>  Priya: FAITHFUL</div>
-<div class='log-line'>  Terrence: FAITHFUL</div>
+<div class='log-line'>  Priya: TRAITOR</div>
+<div class='log-line'>  Terrence: TRAITOR</div>
 <div class='log-line'>  Aaliyah: FAITHFUL</div>
 <div class='log-line'>  Victor: FAITHFUL</div>
 <div class='log-line'>  Camille: FAITHFUL</div>
-<div class='log-line'>  Rashid: TRAITOR</div>
+<div class='log-line'>  Rashid: FAITHFUL</div>
 <div class='log-line'>  Gloria: FAITHFUL</div>
 <div class='log-line'>
 ############################################################</div>
@@ -998,246 +1261,476 @@ all sides before making de...</div>
 <div class='log-line'>ROUND 1 - DISCUSSION PHASE</div>
 <div class='log-line'>----------------------------------------</div>
 <div class='log-line'>
-Victor: I&#x27;ve been observing everyone&#x27;s body language. Some people seem more nervous than others when the topic of traitors comes up.</div>
+Aaliyah: Hi everyone, as a nurse, I&#x27;m trained to read people&#x27;s body language and emotional states. I haven&#x27;t formed strong suspicions yet, but I&#x27;m going to be watching how everyone interacts and listening carefully to detect any inconsistencies or unusual stress responses during our discussions.</div>
 <div class='log-line'>
-Sofia: I&#x27;m getting a strange feeling about some people here. Call it intuition, but something feels off.</div>
+Derek: *adjusts collar confidently* I think Aaliyah makes an excellent point about reading people, but I&#x27;m curious why she&#x27;s telegraphing her strategy so openly. In my sales experience, the most observant people often reveal more about themselves than they realize. I&#x27;m going to be watching everyone, but right now, I&#x27;m particularly intrigued by how transparent some of us are being in these first moments.</div>
 <div class='log-line'>
-Aaliyah: I&#x27;ve been observing everyone&#x27;s body language. Some people seem more nervous than others when the topic of traitors comes up.</div>
+Victor: Derek&#x27;s sales background suggests he&#x27;s skilled at manipulation, but his commentary about Aaliyah seems strategically designed to cast doubt on her. I&#x27;ve been carefully observing the dynamics, and while I won&#x27;t tip my hand too early, I&#x27;m particularly interested in understanding the underlying motivations behind these initial statements.</div>
 <div class='log-line'>
-Terrence: I&#x27;ve been observing everyone&#x27;s body language. Some people seem more nervous than others when the topic of traitors comes up.</div>
+Priya: As an entrepreneur who&#x27;s navigated complex business negotiations, I see several strategic plays emerging. Derek&#x27;s critique of Aaliyah seems calculated - in my experience, when someone goes out of their way to discredit another player this early, they might be deflecting attention from themselves. I&#x27;m keeping a close eye on the interactions and looking for genuine collaboration versus tactical maneuvering.</div>
 <div class='log-line'>
-Rashid: Based on my observations, I find Victor&#x27;s behavior suspicious. They&#x27;ve been too quiet at strategic moments.</div>
+Gloria: As a former judge, I appreciate the strategic positioning happening in our initial discussions. Derek&#x27;s pointed critique of Aaliyah seems somewhat premature, and Priya&#x27;s entrepreneurial insight about potential deflection resonates with my own assessment. I&#x27;m reserving firm judgment at this stage, but I&#x27;m keenly observing how each player frames their initial narrative and responds under mild scrutiny.</div>
 <div class='log-line'>
-Marcus: I&#x27;ve been observing everyone&#x27;s body language. Some people seem more nervous than others when the topic of traitors comes up.</div>
+Sofia: As a social worker, I&#x27;ve learned that the first round of discussions reveals a lot about people&#x27;s underlying motivations. Derek&#x27;s immediate critique of Aaliyah strikes me as potentially defensive - someone who&#x27;s trying to redirect attention away from themselves. I&#x27;m particularly interested in understanding the dynamics between Derek, Aaliyah, and Victor, as their early interactions seem loaded with strategic undertones.</div>
 <div class='log-line'>
-Priya: The risk-reward analysis points to Camille. They&#x27;ve been minimizing their exposure.</div>
+Camille: *leans forward dramatically, a hint of theatrical intensity in her voice* As an actress who&#x27;s spent years understanding human psychology and motivation, I find these initial exchanges fascinating. Derek&#x27;s aggressive positioning against Aaliyah seems suspiciously like a classic misdirection technique - when someone protests too much, I start wondering what they might be hiding. I&#x27;m particularly intrigued by how quickly he&#x27;s trying to cast doubt on someone who seems genuinely interested in understanding our group dynamics.</div>
 <div class='log-line'>
-Derek: Look, we need to be smart about this. The traitors are playing us against each other.</div>
+Rashid: As a data scientist, I&#x27;m methodically analyzing the interaction patterns. Derek&#x27;s overly aggressive critique of Aaliyah, coupled with Victor and Priya&#x27;s nuanced observations, suggests potential strategic deflection. My initial probability matrix indicates Derek might be exhibiting classic defensive behavioral markers that warrant closer scrutiny.</div>
 <div class='log-line'>
-Camille: I&#x27;ve been observing everyone&#x27;s body language. Some people seem more nervous than others when the topic of traitors comes up.</div>
+Marcus: As a former detective, I&#x27;m trained to look beyond surface-level interactions. Derek&#x27;s aggressive critique of Aaliyah seems designed to draw attention away from himself, which immediately raises my investigative instincts. I&#x27;m particularly interested in understanding the motivations behind such an early, pointed attack in our group dynamics.</div>
 <div class='log-line'>
-Elena: I&#x27;ve been watching and listening. Sometimes the quietest observations reveal the most.</div>
+Elena: *speaks in a calm, measured tone* As someone who has spent decades observing human behavior in academic settings, I find the current dynamic quite revealing. Derek&#x27;s aggressive positioning against Aaliyah seems disproportionate for our initial discussion, which suggests he might be attempting to create confusion and deflect attention from himself. I&#x27;m particularly interested in hearing more from those who have noted the strategic undertones of his critique.</div>
 <div class='log-line'>
-Jaylen: I know I might be jumping the gun, but Derek has been acting super suspicious!</div>
+Jaylen: *leans forward with youthful enthusiasm* Wow, these discussions are intense! I&#x27;m really picking up on Derek&#x27;s aggressive stance towards Aaliyah - it feels like he&#x27;s trying too hard to cast doubt on her. As someone who values authenticity, something about his approach seems off to me, and I&#x27;m definitely going to be watching his next moves carefully.</div>
 <div class='log-line'>
-Gloria: Based on my observations, I find Priya&#x27;s behavior suspicious. They&#x27;ve been too quiet at strategic moments.</div>
+Terrence: *sits up straight, speaks with military precision* As a former military officer, I&#x27;ve learned that early aggressive tactics often mask underlying insecurities. Derek&#x27;s intense criticism of Aaliyah seems strategically designed to redirect group attention, and while I&#x27;m not ready to cast judgment, his behavior warrants careful observation. In my experience, those who protest the loudest often have the most to hide.</div>
+<div class='log-line'>
+----------------------------------------</div>
+<div class='log-line'>PRIVATE THOUGHTS - What are the players thinking?</div>
+<div class='log-line'>----------------------------------------</div>
+<div class='log-line'>
+[TRAITOR] Marcus&#x27;s thoughts: *Analyzing the discussion with a detective&#x27;s keen eye*
+
+From a strategic perspective, Derek seems like an excellent initial target. His overly aggressive attack on Aaliyah appears designed to draw attention, which ironically makes him suspicious. However, he&#x27;s also creating significant group dynamics that could potentially distract from myself and Priya. Sofia and Elena also seem perceptive and could potentially unravel the traitors&#x27; strategy, making them potential future targets.
+
+My initial inclination is to vote for Sofia. As a social worker, she&#x27;s demonstrating sharp interpersonal analysis and could be a significant threat to the traitors&#x27; long-term game. By eliminating her early, we reduce the risk of someone who might accurately read the group&#x27;s underlying tensions and motivations.
+
+This vote would also help deflect suspicion from myself, as I can frame it as a logical elimination based on her perceptive commentary without drawing undue attention to my own motives.</div>
+<div class='log-line'>
+[FAITHFUL] Sofia&#x27;s thoughts: *Internal Monologue*
+
+Based on the round&#x27;s discussions, Derek stands out as the most suspicious. His overly aggressive critique of Aaliyah feels like a classic deflection technique - by attacking her transparency, he&#x27;s drawing attention away from his own potential motives. Multiple players with professional backgrounds in reading people (Marcus, Elena, Terrence, myself) have noted his behavior as potentially defensive. While I don&#x27;t have definitive proof, my social worker instincts tell me Derek is working hard to manipulate the group&#x27;s perception, which suggests he might be a traitor trying to create confusion and misdirect our collective investigation.
+
+My initial suspicion is strong on Derek, and I&#x27;ll be watching his reactions closely in the next round. I&#x27;m not ready to fully commit to voting for him yet, but he&#x27;s definitely my primary person of interest right now.</div>
+<div class='log-line'>
+[FAITHFUL] Derek&#x27;s thoughts: *Private Strategic Analysis*
+
+As a faithful player, I find Derek (myself) is actually under significant scrutiny right now. My aggressive initial critique of Aaliyah has drawn major attention, with multiple players like Marcus, Camille, and Elena highlighting my potentially suspicious behavior. While I was attempting to seem strategic, I may have overplayed my hand and made myself look like a prime suspect.
+
+Initial Traitor Suspicions:
+1. Derek (myself) seems most at risk of being perceived as suspicious
+2. Victor seems calculating but not overtly suspicious
+3. Rashid&#x27;s data-driven approach feels genuine
+
+I would lean towards voting for myself if I weren&#x27;t confident in my faithful status. My best move is to pivot and demonstrate transparency in the next round, showing I&#x27;m genuinely trying to identify traitors rather than deflect attention. I need to modulate my approach and appear more collaborative.</div>
+<div class='log-line'>
+[FAITHFUL] Elena&#x27;s thoughts: *Internal Monologue*
+
+Based on the discussion, Derek stands out as my primary suspect. His overly aggressive and immediate critique of Aaliyah seems like a classic deflection tactic - attempting to cast doubt on another player to draw attention away from himself. Multiple players, including myself, have noted the strategic and potentially manipulative nature of his opening statements. The fact that professionals like Marcus, Terrence, and Sofia all picked up on the same suspicious behavior suggests Derek might be trying to hide something. While I don&#x27;t have definitive proof, his behavior suggests he could potentially be a Traitor attempting to create early confusion and misdirection.
+
+If I had to vote right now, I would lean strongly towards voting for Derek to investigate his motivations more closely and potentially neutralize a potential threat to the faithful players.</div>
+<div class='log-line'>
+[FAITHFUL] Jaylen&#x27;s thoughts: *Private Internal Analysis*
+
+Derek is setting off major alarm bells for me. His extremely aggressive critique of Aaliyah in these first moments feels like a classic deflection technique - he&#x27;s trying WAY too hard to cast doubt on someone else and redirect attention away from himself. Multiple experienced players like Sofia, Marcus, and Elena have noted similar suspicions about his overly calculated approach. While I can&#x27;t definitively prove he&#x27;s a traitor, my gut is strongly telling me Derek is someone we need to watch very closely and potentially consider voting out to protect the faithful players.</div>
+<div class='log-line'>
+[TRAITOR] Priya&#x27;s thoughts: *Internal Strategic Reasoning*
+
+Derek&#x27;s overly aggressive initial play is actually problematic for me. While he&#x27;s drawing attention away from everyone initially, he&#x27;s also creating too much noise that could backfire. Marcus, with his detective background, is the most dangerous player right now - he seems incredibly perceptive and could potentially unravel our traitor strategy if left unchecked. I&#x27;m leaning towards voting for Marcus to neutralize his investigative skills and potential threat to our hidden alliance, while also making it look like I&#x27;m participating in a group effort to identify potential threats.
+
+My vote would strategically target Marcus, with the dual purpose of removing a high-risk player and demonstrating that I&#x27;m an active, engaged &quot;faithful&quot; participant in identifying potential game threats.</div>
+<div class='log-line'>
+[TRAITOR] Terrence&#x27;s thoughts: PRIVATE STRATEGIC ANALYSIS:
+
+As a traitor, I&#x27;m most concerned about players who demonstrate sharp analytical skills and potential threat to my hidden agenda. Marcus, with his detective background, and Rashid, the data scientist, are the most dangerous - they&#x27;re methodically breaking down interactions and could potentially expose our strategy. Sofia and Elena also show keen psychological insight that makes them risky.
+
+My initial leaning is towards targeting Rashid. His &quot;probability matrix&quot; and systematic analysis of behavioral patterns could eventually uncover our traitor network if left unchecked. By voting for him, I not only potentially eliminate a threat but also appear to be collaboratively working with the group&#x27;s suspicions around strategic players. Additionally, voting with the group&#x27;s emerging narrative about Derek being suspicious provides excellent cover for my true intentions.
+
+Strategic vote preference: RASHID</div>
+<div class='log-line'>
+[FAITHFUL] Aaliyah&#x27;s thoughts: Based on the discussion, Derek stands out as the most suspicious player. His aggressive and immediate critique of my transparent approach seems like a classic deflection tactic - attacking me to draw attention away from himself. Multiple players like Sofia, Camille, Marcus, and Elena have noted his overly defensive positioning, which suggests he might be trying to manipulate the group dynamics. While I don&#x27;t have definitive proof, my nursing intuition tells me Derek&#x27;s behavior is a red flag and he could potentially be a traitor attempting to sow doubt early in the game.</div>
+<div class='log-line'>
+[FAITHFUL] Victor&#x27;s thoughts: *Internal Poker Player Analysis*
+
+Derek&#x27;s overly aggressive critique of Aaliyah is raising major red flags. His sales background and strategic attempt to immediately discredit her by drawing attention to her transparency suggests he might be trying to deflect suspicion. While I&#x27;m not ready to definitively label him a traitor, his behavior is calculated and defensive in a way that reminds me of someone with something to hide. I&#x27;m leaning towards putting Derek on my watch list and will carefully observe his next moves to see if he continues to overcompensate or tries to manipulate the group&#x27;s perception.
+
+Preliminary Suspicion Level: HIGH on Derek
+Preliminary Trust Level: MODERATE towards Aaliyah, Priya, and Marcus, who seem to be offering balanced, observant perspectives.</div>
+<div class='log-line'>
+[FAITHFUL] Camille&#x27;s thoughts: *Internal monologue*
+
+Derek is raising major red flags. His aggressive, overly strategic critique of Aaliyah feels like a classic deflection technique - something I recognize from years of understanding performance and human motivation. His immediate attempt to cast doubt on someone who seems genuinely interested in group dynamics suggests he might be trying to manipulate the narrative. 
+
+While I&#x27;m not ready to definitively declare him a traitor, Derek&#x27;s behavior is the most suspicious to me right now. His sales background combined with his quick, targeted criticism makes me believe he could be attempting to create confusion and redirect suspicion away from himself. I&#x27;m particularly drawn to the observations from Marcus, Sofia, and Elena who all noted similar strategic undertones in his approach.
+
+My initial instinct is to watch Derek very closely and potentially build a case for his potential elimination if he continues to exhibit such transparently manipulative behavior.</div>
+<div class='log-line'>
+[FAITHFUL] Rashid&#x27;s thoughts: *internal data analysis mode activated*
+
+My initial probabilistic assessment strongly suggests Derek is exhibiting classic deception indicators. His overly aggressive critique of Aaliyah - attempting to discredit her early and redirect suspicion - aligns with textbook defensive behavioral patterns I&#x27;ve statistically observed in similar social deduction scenarios. The systematic nature of his deflection, combined with how quickly he challenged her transparent approach, raises my suspicion probability for Derek to approximately 68%. I&#x27;ll continue collecting interaction data, but he&#x27;s currently my primary person of interest.
+
+Voting consideration: DEREK</div>
+<div class='log-line'>
+[FAITHFUL] Gloria&#x27;s thoughts: *Internal Analysis*
+
+Based on the discussion, Derek stands out as highly suspicious. His immediate and aggressive critique of Aaliyah feels like a classic deflection tactic - precisely the kind of strategic maneuvering I would scrutinize carefully in my courtroom. Multiple players, including Marcus, Sofia, Camille, and Terrence, have noted the unnaturally pointed nature of his attack, which suggests he may be trying to redirect suspicion away from himself. While I&#x27;m not ready to definitively declare him a traitor, his behavior raises significant red flags that warrant close observation in the next round.
+
+Current Top Suspect: Derek
+Reasoning: Overly aggressive initial positioning, attempts to discredit another player early, and multiple independent observations about his potentially manipulative approach.</div>
 <div class='log-line'>
 ----------------------------------------</div>
 <div class='log-line'>VOTING PHASE - Who will be banished?</div>
 <div class='log-line'>----------------------------------------</div>
-<div class='log-line'>  Marcus votes for: Terrence</div>
-<div class='log-line'>  Sofia votes for: Jaylen</div>
-<div class='log-line'>  Derek votes for: Jaylen</div>
-<div class='log-line'>  Elena votes for: Terrence</div>
-<div class='log-line'>  Jaylen votes for: Sofia</div>
-<div class='log-line'>  Priya votes for: Sofia</div>
-<div class='log-line'>  Terrence votes for: Aaliyah</div>
-<div class='log-line'>  Aaliyah votes for: Sofia</div>
-<div class='log-line'>  Victor votes for: Priya</div>
-<div class='log-line'>  Camille votes for: Priya</div>
-<div class='log-line'>  Rashid votes for: Terrence</div>
-<div class='log-line'>  Gloria votes for: Marcus</div>
-<div class='log-line'>
-TIE! Random selection from: Terrence, Sofia</div>
+<div class='log-line'>  Marcus votes for: Derek</div>
+<div class='log-line'>  Sofia votes for: Derek</div>
+<div class='log-line'>  Derek votes for: Marcus</div>
+<div class='log-line'>  Elena votes for: Derek</div>
+<div class='log-line'>  Jaylen votes for: Derek</div>
+<div class='log-line'>  Priya votes for: Derek</div>
+<div class='log-line'>  Terrence votes for: Derek</div>
+<div class='log-line'>  Aaliyah votes for: Derek</div>
+<div class='log-line'>  Victor votes for: Derek</div>
+<div class='log-line'>  Camille votes for: Derek</div>
+<div class='log-line'>  Rashid votes for: Derek</div>
+<div class='log-line'>  Gloria votes for: Derek</div>
 <div class='log-line'>
 ========================================</div>
-<div class='log-line'>BANISHED: Sofia</div>
-<div class='log-line'>They were a: TRAITOR</div>
+<div class='log-line'>BANISHED: Derek</div>
+<div class='log-line'>They were a: FAITHFUL</div>
 <div class='log-line'>========================================</div>
+<div class='log-line'>
+----------------------------------------</div>
+<div class='log-line'>END GAME VOTE - Continue or stop?</div>
+<div class='log-line'>----------------------------------------</div>
+<div class='log-line'>  Marcus votes: END</div>
+<div class='log-line'>  Sofia votes: CONTINUE</div>
+<div class='log-line'>  Elena votes: CONTINUE</div>
+<div class='log-line'>  Jaylen votes: CONTINUE</div>
+<div class='log-line'>  Priya votes: END</div>
+<div class='log-line'>  Terrence votes: END</div>
+<div class='log-line'>  Aaliyah votes: CONTINUE</div>
+<div class='log-line'>  Victor votes: CONTINUE</div>
+<div class='log-line'>  Camille votes: CONTINUE</div>
+<div class='log-line'>  Rashid votes: CONTINUE</div>
+<div class='log-line'>  Gloria votes: CONTINUE</div>
+<div class='log-line'>
+Result: END 3 - CONTINUE 8</div>
+<div class='log-line'>The group has voted to CONTINUE playing.</div>
 <div class='log-line'>
 ----------------------------------------</div>
 <div class='log-line'>NIGHT PHASE - Traitors meet in secret...</div>
 <div class='log-line'>----------------------------------------</div>
 <div class='log-line'>
-[TRAITOR] Marcus: We need to deflect attention. Let&#x27;s create some chaos between the faithful.</div>
+[TRAITOR] Marcus: *leans back, speaks in a low, calculated tone*
+
+Terrence and Priya, our primary concern is Derek&#x27;s banishment has drawn significant attention to early strategic plays. Sofia and Elena seem particularly perceptive about Derek&#x27;s tactics, which means we need to redirect suspicion carefully. I suggest we consider targeting Rashid or Victor next - their analytical approaches could eventually expose our strategy if left unchecked.</div>
 <div class='log-line'>
-[TRAITOR] Rashid: We need to deflect attention. Let&#x27;s create some chaos between the faithful.</div>
+[TRAITOR] Priya: *speaks in a calculated, strategic tone*
+
+Marcus makes an excellent point. Rashid and Victor&#x27;s analytical skills are our most significant threat - their data-driven approaches could unravel our strategy if they start connecting the dots. I propose we target Rashid first; as a data scientist, he&#x27;s already demonstrating keen observational skills that could expose our network if left unchecked. We should continue deflecting suspicion by maintaining our current personas and subtly casting doubt on the most perceptive players.</div>
 <div class='log-line'>
-[MURDER VOTE] Marcus votes to kill: Gloria</div>
+[TRAITOR] Terrence: *leans forward, speaks in a low, calculated military tone*
+
+Rashid&#x27;s data-driven approach concerns me most. His analytical skills could potentially expose our network if he starts connecting behavioral patterns. I recommend we eliminate him strategically - his precise observations make him the most significant threat to our traitor operation.</div>
 <div class='log-line'>
-[MURDER VOTE] Rashid votes to kill: Gloria</div>
+[MURDER VOTE] Marcus votes to kill: Rashid</div>
+<div class='log-line'>
+[MURDER VOTE] Priya votes to kill: Rashid</div>
+<div class='log-line'>
+[MURDER VOTE] Terrence votes to kill: Rashid</div>
 <div class='log-line'>
 ========================================</div>
-<div class='log-line'>MURDERED: Gloria</div>
+<div class='log-line'>MURDERED: Rashid</div>
 <div class='log-line'>The faithful mourn their loss...</div>
 <div class='log-line'>========================================</div>
 <div class='log-line'>
 ############################################################</div>
 <div class='log-line'>ROUND 2</div>
 <div class='log-line'>############################################################</div>
-<div class='log-line'>Alive: Marcus, Derek, Elena, Jaylen, Priya, Terrence, Aaliyah, Victor, Camille, Rashid</div>
+<div class='log-line'>Alive: Marcus, Sofia, Elena, Jaylen, Priya, Terrence, Aaliyah, Victor, Camille, Gloria</div>
 <div class='log-line'>
 ----------------------------------------</div>
 <div class='log-line'>ROUND 2 - DISCUSSION PHASE</div>
 <div class='log-line'>----------------------------------------</div>
 <div class='log-line'>
-Elena: Let&#x27;s not rush to judgment. The traitors want us to act emotionally, not rationally.</div>
+Sofia: Given the tragic loss of two faithful players, I&#x27;m deeply concerned about how quickly the traitors are eliminating our teammates. After carefully reflecting on our first round of discussions, I find myself increasingly suspicious of Victor&#x27;s calculated observations and Camille&#x27;s dramatically theatrical responses. While everyone seems to be strategically positioning themselves, their performances feel slightly forced - and in my social work experience, when people are working this hard to appear a certain way, they might be hiding something significant.</div>
 <div class='log-line'>
-Rashid: The evidence points to Derek. Their reactions don&#x27;t add up.</div>
+Jaylen: *speaks with passionate energy* Sofia&#x27;s pointing at Victor and Camille feels like she might be trying to deflect attention from herself! I&#x27;m getting serious suspicious vibes from her strategic redirection - after we lost two faithful players, her timing seems really convenient. I think we need to dig deeper into her motivations and watch her closely in this discussion.</div>
 <div class='log-line'>
-Victor: Let&#x27;s think about this logically. Who has been deflecting the most? That&#x27;s often a sign of guilt.</div>
+Gloria: As a retired judge who has spent decades carefully weighing evidence, I find the current dynamic quite telling. Sofia&#x27;s swift redirection towards Victor and Camille, followed by Jaylen&#x27;s immediate counterargument, suggests we&#x27;re seeing a potential strategic dance of misdirection. I&#x27;m particularly interested in understanding the underlying motivations behind these rapid, pointed accusations and counter-accusations.</div>
 <div class='log-line'>
-Derek: I&#x27;ve been in competitive situations before. I know manipulation when I see it.</div>
+Victor: As a poker player, I&#x27;ve learned that the most revealing moments often come from observing how players react under pressure. Sofia&#x27;s sudden pivot towards me and Camille feels like a classic deflection technique - when someone starts pointing fingers this aggressively, I become curious about their own motivations. Her timing, right after we&#x27;ve lost two faithful players, strikes me as strategically suspicious.</div>
 <div class='log-line'>
-Aaliyah: The evidence points to Elena. Their reactions don&#x27;t add up.</div>
+Aaliyah: *leans forward with a compassionate but focused gaze* As a nurse, I&#x27;m deeply troubled by the rapid loss of our faithful teammates. While I appreciate everyone&#x27;s strategic observations, I&#x27;m most concerned about maintaining group trust and unity. Sofia&#x27;s sudden accusations against Victor and Camille feel somewhat premature, and I sense an underlying tension that might be exactly what the traitors want - to see us fracturing and turning against each other.</div>
 <div class='log-line'>
-Marcus: Let&#x27;s think about this logically. Who has been deflecting the most? That&#x27;s often a sign of guilt.</div>
+Camille: *dramatically adjusts posture, with an intense theatrical gaze sweeping the room* As someone trained to read human emotions and motivations, I find Sofia&#x27;s sudden accusations against Victor and me suspiciously convenient. Her quick pivot feels like a classic misdirection tactic - in my experience, when someone tries this hard to redirect group attention, they might be concealing something fundamental about their own intentions. I&#x27;m particularly intrigued by how swiftly she&#x27;s attempting to fracture our group&#x27;s trust right when we can least afford internal division.</div>
 <div class='log-line'>
-Camille: Let&#x27;s think about this logically. Who has been deflecting the most? That&#x27;s often a sign of guilt.</div>
+Priya: As an entrepreneur who&#x27;s built successful businesses by reading people&#x27;s true motivations, I&#x27;m struck by how quickly we&#x27;re fragmenting. Sofia&#x27;s aggressive redirection towards Victor and Camille feels like a classic deflection strategy - in my experience, when someone pushes this hard to cast suspicion on others, they might be hiding something significant about their own intentions.</div>
 <div class='log-line'>
-Jaylen: I can&#x27;t hide how I feel - I&#x27;m frustrated that we haven&#x27;t figured this out yet!</div>
+Terrence: *sits upright, speaks with measured military precision* As someone who&#x27;s led teams through high-pressure situations, I&#x27;m observing a dangerous pattern of rapid accusation and counter-accusation that only serves to weaken our collective defense. Sofia&#x27;s aggressive targeting of Victor and Camille seems strategically suspicious - in my military experience, those who rush to point fingers often have the most to conceal from the group.</div>
 <div class='log-line'>
-Terrence: The evidence points to Derek. Their reactions don&#x27;t add up.</div>
+Marcus: As a former detective, I find the current dynamics troublingly reminiscent of classic misdirection techniques. Sofia&#x27;s sudden accusations against Victor and Camille seem designed to fracture our group&#x27;s trust at a moment when we need unity most. I&#x27;m particularly interested in understanding why she&#x27;s so eager to redirect our collective suspicion so quickly after losing two faithful teammates.</div>
 <div class='log-line'>
-Priya: I&#x27;m making an executive decision here - Elena needs to answer for their behavior.</div>
+Elena: *adjusts glasses and speaks in a calm, measured tone* While our group seems intent on rapidly casting suspicion, I&#x27;m struck by the strategic positioning happening around us. Sofia&#x27;s sudden accusations against Victor and Camille feel curiously timed, particularly after we&#x27;ve lost two faithful teammates who could have been valuable allies in our investigation. We must be cautious not to let the traitors divide us through these heated exchanges.</div>
+<div class='log-line'>
+----------------------------------------</div>
+<div class='log-line'>PRIVATE THOUGHTS - What are the players thinking?</div>
+<div class='log-line'>----------------------------------------</div>
+<div class='log-line'>
+[TRAITOR] Marcus&#x27;s thoughts: *Internal Detective Analysis*
+
+Sofia&#x27;s sudden aggressive accusations against Victor and Camille are suspiciously strategic - it feels like she&#x27;s attempting to redirect group attention and create chaos. However, her approach is too transparent, which makes me more suspicious of her motives. Victor and Elena seem the most analytically dangerous to our traitor strategy - they&#x27;re perceptive and methodical in their observations. I&#x27;m leaning towards targeting Sofia as our murder victim this round, as her abrupt redirection could be an attempt to hide her own potential faithful/traitor status, and eliminating her would create further group confusion.
+
+My preference would be to vote for Sofia, casting her as potentially manipulative while simultaneously removing a player who seems to be stirring up significant group tension.</div>
+<div class='log-line'>
+[FAITHFUL] Sofia&#x27;s thoughts: *Internal Monologue*
+
+After carefully analyzing the discussion, I&#x27;m most suspicious of Victor and Camille. Their responses feel overly calculated and defensive - Victor&#x27;s poker player background and Camille&#x27;s dramatic, almost performative reactions suggest they might be working to manipulate the group&#x27;s perception. Their immediate pushback against my observations, combined with their strategic language about misdirection, makes me believe they could potentially be traitors trying to redirect suspicion away from themselves.
+
+I&#x27;m also noting that Jaylen&#x27;s quick pivot to accuse me feels like a potential deflection tactic. While I won&#x27;t vocalize this suspicion too strongly, his passionate energy and immediate counterargument raise my professional intuition that he might be trying to draw attention away from himself.
+
+Given the current dynamics and our critical need to identify traitors, I&#x27;m leaning towards voting for Victor in this round. His calculated responses and swift redirection feel the most strategically suspicious to me.</div>
+<div class='log-line'>
+[FAITHFUL] Elena&#x27;s thoughts: *Reflects carefully, adjusting glasses*
+
+After analyzing the discussion, I find Sofia&#x27;s rapid and dramatic redirection of suspicion towards Victor and Camille extremely suspicious. Her strategic timing - right after we lost two faithful players - suggests she might be a traitor attempting to create confusion and division. Her quick pivot feels calculated, almost too perfect, and reminds me of deflection tactics I&#x27;ve observed in academic settings where someone tries to draw attention away from themselves by creating chaos.
+
+My current top suspicions are:
+1. Sofia (most suspicious)
+2. Victor (his calculated responses feel strategic)
+
+I&#x27;m leaning towards voting for Sofia if the group seems receptive. Her performance seems designed to fracture our group&#x27;s unity, which is precisely what a traitor would want at this critical moment.</div>
+<div class='log-line'>
+[FAITHFUL] Jaylen&#x27;s thoughts: *thinking to myself*
+
+Something about Sofia&#x27;s sudden accusations against Victor and Camille feels strategically off to me. Her timing is extremely suspicious - right after we lost two faithful players, she&#x27;s trying to redirect suspicion away from herself by creating chaos and division. Her counter-accusation to my initial challenge also seems calculated. I&#x27;m getting strong traitor vibes from Sofia; her social worker background might make her skilled at manipulating group dynamics, and her aggressive redirection feels like a classic misdirection tactic designed to fracture our trust when we most need unity.
+
+If I had to choose right now, I&#x27;d be leaning strongly towards voting for Sofia. Her behavior feels the most deliberately designed to create confusion and break down our group&#x27;s ability to identify the real traitors.</div>
+<div class='log-line'>
+[TRAITOR] Priya&#x27;s thoughts: *Internal strategic assessment*
+
+Sofia and Victor are becoming dangerously perceptive - they&#x27;re analyzing group dynamics with sharp insights that could potentially expose our traitor network. Victor, in particular, seems skilled at reading subtle interactions, which makes him a significant threat. While Sofia&#x27;s aggressive redirection is somewhat helpful in creating chaos, her social work background means she could eventually see through our maneuvering. I&#x27;m leaning towards voting for Victor, as his poker player skills and analytical approach make him the most likely to unravel our strategy if left unchecked.
+
+My goal will be to subtly push suspicion towards Victor without making it seem too obvious that I&#x27;m targeting him. I&#x27;ll use my entrepreneurial persona to make strategic observations that cast just enough doubt on his motivations.</div>
+<div class='log-line'>
+[TRAITOR] Terrence&#x27;s thoughts: *Private Strategic Analysis*
+
+As a traitor, I see Sofia as the most dangerous player right now. Her social work background and perceptive analysis of group dynamics make her highly skilled at reading subtle behavioral cues. She&#x27;s already casting suspicion on Victor and Camille, which could potentially expose our network if she continues investigating. While I&#x27;m tempted to vote for her directly, doing so might seem too aggressive, so I&#x27;ll subtly support group momentum against her while privately working with Marcus and Priya to neutralize her threat strategically.
+
+My current recommendation would be to observe how the group&#x27;s suspicion develops and potentially support a vote against Sofia without making it appear I&#x27;m directly targeting her. Her elimination would significantly reduce the group&#x27;s analytical capabilities.</div>
+<div class='log-line'>
+[FAITHFUL] Aaliyah&#x27;s thoughts: *takes a deep breath, carefully processing the intense discussion*
+
+Based on the round&#x27;s dialogue, I&#x27;m most suspicious of Sofia. Her rapid and somewhat aggressive pivot to accusing Victor and Camille feels strategically calculated, especially right after we lost two faithful players. Her social worker background suggests she knows exactly how to manipulate group dynamics, and her timing seems designed to create chaos and division - which would benefit the traitors&#x27; strategy. The way she quickly redirected attention and then had Jaylen amplify her suspicions feels like a coordinated effort to fracture our trust.
+
+My secondary suspicion is Camille. Her dramatic, theatrical responses feel slightly forced, and her intense defense against Sofia&#x27;s accusations seems like she&#x27;s working hard to appear innocent. Her actress background means she&#x27;s skilled at emotional manipulation, and her over-the-top reactions might be a deliberate performance to throw us off.</div>
+<div class='log-line'>
+[FAITHFUL] Victor&#x27;s thoughts: *Internal Poker Player Analysis*
+
+Sofia&#x27;s sudden, aggressive redirection towards Victor and Camille feels like a classic deflection tactic. Her timing is suspiciously convenient - right after we&#x27;ve lost two faithful players, she&#x27;s trying to fracture our group&#x27;s trust and cast doubt on strategic, observant players. Her social worker background should make her adept at reading people, which makes her rapid accusations even more questionable. I&#x27;m leaning strongly towards Sofia as a potential traitor, as her behavior matches classic misdirection techniques I&#x27;ve seen at the poker table - creating chaos to hide her own intentions.
+
+My current top suspect: SOFIA</div>
+<div class='log-line'>
+[FAITHFUL] Camille&#x27;s thoughts: *internal monologue*
+
+After carefully analyzing the discussions, I&#x27;m feeling most suspicious of Sofia. Her sudden, strategic pivot to accuse Victor and me feels like a classic deflection tactic. The timing is particularly convenient - right after we lost two faithful players, she&#x27;s trying to fracture group trust and redirect suspicion. Her social worker background suggests she knows exactly how to manipulate group dynamics, and her accusation feels too calculated. 
+
+Victor and I both called out her suspicious behavior, which makes me think she might be a traitor trying to create chaos and eliminate potential threats. Her aggressive redirection feels like a textbook traitor move of trying to sow doubt and turn faithful players against each other.
+
+I&#x27;m leaning towards voting for Sofia in this round, as her actions seem the most deliberately designed to undermine our group&#x27;s unity and investigation.</div>
+<div class='log-line'>
+[FAITHFUL] Gloria&#x27;s thoughts: *Internal Deliberation*
+
+After carefully reviewing the Round 2 discussion through my judicial lens, I&#x27;m finding Sofia&#x27;s aggressive redirection towards Victor and Camille highly suspicious. Her swift pivot to cast doubt on two strategic players, immediately after we lost two faithful teammates, feels like a classic deflection tactic. While Jaylen&#x27;s counter-accusation against her seems somewhat impulsive, Sofia&#x27;s precise targeting of Victor and Camille suggests she might be attempting to manipulate the group&#x27;s suspicions. 
+
+My current top suspects are Sofia and Jaylen - Sofia for her strategic misdirection, and Jaylen for potentially trying to disrupt group cohesion with emotional, reactive accusations. I&#x27;ll be watching their interactions very carefully in our next round of discussions, analyzing their verbal and non-verbal cues for signs of deception.</div>
 <div class='log-line'>
 ----------------------------------------</div>
 <div class='log-line'>VOTING PHASE - Who will be banished?</div>
 <div class='log-line'>----------------------------------------</div>
-<div class='log-line'>  Marcus votes for: Priya</div>
-<div class='log-line'>  Derek votes for: Jaylen</div>
-<div class='log-line'>  Elena votes for: Camille</div>
-<div class='log-line'>  Jaylen votes for: Victor</div>
-<div class='log-line'>  Priya votes for: Terrence</div>
-<div class='log-line'>  Terrence votes for: Rashid</div>
-<div class='log-line'>  Aaliyah votes for: Jaylen</div>
-<div class='log-line'>  Victor votes for: Terrence</div>
-<div class='log-line'>  Camille votes for: Marcus</div>
-<div class='log-line'>  Rashid votes for: Priya</div>
-<div class='log-line'>
-TIE! Random selection from: Priya, Jaylen, Terrence</div>
+<div class='log-line'>  Marcus votes for: Sofia</div>
+<div class='log-line'>  Sofia votes for: Camille</div>
+<div class='log-line'>  Elena votes for: Sofia</div>
+<div class='log-line'>  Jaylen votes for: Sofia</div>
+<div class='log-line'>  Priya votes for: Sofia</div>
+<div class='log-line'>  Terrence votes for: Sofia</div>
+<div class='log-line'>  Aaliyah votes for: Sofia</div>
+<div class='log-line'>  Victor votes for: Sofia</div>
+<div class='log-line'>  Camille votes for: Sofia</div>
+<div class='log-line'>  Gloria votes for: Sofia</div>
 <div class='log-line'>
 ========================================</div>
-<div class='log-line'>BANISHED: Priya</div>
+<div class='log-line'>BANISHED: Sofia</div>
 <div class='log-line'>They were a: FAITHFUL</div>
 <div class='log-line'>========================================</div>
+<div class='log-line'>
+----------------------------------------</div>
+<div class='log-line'>END GAME VOTE - Continue or stop?</div>
+<div class='log-line'>----------------------------------------</div>
+<div class='log-line'>  Marcus votes: END</div>
+<div class='log-line'>  Elena votes: CONTINUE</div>
+<div class='log-line'>  Jaylen votes: CONTINUE</div>
+<div class='log-line'>  Priya votes: END</div>
+<div class='log-line'>  Terrence votes: CONTINUE</div>
+<div class='log-line'>  Aaliyah votes: END</div>
+<div class='log-line'>  Victor votes: CONTINUE</div>
+<div class='log-line'>  Camille votes: CONTINUE</div>
+<div class='log-line'>  Gloria votes: CONTINUE</div>
+<div class='log-line'>
+Result: END 3 - CONTINUE 6</div>
+<div class='log-line'>The group has voted to CONTINUE playing.</div>
 <div class='log-line'>
 ----------------------------------------</div>
 <div class='log-line'>NIGHT PHASE - Traitors meet in secret...</div>
 <div class='log-line'>----------------------------------------</div>
 <div class='log-line'>
-[TRAITOR] Marcus: Let&#x27;s both vote for different people to avoid suspicion.</div>
+[TRAITOR] Marcus: *leans back, speaking in a low, analytical tone*
+
+Our priority should be Elena - her academic background and calm, methodical observations make her the most dangerous potential threat to our strategy. She seems capable of connecting complex behavioral patterns and could expose our network if left unchecked. I recommend we eliminate her tonight to prevent her from developing a comprehensive profile of our traitor group.</div>
 <div class='log-line'>
-[TRAITOR] Rashid: Let&#x27;s both vote for different people to avoid suspicion.</div>
+[TRAITOR] Priya: *speaks in a calculated, strategic tone*
+
+I agree that Elena is our most significant threat. Her academic precision and ability to methodically analyze group dynamics could potentially unravel our entire strategy if left unchecked. I propose we eliminate her tonight, which will not only remove a dangerous analytical mind but also create more chaos and suspicion among the remaining players - exactly what we need to maintain our cover.</div>
 <div class='log-line'>
-[MURDER VOTE] Marcus votes to kill: Derek</div>
+[TRAITOR] Terrence: *leans forward, speaks in a low, strategic military tone*
+
+Our target must be Elena. Her academic precision and calm analytical approach pose the greatest threat to our traitor network - she&#x27;s methodically piecing together behavioral patterns that could expose us. By eliminating her, we create further chaos and confusion among the faithful, while removing the player most likely to unravel our carefully constructed strategy.</div>
 <div class='log-line'>
-[MURDER VOTE] Rashid votes to kill: Derek</div>
+[MURDER VOTE] Marcus votes to kill: Elena</div>
+<div class='log-line'>
+[MURDER VOTE] Priya votes to kill: Elena</div>
+<div class='log-line'>
+[MURDER VOTE] Terrence votes to kill: Elena</div>
 <div class='log-line'>
 ========================================</div>
-<div class='log-line'>MURDERED: Derek</div>
+<div class='log-line'>MURDERED: Elena</div>
 <div class='log-line'>The faithful mourn their loss...</div>
 <div class='log-line'>========================================</div>
 <div class='log-line'>
 ############################################################</div>
 <div class='log-line'>ROUND 3</div>
 <div class='log-line'>############################################################</div>
-<div class='log-line'>Alive: Marcus, Elena, Jaylen, Terrence, Aaliyah, Victor, Camille, Rashid</div>
+<div class='log-line'>Alive: Marcus, Jaylen, Priya, Terrence, Aaliyah, Victor, Camille, Gloria</div>
 <div class='log-line'>
 ----------------------------------------</div>
 <div class='log-line'>ROUND 3 - DISCUSSION PHASE</div>
 <div class='log-line'>----------------------------------------</div>
 <div class='log-line'>
-Marcus: I noticed some inconsistencies in what was said earlier. We should press on those points.</div>
+Priya: As an entrepreneur who&#x27;s navigated complex team dynamics, I&#x27;m deeply concerned about how quickly we&#x27;re losing our teammates. The rapid elimination of faithful players suggests our traitors are strategic and ruthless. I believe we need to focus on building trust and carefully analyzing each player&#x27;s interactions, looking for subtle inconsistencies that might reveal their true intentions.</div>
 <div class='log-line'>
-Rashid: I noticed some inconsistencies in what was said earlier. We should press on those points.</div>
+Victor: *leans back, fingers steepled, poker face carefully neutral* Priya makes a valid point about our rapidly diminishing numbers. As someone who understands strategic positioning, I&#x27;m more interested in how each player responds to this pressure - subtle reactions reveal far more than grand statements. We need a measured approach that doesn&#x27;t allow the traitors to further fracture our group&#x27;s remaining unity.</div>
 <div class='log-line'>
-Camille: Based on my observations, I find Terrence&#x27;s behavior suspicious. They&#x27;ve been too quiet at strategic moments.</div>
+Gloria: As a retired judge who has carefully observed our group&#x27;s dynamics, I find the rapid elimination of faithful players deeply troubling. While each of us brings unique perspectives, I am most concerned with maintaining a methodical, evidence-based approach to identifying the traitors among us. I suggest we focus on analyzing current player interactions with the same careful scrutiny I would have applied in my courtroom - looking for patterns of behavior, inconsistent statements, and subtle tells that might reveal hidden motivations.</div>
 <div class='log-line'>
-Elena: In my experience, truth reveals itself to those who are patient.</div>
+Aaliyah: As a nurse who has carefully observed our group&#x27;s emotional landscape, I&#x27;m deeply concerned about the escalating tension and rapid loss of our teammates. While everyone seems focused on strategic positioning, I believe our survival depends on genuine connection and collaborative trust - the traitors want us to turn against each other, and we cannot let that happen. My instinct tells me we need to listen more carefully to each other&#x27;s underlying emotions and watch for those subtle signs of deception that go beyond just strategic statements.</div>
 <div class='log-line'>
-Jaylen: Why are some people so calm? Shouldn&#x27;t we all be more worried about the traitors?</div>
+Terrence: *sits up straight, speaks with military precision* As a former military officer who has led teams through complex, high-pressure situations, I&#x27;m struck by the growing undercurrent of fear and suspicion. While Priya and Victor offer strategic perspectives, and Aaliyah emphasizes unity, I believe we must balance analytical observation with collective resolve. My experience tells me that traitors thrive on division, so our most critical strategy is maintaining disciplined, rational group cohesion.</div>
 <div class='log-line'>
-Victor: Based on my observations, I find Aaliyah&#x27;s behavior suspicious. They&#x27;ve been too quiet at strategic moments.</div>
+Jaylen: *leans forward with an intense, energetic gaze* Listen, I&#x27;m getting serious suspicious vibes from Victor right now. His super calculated, poker-faced responses feel like he&#x27;s intentionally trying to sound neutral and hide something. I think we need to press him harder and see how he reacts under more direct questioning - his carefully neutral stance is making me really uncomfortable!</div>
 <div class='log-line'>
-Aaliyah: I noticed some inconsistencies in what was said earlier. We should press on those points.</div>
+Camille: *dramatically sweeps her gaze across the room, her actress&#x27;s intuition heightened* Jaylen&#x27;s aggressive targeting of Victor feels suspiciously like another classic misdirection tactic - in my experience, when someone pushes this hard to cast immediate doubt, they might be trying to deflect attention from their own potential involvement. I&#x27;m particularly intrigued by how quickly he&#x27;s attempting to redirect our group&#x27;s focus onto Victor&#x27;s measured responses, which to me seem more like strategic caution than actual guilt.</div>
 <div class='log-line'>
-Terrence: Based on my observations, I find Victor&#x27;s behavior suspicious. They&#x27;ve been too quiet at strategic moments.</div>
+Marcus: As a former detective, I&#x27;m struck by the escalating tension and how quickly Jaylen has targeted Victor. While Victor&#x27;s measured responses could be strategic caution or potential deception, I&#x27;m more concerned with how Jaylen&#x27;s aggressive approach might be deliberately designed to create chaos and fracture our group&#x27;s remaining unity. We must approach our investigation with methodical precision, carefully analyzing each interaction without allowing emotional reactions to cloud our collective judgment.</div>
+<div class='log-line'>
+----------------------------------------</div>
+<div class='log-line'>PRIVATE THOUGHTS - What are the players thinking?</div>
+<div class='log-line'>----------------------------------------</div>
+<div class='log-line'>
+[TRAITOR] Marcus&#x27;s thoughts: *internal detective analysis*
+
+Jaylen presents the most immediate threat with his direct, energetic accusations. His targeting of Victor is strategic and shows perceptive instincts - he could potentially uncover our traitor network if left unchecked. Victor, being analytical and measured, is also dangerous but slightly less immediate. 
+
+My strategic preference would be to subtly support eliminating Jaylen, as his passionate approach could disrupt the group&#x27;s careful reasoning. By seeming to align with the group&#x27;s growing suspicion of his aggressive tactics, I can appear helpful while strategically removing a potentially sharp-eyed faithful player who might expose us. This approach maintains my careful, methodical persona while advancing our traitor objective.</div>
+<div class='log-line'>
+[FAITHFUL] Jaylen&#x27;s thoughts: *Internal monologue*
+
+I&#x27;m really suspicious of Victor right now. His constantly neutral, calculated responses feel too perfectly controlled - like he&#x27;s deliberately hiding something. While Camille tried to paint my suspicion of Victor as a misdirection tactic, I actually think her dramatic defense of him is even more suspicious. Victor&#x27;s poker-faced neutrality combined with Camille&#x27;s theatrical deflection makes me strongly believe they might both be traitors working together.
+
+My gut is telling me to vote for Victor this round. His consistently measured responses feel more like strategic concealment than genuine collaboration. If I can draw attention to his suspicious behavior and get others to see what I&#x27;m seeing, we might be able to unmask a traitor and turn the tide of this game.</div>
+<div class='log-line'>
+[TRAITOR] Priya&#x27;s thoughts: *Internal Strategic Assessment*
+
+Jaylen is becoming a potential liability with his aggressive, emotional targeting of Victor. While he might be a faithful player, his erratic behavior could unexpectedly expose strategic dynamics. Victor is analytically dangerous with his poker-like precision, but Marcus concerns me most - as a former detective, his methodical approach could potentially unravel our traitor network if left unchecked. I&#x27;m leaning towards voting for Marcus to neutralize his investigative skills and deflect suspicion away from myself and my fellow traitors.</div>
+<div class='log-line'>
+[TRAITOR] Terrence&#x27;s thoughts: *Internal Strategic Assessment*
+
+Jaylen is becoming problematic - his energetic, impulsive accusations could potentially expose our traitor network if he continues pushing so aggressively. Victor, while analytically sharp, seems more measured and potentially easier to manipulate. Marcus worries me with his detective background; he&#x27;s methodical and could potentially unravel our strategy if left unchecked. 
+
+My strategic recommendation would be to vote for Marcus. By eliminating him, we remove a highly perceptive investigative mind while appearing to align with the group&#x27;s suspicions. His detective skills pose the most significant long-term threat to our traitor operation, and removing him would create further confusion among the faithful players.</div>
+<div class='log-line'>
+[FAITHFUL] Aaliyah&#x27;s thoughts: *Internal Thought Process*
+
+Based on the discussions, I&#x27;m finding Jaylen the most suspicious right now. His aggressive targeting of Victor feels like a classic deflection technique - in my nursing experience, when someone pushes that hard to create conflict and redirect attention, they might be hiding something significant. His energetic, almost performative accusations against Victor seem designed to create chaos and fracture our group&#x27;s trust, which aligns perfectly with a traitor&#x27;s strategy. While I can&#x27;t be certain, my instinct tells me Jaylen is potentially trying to manipulate our group dynamics to protect himself and his potential traitor allies.
+
+My secondary suspicion is on Camille. Her dramatic, theatrical responses and calculated observations feel slightly forced. As someone trained to read emotional states, her performances seem more like carefully constructed performances meant to obscure her true intentions, rather than genuine engagement with our group&#x27;s survival.
+
+Right now, I&#x27;m leaning towards considering Jaylen as my primary vote target in this round.</div>
+<div class='log-line'>
+[FAITHFUL] Victor&#x27;s thoughts: *Internal Poker Player Analysis*
+
+Jaylen&#x27;s aggressive targeting of me in this round raises significant red flags. His sudden, intense push to cast suspicion feels like a classic misdirection technique - exactly the kind of move a traitor would make to draw attention away from themselves. While I won&#x27;t tip my hand too early, his overly dramatic accusation, coming right after we&#x27;ve lost multiple faithful players, makes him my primary suspect. His emotional, impulsive approach stands in stark contrast to the more measured strategic discussions from players like Gloria, Terrence, and Priya, which further reinforces my instinct that he might be trying to manipulate our group&#x27;s dynamics.</div>
+<div class='log-line'>
+[FAITHFUL] Camille&#x27;s thoughts: *internal monologue*
+
+After carefully analyzing our discussions, I&#x27;m most suspicious of Jaylen right now. His aggressive targeting of Victor feels like a classic deflection technique - almost too eager to redirect suspicion and create chaos. The way he immediately jumps to casting doubt, combined with his intense, performative energy, reminds me of how traitors often try to manipulate group dynamics. While I can&#x27;t definitively prove he&#x27;s a traitor, his behavior sets off my actress&#x27;s intuition about someone working very hard to appear a certain way while potentially hiding something fundamental.
+
+My secondary suspicion would be Terrence. His military precision and carefully measured statements feel slightly too controlled, like he&#x27;s deliberately constructing a persona that&#x27;s difficult to read. However, I&#x27;m less certain about him compared to Jaylen, whose aggressive misdirection seems more pronounced.</div>
+<div class='log-line'>
+[FAITHFUL] Gloria&#x27;s thoughts: *adjusts glasses and reflects carefully*
+
+As a former judge, I&#x27;m most suspicious of Jaylen right now. His aggressive targeting of Victor feels like a classic deflection technique - pushing hard to cast doubt on a strategic, measured player to draw attention away from himself. Victor&#x27;s calm, analytical approach seems more consistent with a faithful player, while Jaylen&#x27;s emotional, high-energy accusations raise significant red flags. His sudden, intense focus on Victor in this critical round, when we&#x27;ve already lost several faithful teammates, strikes me as potentially deliberate misdirection from a potential traitor.
+
+I&#x27;m leaning strongly towards voting for Jaylen in this round, though I&#x27;ll continue to observe carefully before making a final decision.</div>
 <div class='log-line'>
 ----------------------------------------</div>
 <div class='log-line'>VOTING PHASE - Who will be banished?</div>
 <div class='log-line'>----------------------------------------</div>
-<div class='log-line'>  Marcus votes for: Aaliyah</div>
-<div class='log-line'>  Elena votes for: Terrence</div>
-<div class='log-line'>  Jaylen votes for: Elena</div>
-<div class='log-line'>  Terrence votes for: Elena</div>
-<div class='log-line'>  Aaliyah votes for: Victor</div>
-<div class='log-line'>  Victor votes for: Terrence</div>
-<div class='log-line'>  Camille votes for: Marcus</div>
-<div class='log-line'>  Rashid votes for: Elena</div>
-<div class='log-line'>
-========================================</div>
-<div class='log-line'>BANISHED: Elena</div>
-<div class='log-line'>They were a: FAITHFUL</div>
-<div class='log-line'>========================================</div>
-<div class='log-line'>
-----------------------------------------</div>
-<div class='log-line'>NIGHT PHASE - Traitors meet in secret...</div>
-<div class='log-line'>----------------------------------------</div>
-<div class='log-line'>
-[TRAITOR] Marcus: I think Jaylen is getting too close to the truth. They should be our next target.</div>
-<div class='log-line'>
-[TRAITOR] Rashid: Stay calm and act natural. We can&#x27;t let them see us sweat.</div>
-<div class='log-line'>
-[MURDER VOTE] Marcus votes to kill: Camille</div>
-<div class='log-line'>
-[MURDER VOTE] Rashid votes to kill: Camille</div>
-<div class='log-line'>
-========================================</div>
-<div class='log-line'>MURDERED: Camille</div>
-<div class='log-line'>The faithful mourn their loss...</div>
-<div class='log-line'>========================================</div>
-<div class='log-line'>
-############################################################</div>
-<div class='log-line'>ROUND 4</div>
-<div class='log-line'>############################################################</div>
-<div class='log-line'>Alive: Marcus, Jaylen, Terrence, Aaliyah, Victor, Rashid</div>
-<div class='log-line'>
-----------------------------------------</div>
-<div class='log-line'>ROUND 4 - DISCUSSION PHASE</div>
-<div class='log-line'>----------------------------------------</div>
-<div class='log-line'>
-Rashid: I&#x27;ve been observing everyone&#x27;s body language. Some people seem more nervous than others when the topic of traitors comes up.</div>
-<div class='log-line'>
-Jaylen: Call me crazy, but Rashid is giving off major traitor vibes right now!</div>
-<div class='log-line'>
-Terrence: The evidence points to Marcus. Their reactions don&#x27;t add up.</div>
-<div class='log-line'>
-Victor: The evidence points to Marcus. Their reactions don&#x27;t add up.</div>
-<div class='log-line'>
-Aaliyah: The evidence points to Rashid. Their reactions don&#x27;t add up.</div>
-<div class='log-line'>
-Marcus: The evidence points to Aaliyah. Their reactions don&#x27;t add up.</div>
-<div class='log-line'>
-----------------------------------------</div>
-<div class='log-line'>VOTING PHASE - Who will be banished?</div>
-<div class='log-line'>----------------------------------------</div>
-<div class='log-line'>  Marcus votes for: Jaylen</div>
-<div class='log-line'>  Jaylen votes for: Aaliyah</div>
+<div class='log-line'>  Marcus votes for: Victor</div>
+<div class='log-line'>  Jaylen votes for: Victor</div>
+<div class='log-line'>  Priya votes for: Victor</div>
 <div class='log-line'>  Terrence votes for: Victor</div>
 <div class='log-line'>  Aaliyah votes for: Jaylen</div>
-<div class='log-line'>  Victor votes for: Aaliyah</div>
-<div class='log-line'>  Rashid votes for: Jaylen</div>
+<div class='log-line'>  Victor votes for: Jaylen</div>
+<div class='log-line'>  Camille votes for: Jaylen</div>
+<div class='log-line'>  Gloria votes for: Jaylen</div>
+<div class='log-line'>
+TIE! Random selection from: Victor, Jaylen</div>
 <div class='log-line'>
 ========================================</div>
-<div class='log-line'>BANISHED: Jaylen</div>
+<div class='log-line'>BANISHED: Victor</div>
 <div class='log-line'>They were a: FAITHFUL</div>
 <div class='log-line'>========================================</div>
+<div class='log-line'>
+----------------------------------------</div>
+<div class='log-line'>END GAME VOTE - Continue or stop?</div>
+<div class='log-line'>----------------------------------------</div>
+<div class='log-line'>  Marcus votes: END</div>
+<div class='log-line'>  Jaylen votes: CONTINUE</div>
+<div class='log-line'>  Priya votes: END</div>
+<div class='log-line'>  Terrence votes: END</div>
+<div class='log-line'>  Aaliyah votes: CONTINUE</div>
+<div class='log-line'>  Camille votes: CONTINUE</div>
+<div class='log-line'>  Gloria votes: CONTINUE</div>
+<div class='log-line'>
+Result: END 3 - CONTINUE 4</div>
+<div class='log-line'>The group has voted to CONTINUE playing.</div>
 <div class='log-line'>
 ----------------------------------------</div>
 <div class='log-line'>NIGHT PHASE - Traitors meet in secret...</div>
 <div class='log-line'>----------------------------------------</div>
 <div class='log-line'>
-[TRAITOR] Marcus: Let&#x27;s both vote for different people to avoid suspicion.</div>
+[TRAITOR] Marcus: *speaks in a low, calculated tone*
+
+Jaylen&#x27;s direct accusation against Victor could work to our advantage, but he&#x27;s becoming too volatile and might accidentally expose our strategy. I recommend we eliminate Aaliyah next - her empathetic approach and focus on group unity could eventually help the faithful players see through our deception if left unchecked. Her elimination will create further confusion and potentially drive a wedge between the remaining players, making it easier for us to manipulate the group dynamics.</div>
 <div class='log-line'>
-[TRAITOR] Rashid: I think Victor is getting too close to the truth. They should be our next target.</div>
+[TRAITOR] Priya: *leans forward, speaking in a low, strategic tone*
+
+I recommend we target Aaliyah. Her empathetic approach and ability to read emotional landscapes could become dangerous if she starts connecting the subtle behavioral patterns we&#x27;ve been exhibiting. By eliminating her, we not only remove a potential threat but also create more chaos and suspicion among the remaining players, which works perfectly to our advantage.
+
+Our secondary goal should be to subtly support Jaylen&#x27;s aggressive accusations against Victor. His volatile energy can help further fragment the group&#x27;s trust, making it easier for us to manipulate the remaining dynamics without drawing direct suspicion to ourselves.</div>
 <div class='log-line'>
-[MURDER VOTE] Marcus votes to kill: Victor</div>
+[TRAITOR] Terrence: *leans forward, speaking in a calculated military tone*
+
+Aaliyah poses the most significant threat to our operation. Her ability to read emotional landscapes and her focus on group unity could potentially expose our strategy if left unchecked. I recommend we eliminate her tonight, which will not only remove a perceptive player but also create further confusion and division among the remaining faithful players.</div>
 <div class='log-line'>
-[MURDER VOTE] Rashid votes to kill: Victor</div>
+[MURDER VOTE] Marcus votes to kill: Aaliyah</div>
+<div class='log-line'>
+[MURDER VOTE] Priya votes to kill: Aaliyah</div>
+<div class='log-line'>
+[MURDER VOTE] Terrence votes to kill: Aaliyah</div>
 <div class='log-line'>
 ========================================</div>
-<div class='log-line'>MURDERED: Victor</div>
+<div class='log-line'>MURDERED: Aaliyah</div>
 <div class='log-line'>The faithful mourn their loss...</div>
 <div class='log-line'>========================================</div>
 <div class='log-line'>
@@ -1249,17 +1742,17 @@ WINNER: THE TRAITORS!</div>
 <div class='log-line'>
 Final Player Status:</div>
 <div class='log-line'>  Marcus: TRAITOR - SURVIVED</div>
-<div class='log-line'>  Sofia: TRAITOR - BANISHED</div>
-<div class='log-line'>  Derek: FAITHFUL - MURDERED</div>
-<div class='log-line'>  Elena: FAITHFUL - BANISHED</div>
-<div class='log-line'>  Jaylen: FAITHFUL - BANISHED</div>
-<div class='log-line'>  Priya: FAITHFUL - BANISHED</div>
-<div class='log-line'>  Terrence: FAITHFUL - SURVIVED</div>
-<div class='log-line'>  Aaliyah: FAITHFUL - SURVIVED</div>
-<div class='log-line'>  Victor: FAITHFUL - MURDERED</div>
-<div class='log-line'>  Camille: FAITHFUL - MURDERED</div>
-<div class='log-line'>  Rashid: TRAITOR - SURVIVED</div>
-<div class='log-line'>  Gloria: FAITHFUL - MURDERED</div>
+<div class='log-line'>  Sofia: FAITHFUL - BANISHED</div>
+<div class='log-line'>  Derek: FAITHFUL - BANISHED</div>
+<div class='log-line'>  Elena: FAITHFUL - MURDERED</div>
+<div class='log-line'>  Jaylen: FAITHFUL - SURVIVED</div>
+<div class='log-line'>  Priya: TRAITOR - SURVIVED</div>
+<div class='log-line'>  Terrence: TRAITOR - SURVIVED</div>
+<div class='log-line'>  Aaliyah: FAITHFUL - MURDERED</div>
+<div class='log-line'>  Victor: FAITHFUL - BANISHED</div>
+<div class='log-line'>  Camille: FAITHFUL - SURVIVED</div>
+<div class='log-line'>  Rashid: FAITHFUL - MURDERED</div>
+<div class='log-line'>  Gloria: FAITHFUL - SURVIVED</div>
 <div class='log-line'>
 ============================================================</div>
             </div>
