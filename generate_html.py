@@ -3,7 +3,7 @@
 
 import html
 import os
-from traitors import TraitorsGame, DemoGame
+from traitors import TraitorsGame
 from traitors.types import PlayerStatus
 from main import EXAMPLE_CONTESTANTS
 
@@ -76,7 +76,125 @@ def build_game_summary(results: dict) -> str:
     """
 
 
-def generate_html(results: dict, game_log: list[str], used_real_llm: bool = False) -> str:
+def build_rounds_table(results: dict) -> str:
+    """Build a table summarizing each round's votes and eliminations."""
+    players = results["players"]
+    votes = results.get("votes", [])
+    messages = results.get("messages", [])
+
+    # Group votes by round
+    votes_by_round = {}
+    for vote in votes:
+        if vote.round_num not in votes_by_round:
+            votes_by_round[vote.round_num] = []
+        votes_by_round[vote.round_num].append(vote)
+
+    # Track banishments by round - find which player had the most votes each round
+    banished_by_round = {}
+    banished_players = {p.name: p for p in players.values() if p.status == PlayerStatus.BANISHED}
+
+    for round_num, round_votes in votes_by_round.items():
+        # Count votes per target for this round
+        vote_counts = {}
+        for v in round_votes:
+            vote_counts[v.target] = vote_counts.get(v.target, 0) + 1
+
+        if vote_counts:
+            # Find who got the most votes
+            max_votes = max(vote_counts.values())
+            top_voted = [name for name, count in vote_counts.items() if count == max_votes]
+
+            # Check if any of the top voted players were actually banished
+            for name in top_voted:
+                if name in banished_players:
+                    banished_by_round[round_num] = banished_players[name]
+                    break
+
+    # Track murders by round - look at traitor messages to find which victim was targeted in each round
+    murdered_players = {p.name: p for p in players.values() if p.status == PlayerStatus.MURDERED}
+    murdered_by_round = {}
+
+    # Group private (traitor) messages by round
+    traitor_msgs_by_round = {}
+    for msg in messages:
+        if msg.is_private:
+            if msg.round_num not in traitor_msgs_by_round:
+                traitor_msgs_by_round[msg.round_num] = []
+            traitor_msgs_by_round[msg.round_num].append(msg.content)
+
+    # For each round with traitor messages, find which murdered player was discussed
+    for round_num, msg_contents in traitor_msgs_by_round.items():
+        combined_text = " ".join(msg_contents).lower()
+        for victim_name, victim in murdered_players.items():
+            if victim_name.lower() in combined_text and victim_name not in [p.name for p in murdered_by_round.values()]:
+                murdered_by_round[round_num] = victim
+                break
+
+    # Fallback: assign remaining murders to rounds sequentially (for demo mode)
+    unassigned_victims = [p for p in murdered_players.values() if p not in murdered_by_round.values()]
+    for round_num in range(1, results["rounds_played"] + 1):
+        if round_num not in murdered_by_round and unassigned_victims:
+            murdered_by_round[round_num] = unassigned_victims.pop(0)
+
+    # Build table rows
+    rows = ""
+    for round_num in range(1, results["rounds_played"] + 1):
+        round_votes = votes_by_round.get(round_num, [])
+
+        # Count votes per target
+        vote_counts = {}
+        for v in round_votes:
+            vote_counts[v.target] = vote_counts.get(v.target, 0) + 1
+
+        # Format vote breakdown (top 3)
+        sorted_votes = sorted(vote_counts.items(), key=lambda x: -x[1])[:3]
+        vote_breakdown = ", ".join(f"{name}: {count}" for name, count in sorted_votes) if sorted_votes else "-"
+
+        # Get banished player for this round
+        banished_player = banished_by_round.get(round_num)
+        if banished_player:
+            role = "TRAITOR" if banished_player.is_traitor else "FAITHFUL"
+            role_class = "traitor-text" if banished_player.is_traitor else "faithful-text"
+            banished_cell = f"<span class='{role_class}'>{banished_player.name}</span> <small>({role})</small>"
+        else:
+            banished_cell = "-"
+
+        # Get murdered player for this round
+        murdered_player = murdered_by_round.get(round_num)
+        if murdered_player:
+            murdered_cell = f"<span class='faithful-text'>{murdered_player.name}</span>"
+        else:
+            murdered_cell = "-"
+
+        rows += f"""
+        <tr>
+            <td class="round-num">{round_num}</td>
+            <td class="vote-breakdown">{vote_breakdown}</td>
+            <td class="banished-cell">{banished_cell}</td>
+            <td class="murdered-cell">{murdered_cell}</td>
+        </tr>
+        """
+
+    return f"""
+    <div class="rounds-table-container">
+        <table class="rounds-table">
+            <thead>
+                <tr>
+                    <th>Round</th>
+                    <th>Vote Breakdown</th>
+                    <th>Banished</th>
+                    <th>Murdered</th>
+                </tr>
+            </thead>
+            <tbody>
+                {rows}
+            </tbody>
+        </table>
+    </div>
+    """
+
+
+def generate_html(results: dict, game_log: list[str]) -> str:
     """Generate the HTML page with game explanation and results."""
 
     # Build the game log HTML
@@ -84,6 +202,9 @@ def generate_html(results: dict, game_log: list[str], used_real_llm: bool = Fals
 
     # Build the game summary
     game_summary = build_game_summary(results)
+
+    # Build the rounds table
+    rounds_table = build_rounds_table(results)
 
     # Build contestant cards
     contestant_cards = ""
@@ -200,7 +321,7 @@ def generate_html(results: dict, game_log: list[str], used_real_llm: bool = Fals
     winner_text = "THE FAITHFUL" if results["winner"] == "faithful" else "THE TRAITORS"
 
     # Mode indicator
-    mode_badge = '<span class="mode-badge llm">LLM-Powered (Claude Haiku)</span>' if used_real_llm else '<span class="mode-badge demo">Demo Mode</span>'
+    mode_badge = '<span class="mode-badge llm">LLM-Powered (Claude Haiku)</span>'
 
     return f"""<!DOCTYPE html>
 <html lang="en">
@@ -269,11 +390,6 @@ def generate_html(results: dict, game_log: list[str], used_real_llm: bool = Fals
         .mode-badge.llm {{
             background: var(--accent-green);
             color: white;
-        }}
-
-        .mode-badge.demo {{
-            background: var(--accent-gold);
-            color: #1a1a2e;
         }}
 
         section {{
@@ -597,6 +713,59 @@ def generate_html(results: dict, game_log: list[str], used_real_llm: bool = Fals
             font-size: 0.9rem;
         }}
 
+        .rounds-table-container {{
+            margin: 2rem 0;
+            overflow-x: auto;
+        }}
+
+        .rounds-table {{
+            width: 100%;
+            border-collapse: collapse;
+            background: rgba(0,0,0,0.2);
+            border-radius: 8px;
+            overflow: hidden;
+        }}
+
+        .rounds-table th {{
+            background: rgba(233, 69, 96, 0.3);
+            color: var(--accent-gold);
+            padding: 1rem;
+            text-align: left;
+            font-weight: bold;
+            border-bottom: 2px solid var(--accent-red);
+        }}
+
+        .rounds-table td {{
+            padding: 0.75rem 1rem;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }}
+
+        .rounds-table tr:hover {{
+            background: rgba(255,255,255,0.05);
+        }}
+
+        .rounds-table .round-num {{
+            font-weight: bold;
+            color: var(--accent-gold);
+            text-align: center;
+            width: 80px;
+        }}
+
+        .rounds-table .vote-breakdown {{
+            font-size: 0.9rem;
+            color: var(--text-muted);
+        }}
+
+        .rounds-table .banished-cell,
+        .rounds-table .murdered-cell {{
+            font-weight: 500;
+        }}
+
+        .rounds-table small {{
+            color: var(--text-muted);
+            font-size: 0.8rem;
+        }}
+
         footer {{
             text-align: center;
             padding: 2rem;
@@ -701,6 +870,9 @@ results = game.run()</code>
                 </div>
             </div>
 
+            <h3>Round by Round</h3>
+            {rounds_table}
+
             <h3>What Happened</h3>
             {game_summary}
         </section>
@@ -742,32 +914,25 @@ def main():
         game_log.append(msg)
         print(msg)
 
-    # Check if we have an API key for real LLM mode
+    # Require API key for LLM-powered game
     api_key = os.environ.get("ANTHROPIC_API_KEY")
 
-    if api_key:
-        print("Running with real LLM agents (Claude Haiku)...\n")
-        import anthropic
-        client = anthropic.Anthropic(api_key=api_key)
+    if not api_key:
+        print("Error: ANTHROPIC_API_KEY environment variable is required.")
+        print("Please set your API key: export ANTHROPIC_API_KEY='your-key-here'")
+        return
 
-        game = TraitorsGame(
-            contestants=EXAMPLE_CONTESTANTS,
-            num_traitors=3,  # 3 traitors among 12 players
-            num_rounds=5,    # 5 rounds for more gameplay
-            client=client,
-            log_callback=log_capture,
-        )
-        used_real_llm = True
-    else:
-        print("No API key found, running in demo mode...\n")
-        game = DemoGame(
-            contestants=EXAMPLE_CONTESTANTS,
-            num_traitors=3,  # 3 traitors among 12 players
-            num_rounds=5,    # 5 rounds for more gameplay
-            log_callback=log_capture,
-            seed=42,
-        )
-        used_real_llm = False
+    print("Running with LLM agents (Claude Haiku)...\n")
+    import anthropic
+    client = anthropic.Anthropic(api_key=api_key)
+
+    game = TraitorsGame(
+        contestants=EXAMPLE_CONTESTANTS,
+        num_traitors=3,  # 3 traitors among 12 players
+        num_rounds=5,    # 5 rounds for more gameplay
+        client=client,
+        log_callback=log_capture,
+    )
 
     results = game.run()
 
@@ -778,7 +943,7 @@ def main():
     results["votes"] = game.state.votes
 
     # Generate HTML
-    html_content = generate_html(results, game_log, used_real_llm)
+    html_content = generate_html(results, game_log)
 
     # Write to file
     with open("index.html", "w") as f:
