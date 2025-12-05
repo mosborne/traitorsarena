@@ -77,10 +77,14 @@ def build_game_summary(results: dict) -> str:
 
 
 def build_rounds_table(results: dict) -> str:
-    """Build a table summarizing each round's votes and eliminations."""
+    """Build a table showing game state progression after each event."""
     players = results["players"]
     votes = results.get("votes", [])
     messages = results.get("messages", [])
+
+    # Get initial player lists
+    all_traitors = [p.name for p in players.values() if p.is_traitor]
+    all_faithful = [p.name for p in players.values() if not p.is_traitor]
 
     # Group votes by round
     votes_by_round = {}
@@ -89,32 +93,28 @@ def build_rounds_table(results: dict) -> str:
             votes_by_round[vote.round_num] = []
         votes_by_round[vote.round_num].append(vote)
 
-    # Track banishments by round - find which player had the most votes each round
+    # Track banishments by round
     banished_by_round = {}
     banished_players = {p.name: p for p in players.values() if p.status == PlayerStatus.BANISHED}
 
     for round_num, round_votes in votes_by_round.items():
-        # Count votes per target for this round
         vote_counts = {}
         for v in round_votes:
             vote_counts[v.target] = vote_counts.get(v.target, 0) + 1
 
         if vote_counts:
-            # Find who got the most votes
             max_votes = max(vote_counts.values())
             top_voted = [name for name, count in vote_counts.items() if count == max_votes]
 
-            # Check if any of the top voted players were actually banished
             for name in top_voted:
                 if name in banished_players:
                     banished_by_round[round_num] = banished_players[name]
                     break
 
-    # Track murders by round - look at traitor messages to find which victim was targeted in each round
+    # Track murders by round
     murdered_players = {p.name: p for p in players.values() if p.status == PlayerStatus.MURDERED}
     murdered_by_round = {}
 
-    # Group private (traitor) messages by round
     traitor_msgs_by_round = {}
     for msg in messages:
         if msg.is_private:
@@ -122,7 +122,6 @@ def build_rounds_table(results: dict) -> str:
                 traitor_msgs_by_round[msg.round_num] = []
             traitor_msgs_by_round[msg.round_num].append(msg.content)
 
-    # For each round with traitor messages, find which murdered player was discussed
     for round_num, msg_contents in traitor_msgs_by_round.items():
         combined_text = " ".join(msg_contents).lower()
         for victim_name, victim in murdered_players.items():
@@ -130,60 +129,100 @@ def build_rounds_table(results: dict) -> str:
                 murdered_by_round[round_num] = victim
                 break
 
-    # Fallback: assign remaining murders to rounds sequentially (for demo mode)
+    # Fallback for unassigned murders
     unassigned_victims = [p for p in murdered_players.values() if p not in murdered_by_round.values()]
     for round_num in range(1, results["rounds_played"] + 1):
         if round_num not in murdered_by_round and unassigned_victims:
             murdered_by_round[round_num] = unassigned_victims.pop(0)
 
-    # Build table rows
+    # Build timeline of events
     rows = ""
-    for round_num in range(1, results["rounds_played"] + 1):
-        round_votes = votes_by_round.get(round_num, [])
+    alive_traitors = set(all_traitors)
+    alive_faithful = set(all_faithful)
 
-        # Count votes per target
-        vote_counts = {}
-        for v in round_votes:
-            vote_counts[v.target] = vote_counts.get(v.target, 0) + 1
-
-        # Format vote breakdown (top 3)
-        sorted_votes = sorted(vote_counts.items(), key=lambda x: -x[1])[:3]
-        vote_breakdown = ", ".join(f"{name}: {count}" for name, count in sorted_votes) if sorted_votes else "-"
-
-        # Get banished player for this round
-        banished_player = banished_by_round.get(round_num)
-        if banished_player:
-            role = "TRAITOR" if banished_player.is_traitor else "FAITHFUL"
-            role_class = "traitor-text" if banished_player.is_traitor else "faithful-text"
-            banished_cell = f"<span class='{role_class}'>{banished_player.name}</span> <small>({role})</small>"
-        else:
-            banished_cell = "-"
-
-        # Get murdered player for this round
-        murdered_player = murdered_by_round.get(round_num)
-        if murdered_player:
-            murdered_cell = f"<span class='faithful-text'>{murdered_player.name}</span>"
-        else:
-            murdered_cell = "-"
-
-        rows += f"""
-        <tr>
-            <td class="round-num">{round_num}</td>
-            <td class="vote-breakdown">{vote_breakdown}</td>
-            <td class="banished-cell">{banished_cell}</td>
-            <td class="murdered-cell">{murdered_cell}</td>
+    # Starting state
+    rows += f"""
+        <tr class="state-row">
+            <td class="event-phase">Start</td>
+            <td class="event-desc">Game begins</td>
+            <td class="remaining-traitors"><span class="traitor-text">{len(alive_traitors)}</span> traitors</td>
+            <td class="remaining-faithful"><span class="faithful-text">{len(alive_faithful)}</span> faithful</td>
+            <td class="player-list">{', '.join(sorted(alive_traitors | alive_faithful))}</td>
         </tr>
-        """
+    """
+
+    for round_num in range(1, results["rounds_played"] + 1):
+        # Banishment event
+        banished = banished_by_round.get(round_num)
+        if banished:
+            if banished.name in alive_traitors:
+                alive_traitors.remove(banished.name)
+            elif banished.name in alive_faithful:
+                alive_faithful.remove(banished.name)
+
+            role = "TRAITOR" if banished.is_traitor else "FAITHFUL"
+            role_class = "traitor-text" if banished.is_traitor else "faithful-text"
+            icon = "🎭" if banished.is_traitor else "😇"
+
+            # Get vote breakdown
+            round_votes = votes_by_round.get(round_num, [])
+            vote_counts = {}
+            for v in round_votes:
+                vote_counts[v.target] = vote_counts.get(v.target, 0) + 1
+            sorted_votes = sorted(vote_counts.items(), key=lambda x: -x[1])[:3]
+            vote_info = ", ".join(f"{name}: {count}" for name, count in sorted_votes)
+
+            rows += f"""
+        <tr class="banishment-row">
+            <td class="event-phase">Round {round_num}<br><small>Banishment</small></td>
+            <td class="event-desc">{icon} <span class='{role_class}'>{banished.name}</span> banished<br><small>Votes: {vote_info}</small></td>
+            <td class="remaining-traitors"><span class="traitor-text">{len(alive_traitors)}</span> traitors</td>
+            <td class="remaining-faithful"><span class="faithful-text">{len(alive_faithful)}</span> faithful</td>
+            <td class="player-list">{', '.join(sorted(alive_traitors | alive_faithful))}</td>
+        </tr>
+            """
+
+        # Murder event (if game continued)
+        murdered = murdered_by_round.get(round_num)
+        if murdered:
+            if murdered.name in alive_faithful:
+                alive_faithful.remove(murdered.name)
+
+            rows += f"""
+        <tr class="murder-row">
+            <td class="event-phase">Round {round_num}<br><small>Night</small></td>
+            <td class="event-desc">🔪 <span class='faithful-text'>{murdered.name}</span> murdered</td>
+            <td class="remaining-traitors"><span class="traitor-text">{len(alive_traitors)}</span> traitors</td>
+            <td class="remaining-faithful"><span class="faithful-text">{len(alive_faithful)}</span> faithful</td>
+            <td class="player-list">{', '.join(sorted(alive_traitors | alive_faithful))}</td>
+        </tr>
+            """
+
+    # Final state
+    winner = results["winner"]
+    winner_class = "traitor-text" if winner == "traitors" else "faithful-text"
+    winner_label = "TRAITORS WIN" if winner == "traitors" else "FAITHFUL WIN"
+
+    rows += f"""
+        <tr class="final-row">
+            <td class="event-phase">Final</td>
+            <td class="event-desc"><strong class="{winner_class}">{winner_label}</strong></td>
+            <td class="remaining-traitors"><span class="traitor-text">{len(alive_traitors)}</span> traitors</td>
+            <td class="remaining-faithful"><span class="faithful-text">{len(alive_faithful)}</span> faithful</td>
+            <td class="player-list">{', '.join(sorted(alive_traitors | alive_faithful))}</td>
+        </tr>
+    """
 
     return f"""
     <div class="rounds-table-container">
         <table class="rounds-table">
             <thead>
                 <tr>
-                    <th>Round</th>
-                    <th>Vote Breakdown</th>
-                    <th>Banished</th>
-                    <th>Murdered</th>
+                    <th>Phase</th>
+                    <th>Event</th>
+                    <th>Traitors</th>
+                    <th>Faithful</th>
+                    <th>Remaining Players</th>
                 </tr>
             </thead>
             <tbody>
@@ -738,27 +777,66 @@ def generate_html(results: dict, game_log: list[str]) -> str:
         .rounds-table td {{
             padding: 0.75rem 1rem;
             border-bottom: 1px solid rgba(255,255,255,0.1);
+            vertical-align: middle;
         }}
 
         .rounds-table tr:hover {{
             background: rgba(255,255,255,0.05);
         }}
 
-        .rounds-table .round-num {{
+        .rounds-table .event-phase {{
             font-weight: bold;
             color: var(--accent-gold);
             text-align: center;
-            width: 80px;
+            width: 100px;
         }}
 
-        .rounds-table .vote-breakdown {{
-            font-size: 0.9rem;
+        .rounds-table .event-phase small {{
+            display: block;
+            font-weight: normal;
             color: var(--text-muted);
+            font-size: 0.75rem;
         }}
 
-        .rounds-table .banished-cell,
-        .rounds-table .murdered-cell {{
-            font-weight: 500;
+        .rounds-table .event-desc {{
+            min-width: 200px;
+        }}
+
+        .rounds-table .event-desc small {{
+            display: block;
+            color: var(--text-muted);
+            font-size: 0.8rem;
+            margin-top: 0.25rem;
+        }}
+
+        .rounds-table .remaining-traitors,
+        .rounds-table .remaining-faithful {{
+            text-align: center;
+            font-weight: bold;
+            width: 90px;
+        }}
+
+        .rounds-table .player-list {{
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            max-width: 300px;
+        }}
+
+        .rounds-table .state-row {{
+            background: rgba(42, 157, 143, 0.1);
+        }}
+
+        .rounds-table .banishment-row {{
+            background: rgba(244, 162, 97, 0.1);
+        }}
+
+        .rounds-table .murder-row {{
+            background: rgba(233, 69, 96, 0.1);
+        }}
+
+        .rounds-table .final-row {{
+            background: rgba(255, 255, 255, 0.1);
+            font-weight: bold;
         }}
 
         .rounds-table small {{
