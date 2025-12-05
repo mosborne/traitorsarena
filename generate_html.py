@@ -824,10 +824,12 @@ def generate_html(results: dict, game_log: list[str]) -> str:
             <div class="parameters">
                 <div class="param"><span class="param-name">contestants:</span> <span class="param-value">list[dict]</span> - List of players with name and personality_prompt</div>
                 <div class="param"><span class="param-name">num_traitors:</span> <span class="param-value">int = 2</span> - Number of traitors to assign</div>
-                <div class="param"><span class="param-name">num_rounds:</span> <span class="param-value">int = 3</span> - Maximum number of game rounds</div>
                 <div class="param"><span class="param-name">client:</span> <span class="param-value">Anthropic = None</span> - Optional Anthropic client for LLM calls</div>
                 <div class="param"><span class="param-name">log_callback:</span> <span class="param-value">Callable = print</span> - Function to handle game logging</div>
             </div>
+
+            <h3>Game Flow</h3>
+            <p>The game continues until players vote to end it (after a banishment). If traitors remain when the game ends, they win. If all traitors have been banished, the faithful win.</p>
 
             <h3>Example Usage</h3>
             <div class="parameters" style="margin-top: 1rem;">
@@ -839,7 +841,7 @@ contestants = [
     # ... more contestants
 ]
 
-game = TraitorsGame(contestants=contestants, num_traitors=2, num_rounds=3)
+game = TraitorsGame(contestants=contestants, num_traitors=2)
 results = game.run()</code>
             </div>
         </section>
@@ -929,7 +931,6 @@ def main():
     game = TraitorsGame(
         contestants=EXAMPLE_CONTESTANTS,
         num_traitors=3,  # 3 traitors among 12 players
-        num_rounds=5,    # 5 rounds for more gameplay
         client=client,
         log_callback=log_capture,
     )

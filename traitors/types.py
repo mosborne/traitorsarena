@@ -78,7 +78,6 @@ class GameState:
     private_thoughts: list[PrivateThought] = field(default_factory=list)
     current_round: int = 1
     current_phase: GamePhase = GamePhase.SETUP
-    max_rounds: int = 3
     winner: Optional[str] = None  # "traitors" or "faithful" or None
 
     @property

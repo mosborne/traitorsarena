@@ -137,7 +137,6 @@ def main():
     game = TraitorsGame(
         contestants=contestants,
         num_traitors=3,  # 3 traitors among 12 players (realistic ratio)
-        num_rounds=5,    # 5 rounds for more gameplay
     )
 
     results = game.run()

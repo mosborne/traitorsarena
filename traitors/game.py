@@ -26,7 +26,6 @@ class TraitorsGame:
         self,
         contestants: list[dict],
         num_traitors: int = 1,
-        num_rounds: int = 3,
         client: Optional[anthropic.Anthropic] = None,
         log_callback: Optional[Callable[[str], None]] = None,
     ):
@@ -36,7 +35,6 @@ class TraitorsGame:
         Args:
             contestants: List of dicts with 'name' and 'personality_prompt' keys
             num_traitors: Number of traitors to assign (default 1)
-            num_rounds: Maximum number of rounds (default 3)
             client: Anthropic client (creates new one if not provided)
             log_callback: Optional callback for logging game events
         """
@@ -45,7 +43,7 @@ class TraitorsGame:
         self.num_traitors = num_traitors
 
         # Create game state
-        self.state = GameState(max_rounds=num_rounds)
+        self.state = GameState()
 
         # Create players
         for contestant in contestants:
@@ -87,6 +85,38 @@ class TraitorsGame:
             return "traitors"
 
         return None
+
+    def _run_end_game_vote(self) -> bool:
+        """Run a vote on whether to end the game. Returns True if game should end."""
+        self.log("\n" + "-" * 40)
+        self.log("END GAME VOTE - Continue or stop?")
+        self.log("-" * 40)
+
+        end_votes = 0
+        continue_votes = 0
+        alive_players = self.state.alive_players
+
+        for player in alive_players:
+            agent = self.agents[player.name]
+            vote_to_end = agent.generate_end_game_vote(self.state)
+
+            vote_str = "END" if vote_to_end else "CONTINUE"
+            self.log(f"  {player.name} votes: {vote_str}")
+
+            if vote_to_end:
+                end_votes += 1
+            else:
+                continue_votes += 1
+
+        self.log(f"\nResult: END {end_votes} - CONTINUE {continue_votes}")
+
+        # Majority needed to end
+        if end_votes > continue_votes:
+            self.log("The group has voted to END the game!")
+            return True
+        else:
+            self.log("The group has voted to CONTINUE playing.")
+            return False
 
     def _run_discussion_phase(self) -> None:
         """Run the discussion phase where players talk."""
@@ -268,6 +298,11 @@ class TraitorsGame:
         """
         Run the complete game simulation.
 
+        The game continues until:
+        1. All traitors are banished (faithful win)
+        2. Traitors outnumber or equal faithful (traitors win)
+        3. Players vote to end the game (traitors win if any remain, faithful win otherwise)
+
         Returns:
             dict with game results including winner, final state, and game log
         """
@@ -275,13 +310,13 @@ class TraitorsGame:
         self.log("THE TRAITORS - GAME SIMULATION")
         self.log("=" * 60)
         self.log(f"Players: {', '.join(self.state.players.keys())}")
-        self.log(f"Rounds: {self.state.max_rounds}")
 
         # Assign roles
         self._assign_roles()
 
-        # Main game loop
-        while self.state.current_round <= self.state.max_rounds:
+        # Main game loop - continues until win condition or players vote to end
+        max_safety_rounds = 20  # Prevent infinite loops
+        while self.state.current_round <= max_safety_rounds:
             self.log(f"\n{'#' * 60}")
             self.log(f"ROUND {self.state.current_round}")
             self.log(f"{'#' * 60}")
@@ -290,7 +325,7 @@ class TraitorsGame:
             # Discussion phase
             self._run_discussion_phase()
 
-            # Voting phase
+            # Voting phase (banishment)
             self._run_voting_phase()
 
             # Check win condition after banishment
@@ -299,15 +334,25 @@ class TraitorsGame:
                 self.state.winner = winner
                 break
 
-            # Night phase (traitors murder)
-            if self.state.current_round < self.state.max_rounds:
-                self._run_night_phase()
+            # End game vote - do players want to stop or continue?
+            if self._run_end_game_vote():
+                # Players voted to end - determine winner
+                if self.state.alive_traitors:
+                    self.state.winner = "traitors"
+                    self.log("\n⚠️  TRAITORS WERE STILL AMONG THEM!")
+                else:
+                    self.state.winner = "faithful"
+                    self.log("\n✓ All traitors had been eliminated!")
+                break
 
-                # Check win condition after murder
-                winner = self._check_win_condition()
-                if winner:
-                    self.state.winner = winner
-                    break
+            # Night phase (traitors murder)
+            self._run_night_phase()
+
+            # Check win condition after murder
+            winner = self._check_win_condition()
+            if winner:
+                self.state.winner = winner
+                break
 
             self.state.current_round += 1
 
@@ -315,7 +360,7 @@ class TraitorsGame:
         self.state.current_phase = GamePhase.ENDED
 
         if not self.state.winner:
-            # Game ended due to round limit
+            # Safety: game ended due to round limit
             if self.state.alive_traitors:
                 self.state.winner = "traitors"
             else:

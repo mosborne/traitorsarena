@@ -99,7 +99,7 @@ Personality: {self.player.personality_prompt}
 
 {role_info}
 
-CURRENT GAME STATE (Round {game_state.current_round} of {game_state.max_rounds}):
+CURRENT GAME STATE (Round {game_state.current_round}):
 Players still alive: {', '.join(alive_players)}
 Players eliminated:
   {eliminated_str}
@@ -343,3 +343,60 @@ Speak in character as {self.player.name}. Keep it to 2-3 sentences."""
         )
 
         return response.content[0].text.strip()
+
+    def generate_end_game_vote(self, game_state: GameState) -> bool:
+        """Generate a vote on whether to end the game or continue playing.
+
+        Returns True to END the game, False to CONTINUE playing.
+        """
+        system = self._build_system_prompt(game_state)
+        history = self._format_conversation_history(game_state)
+        round_context = self._get_round_context(game_state)
+
+        alive_count = len(game_state.alive_players)
+
+        # Count known traitors (those who were banished and revealed)
+        revealed_traitors = [p for p in game_state.players.values()
+                           if p.status == PlayerStatus.BANISHED and p.is_traitor]
+        revealed_faithful = [p for p in game_state.players.values()
+                            if p.status == PlayerStatus.BANISHED and not p.is_traitor]
+
+        if self.player.is_traitor:
+            strategy_hint = """As a TRAITOR, consider:
+- If the game ends now AND there are still traitors alive (including you), TRAITORS WIN!
+- You WANT the game to end while you're still alive
+- Vote to END if you think you can get away with it
+- Only vote CONTINUE if you're worried about being caught first"""
+        else:
+            strategy_hint = f"""As FAITHFUL, consider:
+- If the game ends and ANY traitors remain, they win everything
+- {len(revealed_traitors)} traitor(s) have been caught so far
+- There could still be traitors among the {alive_count} remaining players
+- Vote END only if you're confident all traitors are gone
+- Vote CONTINUE if you suspect there are still traitors hiding"""
+
+        user_message = f"""{round_context}DISCUSSION HISTORY:
+{history}
+
+END GAME VOTE - Should the game end now?
+Players remaining: {alive_count}
+Traitors revealed (banished): {len(revealed_traitors)}
+Faithful wrongly banished: {len(revealed_faithful)}
+
+{strategy_hint}
+
+If you vote END and traitors remain: TRAITORS WIN
+If you vote END and all traitors are gone: FAITHFUL WIN and split the prize
+
+Based on your role and what you know, do you vote to END the game or CONTINUE playing?
+Respond with only END or CONTINUE."""
+
+        response = self.client.messages.create(
+            model="claude-3-5-haiku-20241022",
+            max_tokens=20,
+            system=system,
+            messages=[{"role": "user", "content": user_message}]
+        )
+
+        vote_text = response.content[0].text.strip().upper()
+        return "END" in vote_text
