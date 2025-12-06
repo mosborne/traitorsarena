@@ -4,6 +4,7 @@ Run multiple game iterations and generate summary statistics.
 
 Usage:
     python run_games.py [num_iterations]
+    python run_games.py 5 --experimental   # Use experimental contestants
 
 Example:
     python run_games.py 5   # Run 5 game iterations
@@ -15,6 +16,7 @@ import json
 import os
 import re
 from datetime import datetime
+from pathlib import Path
 
 import anthropic
 
@@ -449,10 +451,69 @@ def update_main_index(runs_dir: str):
         f.write(content)
 
 
+def update_prompt_stats(contestants: list, games_data: list):
+    """Update stats in prompt files based on game results."""
+    prompts_dir = Path(__file__).parent / "prompts"
+
+    for game in games_data:
+        for name, player in game["players"].items():
+            # Find contestant with prompt file
+            contestant = next((c for c in contestants if c["name"] == name), None)
+            if not contestant or "_prompt_file" not in contestant:
+                continue
+
+            prompt_file = prompts_dir / contestant["_prompt_file"]
+            if not prompt_file.exists():
+                continue
+
+            try:
+                with open(prompt_file) as f:
+                    data = json.load(f)
+
+                stats = data.get("stats", {
+                    "games_played": 0,
+                    "times_traitor": 0,
+                    "times_faithful": 0,
+                    "wins_as_traitor": 0,
+                    "wins_as_faithful": 0,
+                    "survived": 0,
+                    "banished": 0,
+                    "murdered": 0
+                })
+
+                stats["games_played"] += 1
+
+                if player.is_traitor:
+                    stats["times_traitor"] += 1
+                    if game["winner"] == "traitors" and player.is_alive:
+                        stats["wins_as_traitor"] += 1
+                else:
+                    stats["times_faithful"] += 1
+                    if game["winner"] == "faithful":
+                        stats["wins_as_faithful"] += 1
+
+                if player.is_alive:
+                    stats["survived"] += 1
+                elif player.status == PlayerStatus.BANISHED:
+                    stats["banished"] += 1
+                else:
+                    stats["murdered"] += 1
+
+                data["stats"] = stats
+
+                with open(prompt_file, "w") as f:
+                    json.dump(data, f, indent=2)
+
+            except (json.JSONDecodeError, KeyError) as e:
+                print(f"Warning: Could not update stats for {prompt_file}: {e}")
+
+
 def main():
     parser = argparse.ArgumentParser(description="Run multiple Traitors games")
     parser.add_argument("num_games", type=int, nargs="?", default=3,
                         help="Number of games to run (default: 3)")
+    parser.add_argument("--experimental", "-e", action="store_true",
+                        help="Include experimental contestants (replaces some originals)")
     args = parser.parse_args()
 
     # Check for API key
@@ -463,6 +524,18 @@ def main():
 
     client = anthropic.Anthropic(api_key=api_key)
 
+    # Select contestants
+    if args.experimental:
+        try:
+            from contestants import create_test_roster
+            contestants = create_test_roster()
+            print("Using EXPERIMENTAL roster with improved prompts")
+        except ImportError:
+            print("Warning: contestants.py not found, using original contestants")
+            contestants = EXAMPLE_CONTESTANTS
+    else:
+        contestants = EXAMPLE_CONTESTANTS
+
     # Create run directory
     run_id = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
     run_dir = os.path.join("runs", run_id)
@@ -470,6 +543,7 @@ def main():
 
     print(f"Starting run: {run_id}")
     print(f"Running {args.num_games} game(s)...")
+    print(f"Contestants: {', '.join(c['name'] for c in contestants)}")
     print("=" * 60)
 
     games_data = []
@@ -480,11 +554,11 @@ def main():
         print(f"{'='*60}\n")
 
         game_log = []
-        results = run_single_game(client, EXAMPLE_CONTESTANTS, 3, game_log)
+        results = run_single_game(client, contestants, 3, game_log)
         games_data.append(results)
 
         # Generate individual game HTML
-        game_html = generate_game_html(results, game_log, EXAMPLE_CONTESTANTS,
+        game_html = generate_game_html(results, game_log, contestants,
                                        back_link=f"index.html",
                                        title=f"Game {i}")
 
@@ -499,7 +573,7 @@ def main():
     print(f"\n{'='*60}")
     print("Generating run summary...")
 
-    summary_html = generate_run_summary_html(run_id, games_data, EXAMPLE_CONTESTANTS)
+    summary_html = generate_run_summary_html(run_id, games_data, contestants)
     summary_path = os.path.join(run_dir, "index.html")
     with open(summary_path, "w") as f:
         f.write(summary_html)
@@ -508,9 +582,15 @@ def main():
     metadata = {
         "traitor_wins": sum(1 for g in games_data if g["winner"] == "traitors"),
         "faithful_wins": sum(1 for g in games_data if g["winner"] == "faithful"),
+        "experimental": args.experimental,
     }
     with open(os.path.join(run_dir, "metadata.json"), "w") as f:
         json.dump(metadata, f)
+
+    # Update prompt stats for contestants with prompt files
+    if args.experimental:
+        print("Updating prompt stats...")
+        update_prompt_stats(contestants, games_data)
 
     # Update main index
     update_main_index("runs")
