@@ -233,8 +233,21 @@ def build_rounds_table(results: dict) -> str:
     """
 
 
-def generate_html(results: dict, game_log: list[str]) -> str:
-    """Generate the HTML page with game explanation and results."""
+def generate_game_html(results: dict, game_log: list[str], contestants: list = None,
+                       back_link: str = None, title: str = None) -> str:
+    """Generate the HTML page for a single game with results.
+
+    Args:
+        results: Game results dictionary
+        game_log: List of log messages
+        contestants: List of contestant dicts (defaults to EXAMPLE_CONTESTANTS)
+        back_link: Optional link to navigate back (e.g., "index.html")
+        title: Optional title for the page (e.g., "Game 1")
+    """
+    if contestants is None:
+        contestants = EXAMPLE_CONTESTANTS
+
+    page_title = f"Game: {title}" if title else "The Traitors - LLM Game Simulator"
 
     # Build the game log HTML
     game_log_html = "\n".join(f"<div class='log-line'>{html.escape(line)}</div>" for line in game_log)
@@ -247,7 +260,7 @@ def generate_html(results: dict, game_log: list[str]) -> str:
 
     # Build contestant cards
     contestant_cards = ""
-    for contestant in EXAMPLE_CONTESTANTS:
+    for contestant in contestants:
         role = "traitor" if contestant["name"] in results["traitors"] else "faithful"
 
         # Get fate
@@ -501,12 +514,15 @@ def generate_html(results: dict, game_log: list[str]) -> str:
     # Mode indicator
     mode_badge = '<span class="mode-badge llm">LLM-Powered (Claude Haiku)</span>'
 
+    # Back link for navigation
+    back_link_html = f'<p class="back-link"><a href="{back_link}">&larr; Back to Run Summary</a></p>' if back_link else ""
+
     return f"""<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>The Traitors - LLM Game Simulator</title>
+    <title>{page_title}</title>
     <style>
         :root {{
             --bg-dark: #1a1a2e;
@@ -568,6 +584,19 @@ def generate_html(results: dict, game_log: list[str]) -> str:
         .mode-badge.llm {{
             background: var(--accent-green);
             color: white;
+        }}
+
+        .back-link {{
+            margin-top: 1rem;
+        }}
+
+        .back-link a {{
+            color: var(--accent-gold);
+            text-decoration: none;
+        }}
+
+        .back-link a:hover {{
+            text-decoration: underline;
         }}
 
         section {{
@@ -1087,6 +1116,7 @@ def generate_html(results: dict, game_log: list[str]) -> str:
         <h1>THE TRAITORS</h1>
         <p class="subtitle">LLM-Powered Game Simulator</p>
         {mode_badge}
+        {back_link_html}
     </header>
 
     <div class="container">
@@ -1245,7 +1275,7 @@ def main():
     results["votes"] = game.state.votes
 
     # Generate HTML
-    html_content = generate_html(results, game_log)
+    html_content = generate_game_html(results, game_log, EXAMPLE_CONTESTANTS)
 
     # Write to file
     with open("index.html", "w") as f:
