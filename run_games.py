@@ -132,6 +132,28 @@ def generate_run_summary_html(run_id: str, games_data: list, contestants: list) 
         </tr>
         """
 
+    # Build contestants cards
+    contestants_html = ""
+    for c in contestants:
+        # Get a short description from the personality prompt
+        desc = c.get("personality_prompt", "")
+        # Extract first sentence or first 150 chars
+        if ". " in desc:
+            short_desc = desc.split(". ")[0] + "."
+        else:
+            short_desc = desc[:150] + "..." if len(desc) > 150 else desc
+        # Clean up the "You are X" prefix
+        short_desc = short_desc.replace("You are ", "").strip()
+        if short_desc and short_desc[0].islower():
+            short_desc = short_desc[0].upper() + short_desc[1:]
+
+        contestants_html += f"""
+            <div class="contestant-card">
+                <div class="contestant-card-name">{html.escape(c["name"])}</div>
+                <div class="contestant-card-desc">{html.escape(short_desc)}</div>
+            </div>
+        """
+
     return f"""<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -235,6 +257,31 @@ def generate_run_summary_html(run_id: str, games_data: list, contestants: list) 
         .faithful-text {{ color: var(--accent-green); }}
         .contestant-name {{ font-weight: bold; color: var(--accent-gold); }}
 
+        .contestant-grid {{
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1rem;
+        }}
+
+        .contestant-card {{
+            background: rgba(255,255,255,0.05);
+            padding: 1rem;
+            border-radius: 8px;
+            border: 1px solid rgba(255,255,255,0.1);
+        }}
+
+        .contestant-card-name {{
+            font-size: 1.1rem;
+            font-weight: bold;
+            color: var(--accent-gold);
+            margin-bottom: 0.5rem;
+        }}
+
+        .contestant-card-desc {{
+            font-size: 0.85rem;
+            color: var(--text-muted);
+        }}
+
         a {{ color: var(--accent-gold); }}
 
         footer {{
@@ -252,6 +299,14 @@ def generate_run_summary_html(run_id: str, games_data: list, contestants: list) 
     </header>
 
     <div class="container">
+        <section>
+            <h2>Contestants</h2>
+            <p style="margin-bottom: 1rem;">This run features {len(contestants)} AI-powered contestants:</p>
+            <div class="contestant-grid">
+                {contestants_html}
+            </div>
+        </section>
+
         <section>
             <h2>Summary Statistics</h2>
             <div class="stats-grid">
