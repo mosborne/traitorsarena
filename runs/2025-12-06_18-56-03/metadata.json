@@ -1,0 +1,40 @@
+{
+  "run_id": "2025-12-06_18-56-03",
+  "timestamp": "2025-12-06T20:18:07.106667",
+  "config_name": "experimental_v1",
+  "config_description": "Testing improved prompts: Morgan (v1), Dominic (aggressive), Iris (social) replacing Victor, Derek, Camille",
+  "num_games": 10,
+  "num_contestants": 12,
+  "num_traitors": 3,
+  "traitor_wins": 9,
+  "faithful_wins": 1,
+  "contestants": [
+    "Marcus",
+    "Sofia",
+    "Dominic",
+    "Elena",
+    "Jaylen",
+    "Priya",
+    "Terrence",
+    "Aaliyah",
+    "Morgan",
+    "Iris",
+    "Rashid",
+    "Gloria"
+  ],
+  "prompt_versions": {
+    "Marcus": "original",
+    "Sofia": "original",
+    "Dominic": "1.0",
+    "Elena": "original",
+    "Jaylen": "original",
+    "Priya": "original",
+    "Terrence": "original",
+    "Aaliyah": "original",
+    "Morgan": "1.0",
+    "Iris": "1.0",
+    "Rashid": "original",
+    "Gloria": "original"
+  },
+  "avg_rounds": 3.7
+}

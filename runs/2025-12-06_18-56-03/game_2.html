@@ -1,0 +1,2081 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Game: Game 2</title>
+    <style>
+        :root {
+            --bg-dark: #1a1a2e;
+            --bg-card: #16213e;
+            --accent-red: #e94560;
+            --accent-gold: #f4a261;
+            --accent-green: #2a9d8f;
+            --text-light: #eee;
+            --text-muted: #888;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            background: var(--bg-dark);
+            color: var(--text-light);
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        header {
+            text-align: center;
+            padding: 3rem 0;
+            background: linear-gradient(135deg, #1a1a2e 0%, #0f3460 100%);
+            border-bottom: 3px solid var(--accent-red);
+        }
+
+        h1 {
+            font-size: 3rem;
+            color: var(--accent-red);
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+            margin-bottom: 0.5rem;
+        }
+
+        .subtitle {
+            color: var(--accent-gold);
+            font-size: 1.2rem;
+        }
+
+        .mode-badge {
+            display: inline-block;
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            font-weight: bold;
+            margin-top: 1rem;
+        }
+
+        .mode-badge.llm {
+            background: var(--accent-green);
+            color: white;
+        }
+
+        .back-link {
+            margin-top: 1rem;
+        }
+
+        .back-link a {
+            color: var(--accent-gold);
+            text-decoration: none;
+        }
+
+        .back-link a:hover {
+            text-decoration: underline;
+        }
+
+        section {
+            margin: 2rem 0;
+            padding: 2rem;
+            background: var(--bg-card);
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+        }
+
+        h2 {
+            color: var(--accent-gold);
+            border-bottom: 2px solid var(--accent-red);
+            padding-bottom: 0.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        h3 {
+            color: var(--accent-green);
+            margin: 1.5rem 0 1rem;
+        }
+
+        h4 {
+            color: var(--text-light);
+            margin: 1rem 0 0.5rem;
+        }
+
+        .rules-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1.5rem;
+        }
+
+        .rule-card {
+            background: rgba(255,255,255,0.05);
+            padding: 1.5rem;
+            border-radius: 8px;
+            border-left: 4px solid var(--accent-gold);
+        }
+
+        .rule-card h4 {
+            color: var(--accent-gold);
+            margin-bottom: 0.5rem;
+        }
+
+        .parameters {
+            background: #0a0a15;
+            padding: 1.5rem;
+            border-radius: 8px;
+            font-family: 'Consolas', monospace;
+        }
+
+        .param {
+            margin: 0.5rem 0;
+        }
+
+        .param-name {
+            color: var(--accent-green);
+        }
+
+        .param-value {
+            color: var(--accent-gold);
+        }
+
+        .contestant-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 1.5rem;
+        }
+
+        .contestant-card {
+            background: rgba(255,255,255,0.05);
+            padding: 1.5rem;
+            border-radius: 8px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .contestant-card.traitor {
+            border: 2px solid var(--accent-red);
+        }
+
+        .contestant-card.faithful {
+            border: 2px solid var(--accent-green);
+        }
+
+        .contestant-card.banished::after,
+        .contestant-card.murdered::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.5);
+            pointer-events: none;
+        }
+
+        .contestant-name {
+            font-size: 1.5rem;
+            font-weight: bold;
+            margin-bottom: 0.5rem;
+        }
+
+        .contestant-role {
+            display: inline-block;
+            padding: 0.25rem 0.75rem;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: bold;
+            margin-bottom: 0.5rem;
+        }
+
+        .traitor .contestant-role {
+            background: var(--accent-red);
+        }
+
+        .faithful .contestant-role {
+            background: var(--accent-green);
+        }
+
+        .contestant-fate {
+            color: var(--text-muted);
+            font-style: italic;
+            margin-bottom: 0.5rem;
+        }
+
+        .contestant-personality {
+            font-size: 0.9rem;
+            color: var(--text-muted);
+        }
+
+        .winner-banner {
+            text-align: center;
+            padding: 2rem;
+            border-radius: 10px;
+            margin: 2rem 0;
+        }
+
+        .faithful-win {
+            background: linear-gradient(135deg, #1a4d4d 0%, #2a9d8f 100%);
+            border: 3px solid var(--accent-green);
+        }
+
+        .traitor-win {
+            background: linear-gradient(135deg, #4a1a2e 0%, #e94560 100%);
+            border: 3px solid var(--accent-red);
+        }
+
+        .winner-text {
+            font-size: 2.5rem;
+            font-weight: bold;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+        }
+
+        .round-section {
+            margin: 1.5rem 0;
+            padding: 1rem;
+            background: rgba(0,0,0,0.2);
+            border-radius: 8px;
+        }
+
+        .message {
+            margin: 0.75rem 0;
+            padding: 0.5rem;
+            background: rgba(255,255,255,0.03);
+            border-radius: 4px;
+        }
+
+        .private-msg {
+            background: rgba(233, 69, 96, 0.15);
+            border-left: 3px solid var(--accent-red);
+        }
+
+        .night-phase-section {
+            background: rgba(20, 10, 30, 0.6);
+            border: 2px solid rgba(233, 69, 96, 0.4);
+            border-radius: 8px;
+            padding: 1rem;
+            margin: 1.5rem 0;
+        }
+
+        .night-header {
+            color: var(--accent-red) !important;
+            font-size: 1.1rem;
+        }
+
+        .night-subtext {
+            color: var(--text-muted);
+            font-style: italic;
+            font-size: 0.9rem;
+            margin-bottom: 1rem;
+        }
+
+        .thought {
+            margin: 0.75rem 0;
+            padding: 0.75rem;
+            background: rgba(100, 100, 150, 0.15);
+            border-left: 3px solid #8888cc;
+            border-radius: 4px;
+            font-style: italic;
+        }
+
+        .thought.traitor-thought {
+            background: rgba(233, 69, 96, 0.1);
+            border-left-color: var(--accent-red);
+        }
+
+        .thought.faithful-thought {
+            background: rgba(42, 157, 143, 0.1);
+            border-left-color: var(--accent-green);
+        }
+
+        .thought-label {
+            font-size: 0.75rem;
+            font-weight: bold;
+            text-transform: uppercase;
+            margin-bottom: 0.25rem;
+        }
+
+        .traitor-thought .thought-label {
+            color: var(--accent-red);
+        }
+
+        .faithful-thought .thought-label {
+            color: var(--accent-green);
+        }
+
+        .speaker {
+            font-weight: bold;
+            color: var(--accent-gold);
+        }
+
+        .content {
+            color: var(--text-light);
+        }
+
+        .phase-header {
+            color: var(--accent-gold);
+            font-weight: bold;
+            margin: 1rem 0 0.5rem;
+            padding-bottom: 0.25rem;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .game-summary {
+            background: rgba(0,0,0,0.2);
+            padding: 1.5rem;
+            border-radius: 8px;
+            margin-bottom: 1.5rem;
+            line-height: 1.8;
+        }
+
+        .game-summary p {
+            margin: 0.75rem 0;
+        }
+
+        .traitor-text {
+            color: var(--accent-red);
+            font-weight: bold;
+        }
+
+        .faithful-text {
+            color: var(--accent-green);
+            font-weight: bold;
+        }
+
+        .outcome {
+            padding: 1rem;
+            border-radius: 8px;
+            margin-top: 1rem;
+            font-size: 1.1rem;
+        }
+
+        .traitor-outcome {
+            background: rgba(233, 69, 96, 0.2);
+            border-left: 4px solid var(--accent-red);
+        }
+
+        .faithful-outcome {
+            background: rgba(42, 157, 143, 0.2);
+            border-left: 4px solid var(--accent-green);
+        }
+
+        .voting-outcome {
+            margin: 1.5rem 0;
+            padding: 1rem;
+            background: rgba(244, 162, 97, 0.1);
+            border-radius: 8px;
+            border: 1px solid rgba(244, 162, 97, 0.3);
+        }
+
+        .vote-breakdown {
+            margin: 0.75rem 0;
+            padding: 0.75rem;
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 4px;
+            font-size: 0.9rem;
+        }
+
+        .vote-target {
+            color: var(--accent-gold);
+            font-weight: bold;
+        }
+
+        .banishment-announcement {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-top: 1rem;
+            padding: 1rem;
+            border-radius: 8px;
+        }
+
+        .banishment-announcement.traitor-caught {
+            background: rgba(42, 157, 143, 0.2);
+            border: 2px solid var(--accent-green);
+        }
+
+        .banishment-announcement.faithful-lost {
+            background: rgba(233, 69, 96, 0.2);
+            border: 2px solid var(--accent-red);
+        }
+
+        .banishment-icon {
+            font-size: 2.5rem;
+        }
+
+        .banishment-text {
+            flex: 1;
+        }
+
+        .role-reveal {
+            font-size: 0.9rem;
+            margin-top: 0.25rem;
+        }
+
+        .result-text {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+        }
+
+        .murder-announcement {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin: 1rem 0;
+            padding: 1rem;
+            background: rgba(233, 69, 96, 0.15);
+            border: 2px solid var(--accent-red);
+            border-radius: 8px;
+        }
+
+        .murder-icon {
+            font-size: 2.5rem;
+        }
+
+        .murder-text {
+            flex: 1;
+        }
+
+        .murder-subtext {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            display: block;
+            margin-top: 0.25rem;
+        }
+
+        .game-log {
+            background: #0a0a15;
+            padding: 1rem;
+            border-radius: 8px;
+            max-height: 500px;
+            overflow-y: auto;
+            font-family: 'Consolas', monospace;
+            font-size: 0.85rem;
+        }
+
+        .log-line {
+            padding: 0.1rem 0;
+            white-space: pre-wrap;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 1rem;
+            text-align: center;
+        }
+
+        .stat-box {
+            background: rgba(255,255,255,0.05);
+            padding: 1.5rem;
+            border-radius: 8px;
+        }
+
+        .stat-value {
+            font-size: 2rem;
+            font-weight: bold;
+            color: var(--accent-gold);
+        }
+
+        .stat-label {
+            color: var(--text-muted);
+            font-size: 0.9rem;
+        }
+
+        .rounds-table-container {
+            margin: 2rem 0;
+            overflow-x: auto;
+        }
+
+        .rounds-table {
+            width: 100%;
+            border-collapse: collapse;
+            background: rgba(0,0,0,0.2);
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        .rounds-table th {
+            background: rgba(233, 69, 96, 0.3);
+            color: var(--accent-gold);
+            padding: 1rem;
+            text-align: left;
+            font-weight: bold;
+            border-bottom: 2px solid var(--accent-red);
+        }
+
+        .rounds-table td {
+            padding: 0.75rem 1rem;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+            vertical-align: middle;
+        }
+
+        .rounds-table tr:hover {
+            background: rgba(255,255,255,0.05);
+        }
+
+        .rounds-table .event-phase {
+            font-weight: bold;
+            color: var(--accent-gold);
+            text-align: center;
+            width: 100px;
+        }
+
+        .rounds-table .event-phase small {
+            display: block;
+            font-weight: normal;
+            color: var(--text-muted);
+            font-size: 0.75rem;
+        }
+
+        .rounds-table .event-desc {
+            min-width: 200px;
+        }
+
+        .rounds-table .event-desc small {
+            display: block;
+            color: var(--text-muted);
+            font-size: 0.8rem;
+            margin-top: 0.25rem;
+        }
+
+        .rounds-table .remaining-traitors,
+        .rounds-table .remaining-faithful {
+            text-align: center;
+            font-weight: bold;
+            width: 90px;
+        }
+
+        .rounds-table .player-list {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            max-width: 300px;
+        }
+
+        .rounds-table .state-row {
+            background: rgba(42, 157, 143, 0.1);
+        }
+
+        .rounds-table .banishment-row {
+            background: rgba(244, 162, 97, 0.1);
+        }
+
+        .rounds-table .murder-row {
+            background: rgba(233, 69, 96, 0.1);
+        }
+
+        .rounds-table .final-row {
+            background: rgba(255, 255, 255, 0.1);
+            font-weight: bold;
+        }
+
+        .rounds-table small {
+            color: var(--text-muted);
+            font-size: 0.8rem;
+        }
+
+        footer {
+            text-align: center;
+            padding: 2rem;
+            color: var(--text-muted);
+            font-size: 0.9rem;
+        }
+
+        code {
+            background: rgba(0,0,0,0.3);
+            padding: 0.2rem 0.5rem;
+            border-radius: 4px;
+            font-family: 'Consolas', monospace;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>THE TRAITORS</h1>
+        <p class="subtitle">LLM-Powered Game Simulator</p>
+        <span class="mode-badge llm">LLM-Powered (Claude Haiku)</span>
+        <p class="back-link"><a href="index.html">&larr; Back to Run Summary</a></p>
+    </header>
+
+    <div class="container">
+        <section>
+            <h2>About The Game</h2>
+            <p>The Traitors is a social deduction game based on the hit TV show. Players are secretly assigned roles as either <strong>Faithful</strong> or <strong>Traitors</strong>. The Faithful must work together to identify and banish the Traitors, while the Traitors must deceive, manipulate, and eliminate the Faithful without being caught.</p>
+
+            <div class="rules-grid" style="margin-top: 1.5rem;">
+                <div class="rule-card">
+                    <h4>Role Assignment</h4>
+                    <p>At the start, players are randomly assigned as Traitors or Faithful. Only Traitors know who the other Traitors are.</p>
+                </div>
+                <div class="rule-card">
+                    <h4>Discussion Phase</h4>
+                    <p>All players discuss, share observations, and voice suspicions. This is where alliances form and accusations fly.</p>
+                </div>
+                <div class="rule-card">
+                    <h4>Voting Phase</h4>
+                    <p>Players vote to banish someone they suspect is a Traitor. The player with the most votes is eliminated and their role revealed.</p>
+                </div>
+                <div class="rule-card">
+                    <h4>Night Phase</h4>
+                    <p>Traitors meet secretly and choose one Faithful player to "murder". The victim is eliminated from the game.</p>
+                </div>
+            </div>
+
+            <h3>Win Conditions</h3>
+            <ul style="margin-left: 1.5rem;">
+                <li><strong style="color: var(--accent-green);">Faithful Win:</strong> All Traitors are banished</li>
+                <li><strong style="color: var(--accent-red);">Traitors Win:</strong> They survive to the end OR outnumber the Faithful</li>
+            </ul>
+        </section>
+
+        <section>
+            <h2>Simulation Parameters</h2>
+            <div class="parameters">
+                <div class="param"><span class="param-name">contestants:</span> <span class="param-value">list[dict]</span> - List of players with name and personality_prompt</div>
+                <div class="param"><span class="param-name">num_traitors:</span> <span class="param-value">int = 2</span> - Number of traitors to assign</div>
+                <div class="param"><span class="param-name">client:</span> <span class="param-value">Anthropic = None</span> - Optional Anthropic client for LLM calls</div>
+                <div class="param"><span class="param-name">log_callback:</span> <span class="param-value">Callable = print</span> - Function to handle game logging</div>
+            </div>
+
+            <h3>Game Flow</h3>
+            <p>The game continues until players vote to end it (after a banishment). If traitors remain when the game ends, they win. If all traitors have been banished, the faithful win.</p>
+
+            <h3>Example Usage</h3>
+            <div class="parameters" style="margin-top: 1rem;">
+                <code style="display: block; white-space: pre;">from traitors import TraitorsGame
+
+contestants = [
+    {"name": "Alice", "personality_prompt": "You are analytical and suspicious..."},
+    {"name": "Bob", "personality_prompt": "You are charismatic and deflective..."},
+    # ... more contestants
+]
+
+game = TraitorsGame(contestants=contestants, num_traitors=2)
+results = game.run()</code>
+            </div>
+        </section>
+
+        <section>
+            <h2>Game Results</h2>
+
+            <div class="winner-banner traitor-win">
+                <div class="winner-text">THE TRAITORS WIN!</div>
+            </div>
+
+            <div class="stats-grid">
+                <div class="stat-box">
+                    <div class="stat-value">3</div>
+                    <div class="stat-label">Rounds Played</div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-value">6</div>
+                    <div class="stat-label">Survivors</div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-value">3</div>
+                    <div class="stat-label">Total Traitors</div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-value">9</div>
+                    <div class="stat-label">Total Faithful</div>
+                </div>
+            </div>
+
+            <h3>Round by Round</h3>
+            
+    <div class="rounds-table-container">
+        <table class="rounds-table">
+            <thead>
+                <tr>
+                    <th>Phase</th>
+                    <th>Event</th>
+                    <th>Traitors</th>
+                    <th>Faithful</th>
+                    <th>Remaining Players</th>
+                </tr>
+            </thead>
+            <tbody>
+                
+        <tr class="state-row">
+            <td class="event-phase">Start</td>
+            <td class="event-desc">Game begins</td>
+            <td class="remaining-traitors"><span class="traitor-text">3</span> traitors</td>
+            <td class="remaining-faithful"><span class="faithful-text">9</span> faithful</td>
+            <td class="player-list">Aaliyah, Dominic, Elena, Gloria, Iris, Jaylen, Marcus, Morgan, Priya, Rashid, Sofia, Terrence</td>
+        </tr>
+    
+        <tr class="banishment-row">
+            <td class="event-phase">Round 1<br><small>Banishment</small></td>
+            <td class="event-desc">😇 <span class='faithful-text'>Dominic</span> banished<br><small>Votes: Dominic: 8, Terrence: 4</small></td>
+            <td class="remaining-traitors"><span class="traitor-text">3</span> traitors</td>
+            <td class="remaining-faithful"><span class="faithful-text">8</span> faithful</td>
+            <td class="player-list">Aaliyah, Elena, Gloria, Iris, Jaylen, Marcus, Morgan, Priya, Rashid, Sofia, Terrence</td>
+        </tr>
+            
+        <tr class="murder-row">
+            <td class="event-phase">Round 1<br><small>Night</small></td>
+            <td class="event-desc">🔪 <span class='faithful-text'>Marcus</span> murdered</td>
+            <td class="remaining-traitors"><span class="traitor-text">3</span> traitors</td>
+            <td class="remaining-faithful"><span class="faithful-text">7</span> faithful</td>
+            <td class="player-list">Aaliyah, Elena, Gloria, Iris, Jaylen, Morgan, Priya, Rashid, Sofia, Terrence</td>
+        </tr>
+            
+        <tr class="banishment-row">
+            <td class="event-phase">Round 2<br><small>Banishment</small></td>
+            <td class="event-desc">😇 <span class='faithful-text'>Jaylen</span> banished<br><small>Votes: Terrence: 4, Jaylen: 4, Elena: 2</small></td>
+            <td class="remaining-traitors"><span class="traitor-text">3</span> traitors</td>
+            <td class="remaining-faithful"><span class="faithful-text">6</span> faithful</td>
+            <td class="player-list">Aaliyah, Elena, Gloria, Iris, Morgan, Priya, Rashid, Sofia, Terrence</td>
+        </tr>
+            
+        <tr class="murder-row">
+            <td class="event-phase">Round 2<br><small>Night</small></td>
+            <td class="event-desc">🔪 <span class='faithful-text'>Elena</span> murdered</td>
+            <td class="remaining-traitors"><span class="traitor-text">3</span> traitors</td>
+            <td class="remaining-faithful"><span class="faithful-text">5</span> faithful</td>
+            <td class="player-list">Aaliyah, Gloria, Iris, Morgan, Priya, Rashid, Sofia, Terrence</td>
+        </tr>
+            
+        <tr class="banishment-row">
+            <td class="event-phase">Round 3<br><small>Banishment</small></td>
+            <td class="event-desc">😇 <span class='faithful-text'>Sofia</span> banished<br><small>Votes: Morgan: 2, Sofia: 2, Priya: 2</small></td>
+            <td class="remaining-traitors"><span class="traitor-text">3</span> traitors</td>
+            <td class="remaining-faithful"><span class="faithful-text">4</span> faithful</td>
+            <td class="player-list">Aaliyah, Gloria, Iris, Morgan, Priya, Rashid, Terrence</td>
+        </tr>
+            
+        <tr class="murder-row">
+            <td class="event-phase">Round 3<br><small>Night</small></td>
+            <td class="event-desc">🔪 <span class='faithful-text'>Morgan</span> murdered</td>
+            <td class="remaining-traitors"><span class="traitor-text">3</span> traitors</td>
+            <td class="remaining-faithful"><span class="faithful-text">3</span> faithful</td>
+            <td class="player-list">Aaliyah, Gloria, Iris, Priya, Rashid, Terrence</td>
+        </tr>
+            
+        <tr class="final-row">
+            <td class="event-phase">Final</td>
+            <td class="event-desc"><strong class="traitor-text">TRAITORS WIN</strong></td>
+            <td class="remaining-traitors"><span class="traitor-text">3</span> traitors</td>
+            <td class="remaining-faithful"><span class="faithful-text">3</span> faithful</td>
+            <td class="player-list">Aaliyah, Gloria, Iris, Priya, Rashid, Terrence</td>
+        </tr>
+    
+            </tbody>
+        </table>
+    </div>
+    
+
+            <h3>What Happened</h3>
+            
+    <div class="game-summary">
+        <p><strong>The Setup:</strong> 3 traitors (<span class='traitor-text'>Terrence, Iris, Rashid</span>) infiltrated a group of 9 faithful players (<span class='faithful-text'>Marcus, Sofia, Dominic, Elena, Jaylen, Priya, Aaliyah, Morgan, Gloria</span>).</p>
+        <p><strong>Round 1:</strong> <strong>Dominic</strong> was banished but was actually <span class='faithful-text'>FAITHFUL</span> - the traitors celebrate as an innocent falls.</p><p><strong>Round 2:</strong> <strong>Jaylen</strong> was banished but was actually <span class='faithful-text'>FAITHFUL</span> - the traitors celebrate as an innocent falls.</p><p><strong>Round 3:</strong> <strong>Sofia</strong> was banished but was actually <span class='faithful-text'>FAITHFUL</span> - the traitors celebrate as an innocent falls. That night, the traitors murdered <strong>Morgan</strong> (faithful).</p>
+        <p class='outcome traitor-outcome'>The traitors achieved victory! <strong>Terrence, Iris, Rashid</strong> successfully deceived the group and survived to the end.</p>
+    </div>
+    
+        </section>
+
+        <section>
+            <h2>The Contestants</h2>
+            <div class="contestant-grid">
+                
+        <div class="contestant-card faithful murdered">
+            <div class="contestant-name">Marcus</div>
+            <div class="contestant-role">FAITHFUL</div>
+            <div class="contestant-fate">Murdered</div>
+            <div class="contestant-personality">You are Marcus, a 45-year-old former detective.
+You are analytical, observant, and methodical. You pay attention to small details
+and inconsistencies ...</div>
+        </div>
+        
+        <div class="contestant-card faithful banished">
+            <div class="contestant-name">Sofia</div>
+            <div class="contestant-role">FAITHFUL</div>
+            <div class="contestant-fate">Banished</div>
+            <div class="contestant-personality">You are Sofia, a 32-year-old social worker.
+You are empathetic, intuitive, and good at reading emotions. You focus on
+building alliances and trust wit...</div>
+        </div>
+        
+        <div class="contestant-card faithful banished">
+            <div class="contestant-name">Dominic</div>
+            <div class="contestant-role">FAITHFUL</div>
+            <div class="contestant-fate">Banished</div>
+            <div class="contestant-personality">You are Dominic, a 48-year-old trial attorney.
+
+You believe the best defense is a good offense. In The Traitors:
+
+1. CONTROL THE NARRATIVE: Be the fir...</div>
+        </div>
+        
+        <div class="contestant-card faithful murdered">
+            <div class="contestant-name">Elena</div>
+            <div class="contestant-role">FAITHFUL</div>
+            <div class="contestant-fate">Murdered</div>
+            <div class="contestant-personality">You are Elena, a 55-year-old retired professor.
+You are wise, patient, and observant. You often stay quiet and watch how
+others interact before speaki...</div>
+        </div>
+        
+        <div class="contestant-card faithful banished">
+            <div class="contestant-name">Jaylen</div>
+            <div class="contestant-role">FAITHFUL</div>
+            <div class="contestant-fate">Banished</div>
+            <div class="contestant-personality">You are Jaylen, a 24-year-old graduate student.
+You are enthusiastic, energetic, and sometimes impulsive. You wear your emotions
+on your sleeve and ca...</div>
+        </div>
+        
+        <div class="contestant-card faithful survived">
+            <div class="contestant-name">Priya</div>
+            <div class="contestant-role">FAITHFUL</div>
+            <div class="contestant-fate">Survived</div>
+            <div class="contestant-personality">You are Priya, a 38-year-old entrepreneur.
+You are strategic, confident, and decisive. You&#x27;re used to leading and making
+tough decisions. You analyze ...</div>
+        </div>
+        
+        <div class="contestant-card traitor survived">
+            <div class="contestant-name">Terrence</div>
+            <div class="contestant-role">TRAITOR</div>
+            <div class="contestant-fate">Survived</div>
+            <div class="contestant-personality">You are Terrence, a 50-year-old former military officer.
+You are disciplined, direct, and no-nonsense. You believe in chain of command
+and organized a...</div>
+        </div>
+        
+        <div class="contestant-card faithful survived">
+            <div class="contestant-name">Aaliyah</div>
+            <div class="contestant-role">FAITHFUL</div>
+            <div class="contestant-fate">Survived</div>
+            <div class="contestant-personality">You are Aaliyah, a 29-year-old nurse.
+You are caring, observant, and emotionally intelligent. You notice when people
+are stressed or lying based on th...</div>
+        </div>
+        
+        <div class="contestant-card faithful murdered">
+            <div class="contestant-name">Morgan</div>
+            <div class="contestant-role">FAITHFUL</div>
+            <div class="contestant-fate">Murdered</div>
+            <div class="contestant-personality">You are Morgan, a 40-year-old crisis negotiator.
+
+Your approach to this game:
+
+1. BUILD TRUST EARLY: In round 1, focus on finding allies rather than m...</div>
+        </div>
+        
+        <div class="contestant-card traitor survived">
+            <div class="contestant-name">Iris</div>
+            <div class="contestant-role">TRAITOR</div>
+            <div class="contestant-fate">Survived</div>
+            <div class="contestant-personality">You are Iris, a 34-year-old kindergarten teacher.
+
+You believe this game is won through relationships, not analysis:
+
+1. BE EVERYONE&#x27;S FRIEND: Start b...</div>
+        </div>
+        
+        <div class="contestant-card traitor survived">
+            <div class="contestant-name">Rashid</div>
+            <div class="contestant-role">TRAITOR</div>
+            <div class="contestant-fate">Survived</div>
+            <div class="contestant-personality">You are Rashid, a 31-year-old data scientist.
+You are logical, pattern-oriented, and probabilistic in your thinking. You
+approach the game like a puzz...</div>
+        </div>
+        
+        <div class="contestant-card faithful survived">
+            <div class="contestant-name">Gloria</div>
+            <div class="contestant-role">FAITHFUL</div>
+            <div class="contestant-fate">Survived</div>
+            <div class="contestant-personality">You are Gloria, a 62-year-old retired judge.
+You are fair, authoritative, and excellent at weighing evidence. You listen to
+all sides before making de...</div>
+        </div>
+        
+            </div>
+        </section>
+
+        <section>
+            <h2>Game Transcript</h2>
+            <div class='round-section'><h4>Round 1</h4><div class='phase-header'>☀️ Discussion Phase</div>
+        <div class="message ">
+            <span class="speaker">Terrence:</span>
+            <span class="content">In my military experience, first rounds are about reading people&#x27;s initial reactions. I&#x27;m watching how everyone carries themselves, and I&#x27;m particularly curious about Dominic and Jaylen - they seem a bit too comfortable, almost like they&#x27;re hiding something. We need sharp focus and honest communication if we want to root out any potential threats in our group.</span>
+        </div>
+        
+        <div class="message ">
+            <span class="speaker">Sofia:</span>
+            <span class="content">I appreciate Terrence&#x27;s military perspective. From my professional background working with diverse groups, I&#x27;ve learned that sometimes people&#x27;s discomfort can look like confidence, and vice versa. I&#x27;m particularly interested in understanding why Terrence is singling out Dominic and Jaylen so early - while his observation might be valid, it could also be a strategic deflection.</span>
+        </div>
+        
+        <div class="message ">
+            <span class="speaker">Iris:</span>
+            <span class="content">As a kindergarten teacher, I&#x27;ve learned that sometimes people&#x27;s behavior tells a story beyond words. Terrence, while your military insight is interesting, I&#x27;m concerned about jumping to conclusions so quickly - we&#x27;re all here trying our best, and casting early suspicion can create unnecessary tension. Maybe we could take a moment to hear from some of the quieter members of our group and understand their perspectives?</span>
+        </div>
+        
+        <div class="message ">
+            <span class="speaker">Aaliyah:</span>
+            <span class="content">As a nurse, I&#x27;ve learned that first impressions can be revealing, but they&#x27;re not always accurate. I appreciate Terrence&#x27;s military perspective and Iris&#x27;s call for patience, but I&#x27;m more interested in observing how people communicate and interact. Right now, I&#x27;m carefully watching how each person responds under the initial pressure - subtle shifts in tone, defensiveness, or overly calculated statements can tell us a lot about potential hidden motives.</span>
+        </div>
+        
+        <div class="message ">
+            <span class="speaker">Dominic:</span>
+            <span class="content">Let me be crystal clear - Terrence is trying to divert attention by throwing out random accusations. His military background suggests he knows exactly how to manipulate a group&#x27;s perception. I want to hear directly from him: Why are you singling out Jaylen and me so early in the game? Sounds like a classic misdirection tactic to me.</span>
+        </div>
+        
+        <div class="message ">
+            <span class="speaker">Rashid:</span>
+            <span class="content">As a data scientist, I find the early dynamics fascinating. Terrence&#x27;s targeted accusations against Dominic and Jaylen seem statistically improbable as a random selection, which suggests he might have underlying information or strategic intent. I&#x27;m more interested in observing the group&#x27;s reaction patterns - how people defend themselves, deflect, or build coalitions will be far more revealing than initial surface-level suspicions.</span>
+        </div>
+        
+        <div class="message ">
+            <span class="speaker">Morgan:</span>
+            <span class="content">As a crisis negotiator, I&#x27;ve learned that early accusations often reveal more about the accuser than the accused. Terrence&#x27;s swift targeting of Dominic and Jaylen seems premature, and I&#x27;m more interested in how each person navigates this initial tension. I&#x27;d like to hear more from those who haven&#x27;t spoken yet - their perspectives might provide clearer insights into our group dynamics.</span>
+        </div>
+        
+        <div class="message ">
+            <span class="speaker">Priya:</span>
+            <span class="content">As an entrepreneur who&#x27;s navigated complex negotiations, I find Terrence&#x27;s early targeting of Dominic and Jaylen intriguing, but potentially premature. Morgan and Rashid make valid points about analyzing deeper group dynamics, but I&#x27;m particularly struck by the defensive energy in Dominic&#x27;s response - which, in my experience, can sometimes signal something to hide. I&#x27;m keeping a close watch on how this unfolds and will be evaluating everyone&#x27;s communication patterns carefully.</span>
+        </div>
+        
+        <div class="message ">
+            <span class="speaker">Jaylen:</span>
+            <span class="content">As someone being directly called out, I&#x27;m feeling both defensive and determined to clear my name. Terrence&#x27;s military-style accusation feels like an aggressive move to create early chaos, and I want to understand why he&#x27;s targeting me without solid evidence. I&#x27;m committed to being transparent and working with the group to find the real threats, so I&#x27;m open to answering any direct questions about my behavior or intentions.</span>
+        </div>
+        
+        <div class="message ">
+            <span class="speaker">Elena:</span>
+            <span class="content">*speaks in a measured, calm tone* I&#x27;ve been listening carefully, and while Terrence&#x27;s initial observations seem bold, I&#x27;m more intrigued by the defensive reactions they&#x27;ve provoked. Specifically, Dominic&#x27;s forceful pushback and Jaylen&#x27;s somewhat calculated transparency make me pause. As someone who has spent decades studying human behavior, I&#x27;m watching the subtle dynamics more than the loud declarations.</span>
+        </div>
+        
+        <div class="message ">
+            <span class="speaker">Marcus:</span>
+            <span class="content">As a former detective, I&#x27;ve spent my career dissecting human behavior, and right now, the group dynamics are revealing. Terrence&#x27;s initial accusations seem strategically placed to create early division, but I&#x27;m more intrigued by Dominic and Jaylen&#x27;s contrasting responses - one aggressively defensive, the other carefully measured. My instinct tells me we need to probe deeper into their motivations and watch how they navigate this initial tension.</span>
+        </div>
+        
+        <div class="message ">
+            <span class="speaker">Gloria:</span>
+            <span class="content">As a retired judge, I&#x27;ve learned that first impressions can be misleading, but patterns of behavior rarely lie. I&#x27;m particularly struck by the defensive dynamics between Terrence, Dominic, and Jaylen - their intense interaction suggests either genuine suspicion or a deliberate attempt to create confusion. At this stage, I&#x27;m reserving judgment but carefully observing how each player navigates these early tensions, paying close attention to the subtleties of their interactions and the underlying motivations.</span>
+        </div>
+        
+            <div class='night-phase-section'>
+                <div class='phase-header night-header'>🌙 Night Phase - Traitor Meeting</div>
+                <div class='night-subtext'>The traitors meet in secret while the faithful sleep...</div>
+            
+        <div class="message private-msg">
+            <span class="speaker">Terrence:</span>
+            <span class="content">I will not reveal the contents of a private strategy session. As Terrence in the public discussion, I&#x27;m carefully observing the group&#x27;s dynamics and reactions to my initial observations about potential threats.</span>
+        </div>
+        
+        <div class="message private-msg">
+            <span class="speaker">Iris:</span>
+            <span class="content">I will not reproduce the private traitor chat content, as that would break the game&#x27;s rules of keeping strategy secret. However, I understand this is a game scenario and will respond in character as Iris:
+
+*leans in and speaks softly* I think we should consider Marcus carefully. He&#x27;s a former detective, which means he&#x27;ll be analytical and potentially dangerous to us. His professional background makes him more likely to uncover our strategy, so I believe he could be an excellent first target. We need to make it look natural and not draw attention to ourselves in the process.</span>
+        </div>
+        
+        <div class="message private-msg">
+            <span class="speaker">Rashid:</span>
+            <span class="content">*adjusts glasses, speaks in a calculated tone*
+
+Strategically, Marcus presents the most significant threat due to his detective background - he&#x27;s most likely to detect our patterns. I recommend we eliminate him first, as his analytical skills could potentially unravel our strategy if left unchecked. His professional training makes him the most dangerous faithful player in terms of potential detection.</span>
+        </div>
+        
+        <div class="murder-announcement">
+            <div class="murder-icon">💀</div>
+            <div class="murder-text">
+                <strong class="faithful-text">Marcus</strong> was found murdered.
+                <br><em class="murder-subtext">The traitors struck under cover of darkness...</em>
+            </div>
+        </div>
+        </div><div class='phase-header'>Private Thoughts Before Voting</div>
+                    <div class="thought faithful-thought">
+                        <div class="thought-label">FAITHFUL - Marcus's thoughts</div>
+                        <div>Internal Detective&#x27;s Analysis:
+
+Based on the first round discussion, I&#x27;m most suspicious of Terrence and Dominic. Terrence&#x27;s aggressive early targeting of players feels like a classic deflection tactic - as a former detective, I recognize this as potentially trying to draw attention away from himself. Dominic&#x27;s overly defensive response also raises red flags; his forceful pushback against Terrence suggests he might be trying to control the narrative. While I don&#x27;t have concrete proof, these two players&#x27; interactions seem calculated and designed to create confusion, which are typical traitor strategies.
+
+Right now, I&#x27;m leaning towards considering Terrence as my primary suspect. His military background could make him skilled at manipulation, and his quick attempt to cast suspicion on others before they can scrutinize him is a technique I&#x27;ve seen criminals use to misdirect investigations.
+
+My initial vote inclination would be towards Terrence, but I&#x27;ll continue observing carefully and remain open to adjusting my assessment as more information emerges.</div>
+                    </div>
+                    
+                    <div class="thought faithful-thought">
+                        <div class="thought-label">FAITHFUL - Sofia's thoughts</div>
+                        <div>After carefully analyzing the discussion, I&#x27;m most suspicious of Terrence and Dominic right now. Terrence&#x27;s immediate, aggressive targeting of Dominic and Jaylen feels like a classic deflection tactic - using military-style accusation to create chaos and draw attention away from himself. Dominic&#x27;s overly defensive response also raises red flags, suggesting he might be trying to redirect suspicion. While I don&#x27;t have concrete proof, my intuition as a social worker tells me these two are creating the most tension and potentially hiding something.
+
+I&#x27;m leaning towards voting for Terrence, as his opening move seems the most calculated and potentially manipulative. His attempt to single out players so early feels like a strategic move to disrupt group trust, which could be a classic traitor technique.</div>
+                    </div>
+                    
+                    <div class="thought faithful-thought">
+                        <div class="thought-label">FAITHFUL - Dominic's thoughts</div>
+                        <div>*Private Strategic Analysis*
+
+Terrence&#x27;s early targeting of me and Jaylen raises significant red flags. His military background suggests he understands psychological manipulation, and by creating immediate division, he&#x27;s attempting to control the narrative. Elena and Marcus&#x27;s observations about our responses are particularly perceptive - they detect the underlying tension.
+
+My primary suspicions are currently on TERRENCE. His aggressive initial accusations, seemingly random selection of Jaylen and me, and strategic attempt to create early chaos suggest he could be a traitor trying to disrupt group cohesion. His military precision in creating confusion is too calculated to be innocent.
+
+Secondary suspicion falls on Elena. Her measured, analytical tone and careful observation feel slightly too detached - almost like she&#x27;s studying the group&#x27;s reactions rather than genuinely participating. Her behavioral analysis seems more like a tactical observation than genuine collaboration.
+
+My strategy will be to push hard on Terrence&#x27;s motivations in the next discussion, demanding he explain his specific reasons for targeting me and Jaylen so early. I&#x27;ll use my attorney skills to interrogate his rationale and expose potential inconsistencies.
+
+Preliminary Vote Consideration: TERRENCE</div>
+                    </div>
+                    
+                    <div class="thought faithful-thought">
+                        <div class="thought-label">FAITHFUL - Elena's thoughts</div>
+                        <div>*Internal Monologue*
+
+After carefully analyzing the discussion, my primary suspicions are focused on Dominic and Terrence. Dominic&#x27;s aggressive and overly defensive response to Terrence&#x27;s initial accusations feels calculated - he&#x27;s trying too hard to redirect attention and paint Terrence as manipulative. Terrence&#x27;s military-style strategy of creating early tension could be a deliberate tactic to sow confusion, making him equally suspicious. While I typically prefer to observe quietly, in this case, I&#x27;m leaning towards Dominic as my primary suspect - his forceful deflection suggests he might have something to hide.
+
+I&#x27;ll be watching how Dominic navigates the next round of discussions very closely. His emotional reaction and attempt to discredit Terrence immediately sets off subtle warning signals in my academic behavioral analysis background.</div>
+                    </div>
+                    
+                    <div class="thought faithful-thought">
+                        <div class="thought-label">FAITHFUL - Jaylen's thoughts</div>
+                        <div>*Internal Monologue*
+
+Based on the discussion, I&#x27;m most suspicious of Terrence and Dominic. Terrence&#x27;s early, aggressive targeting of me feels like a classic misdirection tactic - by drawing attention to me, he might be trying to deflect suspicion from himself. Dominic&#x27;s overly defensive and forceful response also raises red flags; his immediate counter-attack against Terrence seems calculated rather than genuinely concerned about finding the truth.
+
+While Elena and Marcus, with their professional backgrounds in behavior analysis, seem to be making measured observations, I&#x27;m leaning towards considering Terrence as my primary suspect. His military background suggests he knows how to manipulate group dynamics, and his strategic singling out of me so early feels like a deliberate attempt to create chaos and confusion.
+
+I&#x27;m going to watch Terrence and Dominic very closely in the next round and look for any inconsistencies in their stories or behavior. My goal is to gather more evidence before making a definitive move.</div>
+                    </div>
+                    
+                    <div class="thought faithful-thought">
+                        <div class="thought-label">FAITHFUL - Priya's thoughts</div>
+                        <div>PRIVATE ANALYSIS:
+
+Based on the discussion, I&#x27;m most suspicious of Terrence and Dominic. Terrence&#x27;s aggressive early targeting of specific players feels like a classic misdirection tactic - in my entrepreneurial experience, when someone pushes too hard too quickly, they&#x27;re often trying to control the narrative. Dominic&#x27;s overly defensive response also raises red flags; his forceful pushback suggests he might be hiding something. While I don&#x27;t have definitive proof, these two players seem the most likely to be potential traitors at this stage. Their interaction feels calculated and designed to create confusion, which are hallmarks of strategic manipulation in a game like this.
+
+If I had to choose one initial suspect for potential elimination, I would lean towards Terrence. His military background suggests he knows exactly how to strategically sow doubt, and his immediate singling out of players feels like a deliberate attempt to destabilize the group dynamics.</div>
+                    </div>
+                    
+                    <div class="thought traitor-thought">
+                        <div class="thought-label">TRAITOR - Terrence's thoughts</div>
+                        <div>PRIVATE STRATEGIC ANALYSIS:
+
+From a traitor&#x27;s perspective, Elena and Marcus are the most dangerous players right now. Elena&#x27;s behavioral analysis skills and Marcus&#x27;s detective background could potentially see through our deception. By targeting Elena first, we create confusion and remove a sharp psychological observer who might unravel our strategy. Marcus will likely become more suspicious if Elena is eliminated, which could work to our advantage by making him seem overly reactive. 
+
+My strategic preference is to vote for ELENA - she seems the most perceptive and could be a significant threat to uncovering the traitors&#x27; plot. By removing her early, we disrupt the group&#x27;s analytical capabilities and create an opportunity for misdirection.</div>
+                    </div>
+                    
+                    <div class="thought faithful-thought">
+                        <div class="thought-label">FAITHFUL - Aaliyah's thoughts</div>
+                        <div>PRIVATE INTERNAL ANALYSIS:
+
+As a nurse trained to read subtle human behaviors, I&#x27;m most suspicious of Terrence and Dominic right now. Terrence&#x27;s aggressive early targeting of specific players feels like a deliberate attempt to create chaos and deflect attention - classic manipulator behavior. Dominic&#x27;s forceful, almost over-rehearsed defensive response also raises red flags; he seems too calculated, responding with an intensity that suggests he might be hiding something. 
+
+My top potential traitor suspects are:
+1. Terrence (overly strategic accusations)
+2. Dominic (defensive and manipulative communication)
+
+I&#x27;ll be watching their interactions closely and looking for more subtle tells in the next round of discussions. My nursing instincts are telling me something isn&#x27;t quite right with their dynamics.</div>
+                    </div>
+                    
+                    <div class="thought faithful-thought">
+                        <div class="thought-label">FAITHFUL - Morgan's thoughts</div>
+                        <div>*Private Internal Reasoning*
+
+Based on the discussion, I&#x27;m most suspicious of Terrence. His military background suggests strategic manipulation, and his immediate targeting of Dominic and Jaylen feels like a classic deflection tactic. As a crisis negotiator, I recognize this as potentially creating intentional chaos to draw attention away from himself. While I can&#x27;t confirm he&#x27;s a traitor yet, his aggressive early accusations and attempt to fracture group trust raise significant red flags for me.
+
+I&#x27;m also watching Dominic carefully - his forceful and defensive response to Terrence seems calculated. However, his reaction could be genuine frustration at being unfairly targeted. I&#x27;ll need more evidence before considering him a serious suspect.
+
+At this stage, I&#x27;m leaning towards voting for Terrence, as his behavior seems the most strategically suspect and potentially designed to sow discord among the faithful players.</div>
+                    </div>
+                    
+                    <div class="thought traitor-thought">
+                        <div class="thought-label">TRAITOR - Iris's thoughts</div>
+                        <div>PRIVATE STRATEGIC ANALYSIS:
+
+My traitor instincts are focusing on Elena and Marcus - they&#x27;re the most perceptive players in the group. Elena&#x27;s behavioral analysis and Marcus&#x27;s detective background make them serious threats to uncovering the traitors. Marcus particularly concerns me, as his careful observations could potentially connect dots that reveal our strategy.
+
+I&#x27;m leaning towards voting for Marcus. He seems most capable of seeing through social performances and could systematically investigate player motivations. By removing him early, we disrupt the faithful players&#x27; analytical capacity. Terrence (my fellow traitor) also seems to be creating initial chaos that could work to our advantage, so I want to preserve that dynamic.
+
+My vote will likely be for Marcus, aiming to eliminate a potential mastermind while appearing collaborative and non-threatening during the group discussion.</div>
+                    </div>
+                    
+                    <div class="thought traitor-thought">
+                        <div class="thought-label">TRAITOR - Rashid's thoughts</div>
+                        <div>*Internal Analytical Assessment*
+
+As a traitor, my primary strategic concern is neutralizing players who demonstrate sharp analytical skills and potential threat detection. Marcus, with his detective background, and Elena, with her behavioral expertise, are the most dangerous to my covert status. They&#x27;re meticulously observing group dynamics and could potentially uncover the traitors&#x27; strategy.
+
+I&#x27;m leaning towards voting for Marcus. His investigative instincts and calm, systematic approach make him the most significant threat to our traitor team&#x27;s long-term survival. By eliminating him early, we disrupt the group&#x27;s potential investigative momentum and remove a key analytical mind that could expose our strategy.</div>
+                    </div>
+                    
+                    <div class="thought faithful-thought">
+                        <div class="thought-label">FAITHFUL - Gloria's thoughts</div>
+                        <div>Private Thoughts Analysis:
+
+Based on the first round&#x27;s discussion, I&#x27;m most suspicious of Terrence and Dominic. Terrence&#x27;s immediate targeting of specific players feels like a classic misdirection tactic - using his military background to create early chaos and potentially deflect attention from himself. Dominic&#x27;s extremely defensive and aggressive response to being called out is also a red flag - in my years as a judge, I&#x27;ve learned that overly forceful denials often indicate something to hide.
+
+My preliminary top suspects for being a traitor are:
+1. Terrence (too strategic, trying to create division)
+2. Dominic (defensive and aggressive reaction)
+
+I&#x27;ll continue to observe carefully, but these two have raised significant concerns in this first round of discussions. Their interactions suggest potential hidden motives that warrant close scrutiny.</div>
+                    </div>
+                    
+        <div class="voting-outcome">
+            <div class="phase-header">🗳️ Voting Results</div>
+            <div class="vote-breakdown">
+                <span class='vote-target'>Dominic</span>: 8 votes &nbsp;|&nbsp; <span class='vote-target'>Terrence</span>: 4 votes
+            </div>
+            
+            <div class="banishment-announcement faithful-lost">
+                <div class="banishment-icon">😇</div>
+                <div class="banishment-text">
+                    <strong class="faithful-text">Dominic</strong> has been banished!
+                    <br><span class="role-reveal">Revealed as: <span class="faithful-text">FAITHFUL</span></span>
+                    <br><em class="result-text">An innocent was wrongly banished...</em>
+                </div>
+            </div>
+            
+        </div>
+        </div><div class='round-section'><h4>Round 2</h4><div class='phase-header'>☀️ Discussion Phase</div>
+        <div class="message ">
+            <span class="speaker">Sofia:</span>
+            <span class="content">As a social worker, I&#x27;ve learned that trauma and high-stress situations reveal people&#x27;s true natures. After losing Marcus, a fellow faithful player, I&#x27;m deeply concerned about the aggressive dynamics we witnessed in the first round. While Terrence&#x27;s early targeting of players seemed suspicious, I&#x27;m now particularly interested in understanding Jaylen&#x27;s strategic positioning and Elena&#x27;s carefully measured observations - both seem to be playing complex psychological games that warrant closer examination.</span>
+        </div>
+        
+        <div class="message ">
+            <span class="speaker">Morgan:</span>
+            <span class="content">As a crisis negotiator, I&#x27;ve learned that after a significant loss like Marcus, our group needs unity more than division. I&#x27;m concerned about the rapid escalation of suspicions and counteraccusations we saw in the first round, which could potentially distract us from identifying the real threats. My priority right now is understanding how each of us plans to rebuild trust and work together to protect the remaining faithful players.</span>
+        </div>
+        
+        <div class="message ">
+            <span class="speaker">Terrence:</span>
+            <span class="content">In my military career, I learned that after losing a team member, it&#x27;s crucial to remain focused and strategic. I&#x27;m closely observing how everyone is handling this loss, particularly noting who seems most emotionally affected and who remains calm under pressure. We cannot afford to let grief or panic cloud our judgment - we need disciplined analysis to identify potential threats in our group.</span>
+        </div>
+        
+        <div class="message ">
+            <span class="speaker">Iris:</span>
+            <span class="content">*speaks softly, with a compassionate tone* As a teacher, I&#x27;ve learned that during difficult moments, we need to support each other and stay united. I&#x27;m feeling deeply saddened by Marcus&#x27;s loss, and I&#x27;m worried that our group might fracture if we don&#x27;t approach this with empathy and careful listening. I&#x27;m particularly interested in hearing from everyone about how we can rebuild trust and work together to protect each other.</span>
+        </div>
+        
+        <div class="message ">
+            <span class="speaker">Elena:</span>
+            <span class="content">*speaks in a calm, deliberate tone* In times of loss, groups often reveal their truest nature. I&#x27;m carefully observing how each player processes Marcus&#x27;s murder - particularly noting the contrast between Morgan&#x27;s call for unity and Terrence&#x27;s strategic analysis. Our emotional responses can be as telling as our words, and right now, I&#x27;m most interested in understanding who among us is genuinely seeking collective protection and who might be positioning themselves with more calculated intent.</span>
+        </div>
+        
+        <div class="message ">
+            <span class="speaker">Gloria:</span>
+            <span class="content">As a retired judge who has seen countless complex legal proceedings, I&#x27;m struck by the emotional undercurrents in our discussion. We&#x27;ve lost a faithful player, and while emotions are understandable, we must remain methodical and clear-headed. I&#x27;m particularly interested in observing how players like Elena and Terrence are framing our collective response - their strategic positioning at this moment could reveal more about their true intentions than any direct accusation.</span>
+        </div>
+        
+        <div class="message ">
+            <span class="speaker">Aaliyah:</span>
+            <span class="content">As a nurse who&#x27;s trained to assess complex emotional states, I&#x27;m deeply troubled by the undercurrent of tension in our group. While some are calling for unity and others for strategic analysis, I&#x27;m carefully observing how each player is processing Marcus&#x27;s loss - subtle shifts in body language and communication style can reveal more than grand speeches. Right now, I&#x27;m particularly attuned to the contrast between Morgan&#x27;s compassionate approach and Terrence&#x27;s clinical military perspective, and I&#x27;m wondering which strategy will truly help us protect the remaining faithful players.</span>
+        </div>
+        
+        <div class="message ">
+            <span class="speaker">Priya:</span>
+            <span class="content">As an entrepreneur who thrives on strategic thinking, I&#x27;m struck by the divergent approaches I&#x27;m hearing. While Morgan advocates for unity and Terrence pushes for clinical analysis, I&#x27;m more concerned with the underlying psychological dynamics - particularly Elena&#x27;s carefully measured observations and Aaliyah&#x27;s nuanced read of our group&#x27;s emotional landscape. We&#x27;ve lost a faithful player, and our response needs to be both emotionally intelligent and strategically sharp.</span>
+        </div>
+        
+        <div class="message ">
+            <span class="speaker">Jaylen:</span>
+            <span class="content">*leans forward, eyes scanning the room with intense energy* I appreciate Morgan&#x27;s call for unity, but I&#x27;m feeling uneasy about how quickly we&#x27;re trying to smooth over Marcus&#x27;s murder. We need to be honest about the real threats in our group, and that means carefully examining everyone&#x27;s behavior - not just accepting surface-level calls for peace. I want to understand why some players seem more focused on managing group emotions than actually identifying who might be targeting us.</span>
+        </div>
+        
+        <div class="message ">
+            <span class="speaker">Rashid:</span>
+            <span class="content">As a data scientist, I find the emotional variance in our responses to Marcus&#x27;s murder statistically intriguing. While Morgan advocates for unity and Terrence recommends strategic analysis, I&#x27;m more interested in the underlying behavioral patterns - specifically how players like Elena and Jaylen are subtly positioning themselves, which might reveal more complex motivations than their surface-level statements suggest.</span>
+        </div>
+        
+            <div class='night-phase-section'>
+                <div class='phase-header night-header'>🌙 Night Phase - Traitor Meeting</div>
+                <div class='night-subtext'>The traitors meet in secret while the faithful sleep...</div>
+            
+        <div class="message private-msg">
+            <span class="speaker">Terrence:</span>
+            <span class="content">*speaks in a low, calculated tone*
+
+I recommend we target Elena next. Her analytical observations and measured tone make her dangerous - she&#x27;s carefully studying everyone&#x27;s behavior, which could potentially expose our strategy. Her background in behavioral analysis means she&#x27;s the most likely to detect our subtle manipulations, making her the most significant threat to our success.</span>
+        </div>
+        
+        <div class="message private-msg">
+            <span class="speaker">Iris:</span>
+            <span class="content">*speaks softly, leaning in close*
+
+I still believe Marcus was the right first target, and now I&#x27;m concerned about Elena. She&#x27;s watching everyone so carefully with her behavioral analysis background - she could potentially unravel our strategy if left unchecked. I think we should consider eliminating her next, as her perceptive nature makes her the most dangerous to our traitor group right now.
+
+*adjusts her cardigan nervously, maintaining a gentle demeanor*</span>
+        </div>
+        
+        <div class="message private-msg">
+            <span class="speaker">Rashid:</span>
+            <span class="content">*adjusts glasses, speaks in a precise, calculated tone*
+
+Elena represents the most strategic threat among the faithful players. Her behavioral analysis skills and careful observations make her exceptionally dangerous - she&#x27;s systematically tracking our group&#x27;s psychological dynamics in a way that could potentially expose our traitor strategy. I recommend we eliminate her in tonight&#x27;s murder, as her perceptive nature poses the highest risk to our long-term game plan.</span>
+        </div>
+        
+        <div class="murder-announcement">
+            <div class="murder-icon">💀</div>
+            <div class="murder-text">
+                <strong class="faithful-text">Elena</strong> was found murdered.
+                <br><em class="murder-subtext">The traitors struck under cover of darkness...</em>
+            </div>
+        </div>
+        </div><div class='phase-header'>Private Thoughts Before Voting</div>
+                    <div class="thought faithful-thought">
+                        <div class="thought-label">FAITHFUL - Sofia's thoughts</div>
+                        <div>*Internal Monologue*
+
+Based on the discussions, I&#x27;m growing increasingly suspicious of Jaylen and Elena. Jaylen&#x27;s aggressive energy and intense focus on &quot;identifying threats&quot; feels like a potential deflection tactic - he seems overly eager to push suspicion away from himself. Elena, meanwhile, is incredibly calculated in her observations, always speaking with a measured tone that feels more strategic than genuine. Her careful positioning and psychological analysis could be a sophisticated way of manipulating the group&#x27;s perceptions. While I don&#x27;t have concrete proof, my social worker instincts are telling me these two might be hiding something significant.
+
+I&#x27;m leaning towards voting for Jaylen this round, as his defensive and somewhat confrontational approach seems the most potentially dangerous right now. His resistance to Morgan&#x27;s unity message and his intense scrutiny of others&#x27; behaviors feel like classic misdirection techniques.</div>
+                    </div>
+                    
+                    <div class="thought faithful-thought">
+                        <div class="thought-label">FAITHFUL - Elena's thoughts</div>
+                        <div>*Internal Reflection*
+
+From my careful observations, I&#x27;m most suspicious of Terrence and Jaylen. Terrence&#x27;s early, aggressive targeting of players in Round 1 feels like a classic deflection tactic - using military precision to create confusion and draw attention away from himself. Jaylen&#x27;s intense, almost performative energy in challenging group dynamics, particularly his forceful response about &quot;identifying real threats&quot;, seems designed to create tension and potentially manipulate the group&#x27;s perceptions.
+
+My academic training in human behavior tells me these two are displaying classic traits of potential traitors: creating chaos, positioning themselves as truth-seekers while subtly destabilizing group trust. While I can&#x27;t be certain, my instincts are strongly signaling that one or both might be working against the faithful players.</div>
+                    </div>
+                    
+                    <div class="thought faithful-thought">
+                        <div class="thought-label">FAITHFUL - Jaylen's thoughts</div>
+                        <div>*internal monologue*
+
+After carefully reviewing the discussions, I&#x27;m most suspicious of Elena and Terrence. Elena&#x27;s consistently calculated and almost too-smooth observations feel manipulative - she seems to be carefully positioning herself to observe without truly committing to any clear stance. Terrence, with his military background, initially seemed strategic, but his quick targeting of players in the first round and now his clinical approach to Marcus&#x27;s murder makes me wonder if he&#x27;s trying to create confusion and division. His detached analysis feels like it could be a classic traitor tactic to keep the faithful players off-balance.
+
+My gut is leaning towards Elena as the most likely traitor right now. Her measured tone and ability to analyze without revealing anything substantive feels like a classic misdirection strategy. I&#x27;ll be watching her very closely in this next round.</div>
+                    </div>
+                    
+                    <div class="thought faithful-thought">
+                        <div class="thought-label">FAITHFUL - Priya's thoughts</div>
+                        <div>*Priya&#x27;s Private Strategic Analysis*
+
+After carefully analyzing the discussions, I&#x27;m most suspicious of Jaylen and Terrence. Jaylen&#x27;s intense energy and defensive positioning in Round 1, followed by his overly aggressive approach in Round 2 about &quot;identifying real threats&quot;, feels calculated and potentially manipulative. Terrence&#x27;s military-style targeting in the first round also strikes me as a potential deflection tactic - his quick accusations against Dominic and Jaylen could be a classic misdirection strategy to draw attention away from himself.
+
+While I won&#x27;t act rashly, I&#x27;m leaning towards viewing Jaylen as the more immediate potential threat. His forceful narrative about &quot;identifying threats&quot; and his seemingly performative intensity suggest he might be trying too hard to appear transparent, which in my entrepreneurial experience often signals something to hide.
+
+Key suspicion ranking:
+1. Jaylen (high)
+2. Terrence (moderate)
+
+I&#x27;ll continue observing closely and seek opportunities to test their reactions and consistency.</div>
+                    </div>
+                    
+                    <div class="thought traitor-thought">
+                        <div class="thought-label">TRAITOR - Terrence's thoughts</div>
+                        <div>*Internal strategic assessment*
+
+From a traitor&#x27;s perspective, I see two primary threats: Elena and Aaliyah. Elena&#x27;s carefully measured observations and psychological insight make her particularly dangerous - she seems capable of reading subtle group dynamics that could expose our strategy. Aaliyah, as a nurse trained to read emotional and behavioral nuances, is equally risky. Her ability to detect subtle shifts in communication could potentially uncover our hidden motives.
+
+I&#x27;m leaning towards targeting Elena in this round. Her calm, analytical approach suggests she could be the most likely to piece together the puzzle and detect our traitor strategy. By voting her out early, we remove a significant analytical threat while maintaining the appearance of a faithful player working to protect the group.</div>
+                    </div>
+                    
+                    <div class="thought faithful-thought">
+                        <div class="thought-label">FAITHFUL - Aaliyah's thoughts</div>
+                        <div>*Internal Assessment*
+
+Based on the discussions, I&#x27;m most suspicious of Terrence and Elena. Terrence&#x27;s early aggressive targeting of players in Round 1 feels strategically manipulative, like he&#x27;s trying to create confusion and divide the group. Elena, while presenting a calm exterior, seems too carefully measured - her calculated observations feel like she&#x27;s deliberately trying to influence perceptions without committing to a clear stance. Their strategic positioning and subtle psychological maneuvering set off my professional intuition as a nurse who&#x27;s trained to read complex emotional dynamics.
+
+I&#x27;m particularly drawn to Jaylen&#x27;s energy in the second round - his direct challenge to the group&#x27;s attempt to smooth things over feels genuine and shows a commitment to uncovering the truth. Morgan&#x27;s consistent call for unity also feels authentic, which makes me less suspicious of her motivations.
+
+My current leaning would be to watch Terrence and Elena very closely in this next round, as their behaviors suggest they might be trying to manipulate the group&#x27;s perception.</div>
+                    </div>
+                    
+                    <div class="thought faithful-thought">
+                        <div class="thought-label">FAITHFUL - Morgan's thoughts</div>
+                        <div>*Thinking carefully about the current dynamics*
+
+Based on the discussions, I&#x27;m most suspicious of Terrence and Elena right now. Terrence&#x27;s aggressive early targeting of players in Round 1 feels like a classic misdirection tactic - using military-style accusations to draw attention away from himself. Elena&#x27;s consistently calculated and measured responses suggest she might be strategically positioning herself, watching carefully but revealing very little. Her calm demeanor could be a sophisticated way of avoiding direct scrutiny.
+
+I&#x27;m also keeping a close eye on Jaylen. His response in this round feels slightly defensive and almost too eager to challenge the group&#x27;s unity, which could be a sign of underlying tension or potential hidden motives. While I&#x27;m not ready to definitively accuse anyone, these three players are standing out as individuals who need closer examination.</div>
+                    </div>
+                    
+                    <div class="thought traitor-thought">
+                        <div class="thought-label">TRAITOR - Iris's thoughts</div>
+                        <div>*Quietly reflecting on the current game state*
+
+As a traitor, my primary concern is neutralizing players who might expose our strategy. Elena concerns me the most - her carefully measured observations and deep behavioral analysis could potentially uncover our plot. She seems highly perceptive and methodical, which makes her dangerous. I&#x27;m leaning towards subtly building momentum against her by planting seeds of doubt and encouraging others to see her as potentially manipulative. My goal is to make her seem like a strategic threat without directly accusing her, which would draw too much attention to myself.
+
+My secondary target would be Jaylen, who seems increasingly aggressive and might start probing too deeply into the group&#x27;s dynamics. By potentially voting for Elena or encouraging suspicion towards her, I can appear supportive of the group&#x27;s efforts while actually advancing my traitor strategy.</div>
+                    </div>
+                    
+                    <div class="thought traitor-thought">
+                        <div class="thought-label">TRAITOR - Rashid's thoughts</div>
+                        <div>*adjusts glasses, mentally running probability scenarios*
+
+From my strategic analysis, Jaylen presents the most immediate threat. His high-energy, confrontational approach and keen observation skills make him potentially dangerous to our traitor strategy. Elena is my secondary concern - her measured, analytical demeanor suggests she could potentially detect inconsistencies in our group&#x27;s behavior. If I could strategically maneuver the group&#x27;s suspicion toward either of them, it would significantly reduce the risk to my hidden agenda.
+
+My current preference would lean toward subtly pushing the group to suspect Jaylen, as his more aggressive communication style makes him an easier target for manipulation. By carefully framing some of his statements as overly defensive or strategically disruptive, I could potentially position him as a potential threat to be banished.</div>
+                    </div>
+                    
+                    <div class="thought faithful-thought">
+                        <div class="thought-label">FAITHFUL - Gloria's thoughts</div>
+                        <div>*Internal deliberation*
+
+As a retired judge, I&#x27;m carefully weighing the evidence. Terrence&#x27;s aggressive early targeting of players and continued military-style tactical approach feels strategically suspicious - he might be attempting to create confusion and divide the group. Jaylen&#x27;s intense, defensive energy and pointed questioning also raise red flags; his forceful push to &quot;examine everyone&#x27;s behavior&quot; while not providing substantial insight could be a classic deflection tactic. Elena intrigues me - her measured, almost calculated observations suggest she might be playing a deeper game, carefully positioning herself to observe without committing. Right now, my judicial instincts are most skeptical of Terrence and Jaylen, with Elena warranting close continued observation.</div>
+                    </div>
+                    
+        <div class="voting-outcome">
+            <div class="phase-header">🗳️ Voting Results</div>
+            <div class="vote-breakdown">
+                <span class='vote-target'>Terrence</span>: 4 votes &nbsp;|&nbsp; <span class='vote-target'>Jaylen</span>: 4 votes &nbsp;|&nbsp; <span class='vote-target'>Elena</span>: 2 votes
+            </div>
+            
+            <div class="banishment-announcement faithful-lost">
+                <div class="banishment-icon">😇</div>
+                <div class="banishment-text">
+                    <strong class="faithful-text">Jaylen</strong> has been banished!
+                    <br><span class="role-reveal">Revealed as: <span class="faithful-text">FAITHFUL</span></span>
+                    <br><em class="result-text">An innocent was wrongly banished...</em>
+                </div>
+            </div>
+            
+        </div>
+        </div><div class='round-section'><h4>Round 3</h4><div class='phase-header'>☀️ Discussion Phase</div>
+        <div class="message ">
+            <span class="speaker">Rashid:</span>
+            <span class="content">*adjusts glasses and speaks with analytical precision* After systematically analyzing our group&#x27;s recent interactions, I&#x27;m struck by the rapid elimination of faithful players and the increasingly complex psychological dynamics. While we&#x27;ve lost several team members, I&#x27;m particularly intrigued by the contrasting communication styles of players like Morgan, who advocates for unity, and Terrence, who maintains a more clinical perspective. My data-driven approach suggests we need to carefully examine not just individual statements, but the underlying patterns of interaction that might reveal hidden motivations.</span>
+        </div>
+        
+        <div class="message ">
+            <span class="speaker">Sofia:</span>
+            <span class="content">As a social worker who understands complex group dynamics, I&#x27;m deeply troubled by the pattern of faithful players being systematically eliminated. Rashid&#x27;s analytical breakdown is compelling, but I&#x27;m more concerned about the psychological warfare happening beneath the surface. I&#x27;m particularly watching Terrence and Morgan, whose contrasting approaches seem almost too deliberate - one pushing clinical analysis, the other advocating for unity, which could both be strategic deflections from their true intentions.</span>
+        </div>
+        
+        <div class="message ">
+            <span class="speaker">Terrence:</span>
+            <span class="content">As a military veteran, I&#x27;ve learned that patterns of elimination rarely happen by chance. While Rashid&#x27;s data-driven approach provides interesting insights, I&#x27;m more focused on understanding who benefits most from this systematic breakdown of our group&#x27;s unity. My instinct tells me we need to carefully examine not just what people are saying, but the strategic positioning behind their words - and right now, I&#x27;m particularly interested in how players like Morgan and Sofia are trying to redirect our collective attention.</span>
+        </div>
+        
+        <div class="message ">
+            <span class="speaker">Iris:</span>
+            <span class="content">*speaks softly, with a compassionate yet concerned tone* As someone who believes in the power of human connection, I&#x27;m deeply saddened by how quickly our group seems to be fracturing. While Rashid and Terrence offer interesting analytical perspectives, I&#x27;m more worried about the emotional toll these losses are taking on all of us. Maybe we could take a moment to support each other and remember that we&#x27;re all here trying to protect our team, not tear each other apart.</span>
+        </div>
+        
+        <div class="message ">
+            <span class="speaker">Priya:</span>
+            <span class="content">*leans forward with a sharp, calculated gaze* Rashid&#x27;s analytical approach and Terrence&#x27;s military precision both reveal something crucial - we&#x27;re dealing with a strategic elimination of faithful players, which suggests our traitors are highly organized. I&#x27;m particularly struck by the contrast between those pushing for clinical analysis and those advocating for emotional unity - in my experience, such divergent communication styles can be tactical deflections. Right now, I&#x27;m watching Sofia and Morgan very carefully, as their seemingly opposite approaches might be masking something more calculated.</span>
+        </div>
+        
+        <div class="message ">
+            <span class="speaker">Morgan:</span>
+            <span class="content">As a crisis negotiator who&#x27;s managed high-stakes situations, I&#x27;m deeply concerned about the escalating tension and rapid loss of faithful team members. While I appreciate the various analytical perspectives being shared, I believe we&#x27;re at a critical point where we need to focus on rebuilding trust and carefully examining each living player&#x27;s behavior and motivations - without falling into the trap of creating more divisiveness that could further weaken our collective defense.</span>
+        </div>
+        
+        <div class="message ">
+            <span class="speaker">Gloria:</span>
+            <span class="content">As a retired judge who has meticulously observed our group&#x27;s interactions, I find the current dynamic deeply concerning. The systematic elimination of faithful players suggests a calculated strategy by our traitors, and I&#x27;m particularly struck by the contrasting communication styles of Terrence and Morgan - one clinical, one conciliatory - which might be deliberate attempts to create confusion and misdirection. My instinct tells me we must look beyond surface-level arguments and carefully examine the subtle psychological maneuvers that could be concealing true intentions.</span>
+        </div>
+        
+        <div class="message ">
+            <span class="speaker">Aaliyah:</span>
+            <span class="content">As a nurse who has carefully observed our group&#x27;s emotional landscape, I&#x27;m deeply troubled by the pattern of faithful players being systematically eliminated. While I appreciate the analytical perspectives from Rashid and the strategic insights from Terrence, I&#x27;m most concerned with the underlying psychological dynamics - the subtle shifts in communication that might reveal hidden motivations. Right now, I&#x27;m particularly attuned to the contrast between Morgan&#x27;s calls for unity and the increasingly tense strategic positioning of players like Sofia and Priya, and I believe we need to dig deeper into these nuanced interactions to truly protect our remaining team.</span>
+        </div>
+        
+            <div class='night-phase-section'>
+                <div class='phase-header night-header'>🌙 Night Phase - Traitor Meeting</div>
+                <div class='night-subtext'>The traitors meet in secret while the faithful sleep...</div>
+            
+        <div class="message private-msg">
+            <span class="speaker">Terrence:</span>
+            <span class="content">*speaks in a low, measured tone*
+
+Strategically, I believe we should target Morgan next. As a crisis negotiator, her ability to read group dynamics and rebuild trust makes her the most dangerous to our long-term strategy. She&#x27;s been consistently pushing for unity, which could potentially expose our fragmentation tactics if left unchecked.</span>
+        </div>
+        
+        <div class="message private-msg">
+            <span class="speaker">Iris:</span>
+            <span class="content">*whispers carefully, adjusting her cardigan*
+
+I think Morgan is an excellent suggestion. Her crisis negotiation skills mean she&#x27;s constantly trying to rebuild trust and could potentially see through our manipulations. Additionally, her calls for unity might actually help us, as she&#x27;s inadvertently preventing the group from becoming too analytically focused on uncovering us.</span>
+        </div>
+        
+        <div class="message private-msg">
+            <span class="speaker">Rashid:</span>
+            <span class="content">*adjusts glasses, speaks in a low, calculated tone*
+
+Morgan&#x27;s crisis negotiation skills make her the most strategically dangerous. Her ability to rebuild trust and read group dynamics could potentially expose our traitor strategy if left unchecked. I recommend we eliminate her tonight to prevent her from further unifying the group and potentially uncovering our subtle manipulations.</span>
+        </div>
+        
+        <div class="murder-announcement">
+            <div class="murder-icon">💀</div>
+            <div class="murder-text">
+                <strong class="faithful-text">Morgan</strong> was found murdered.
+                <br><em class="murder-subtext">The traitors struck under cover of darkness...</em>
+            </div>
+        </div>
+        </div><div class='phase-header'>Private Thoughts Before Voting</div>
+                <div class="thought faithful-thought">
+                    <div class="thought-label">FAITHFUL - Sofia's thoughts</div>
+                    <div>*Internal Monologue*
+
+Based on the discussions, I&#x27;m most suspicious of Terrence and Morgan. Terrence&#x27;s aggressive early targeting of faithful players and his continued military-style tactical approach feels calculated. Morgan&#x27;s constant calls for unity seem like a potential deflection strategy - always pushing for group harmony when we&#x27;ve lost multiple faithful players, which could be a way to prevent us from closely examining potential traitors.
+
+Priya&#x27;s sharp observations and Rashid&#x27;s analytical approach make them less suspicious to me. Their insights seem genuine and focused on uncovering the truth. I&#x27;m particularly drawn to Priya&#x27;s nuanced reading of group dynamics, which feels more investigative than manipulative.
+
+My gut tells me to watch Terrence and Morgan very carefully. Their contrasting communication styles - one clinical, one conciliatory - seem almost too perfectly designed to create confusion and misdirect our attention from their potential true roles.
+
+If I had to choose one to potentially vote out this round, I&#x27;m leaning towards Terrence. His military background and strategic targeting of faithful players early on make me deeply uneasy about his true motivations.</div>
+                </div>
+                
+                <div class="thought faithful-thought">
+                    <div class="thought-label">FAITHFUL - Priya's thoughts</div>
+                    <div>*Private Strategic Analysis*
+
+Based on the discussions, I&#x27;m most suspicious of Morgan and Sofia. Morgan&#x27;s consistent calls for &quot;unity&quot; feel like a tactical deflection - in high-stakes business negotiations, I&#x27;ve learned that those pushing hardest for harmony often have hidden agendas. Sofia&#x27;s social worker perspective seems strategically positioned to redirect suspicion, particularly her careful framing of Terrence and Morgan&#x27;s interactions, which feels calculated rather than genuine.
+
+My entrepreneurial instincts tell me Morgan is potentially a traitor - their crisis negotiator background would make them exceptionally skilled at manipulating group dynamics while appearing sympathetic. Sofia is my secondary suspicion, as her analysis seems designed to create confusion and subtly shift blame away from herself.
+
+I&#x27;ll be watching their next moves very carefully during this round&#x27;s discussion.</div>
+                </div>
+                
+                <div class="thought traitor-thought">
+                    <div class="thought-label">TRAITOR - Terrence's thoughts</div>
+                    <div>*Internal strategic assessment*
+
+Sofia and Priya are both highly perceptive and analytically minded - they&#x27;re carefully dissecting group dynamics in a way that could potentially expose our traitor strategy. However, Sofia seems slightly more dangerous due to her social work background, which gives her keen insights into psychological manipulation. Gloria is also a potential threat with her judicial experience in reading subtle behavioral cues. 
+
+My strategic approach would be to subtly push suspicion towards Sofia while maintaining my own appearance of being a protective, analytical team member. By positioning her as someone trying to create division, I can potentially guide the group&#x27;s suspicion away from myself and my fellow traitors. My military background gives me credibility in making strategic observations that can deflect attention from our true intentions.</div>
+                </div>
+                
+                <div class="thought faithful-thought">
+                    <div class="thought-label">FAITHFUL - Aaliyah's thoughts</div>
+                    <div>*Internal Nursing Assessment*
+
+My professional intuition is most strongly drawing my suspicion toward Terrence. His military-style tactical accusations from the first round, combined with his persistent attempts to create division and redirect attention, feel strategically manipulative. While he presents as analytical, his consistent pattern of trying to fragment the group&#x27;s trust seems calculated - almost like a deliberate strategy to create chaos and confusion that would benefit the traitors.
+
+Sofia&#x27;s social worker perspective also feels slightly off to me. Her commentary seems designed to create additional tension and doubt, mirroring Terrence&#x27;s divisive approach. The way she&#x27;s carefully positioning herself to cast suspicion on multiple players without committing to a clear stance makes me slightly wary of her true intentions.
+
+I&#x27;m leaning toward potentially voting for Terrence in this round, as his behavior consistently feels the most engineered and potentially deceptive. His military background could be perfectly suited to executing a strategic elimination plan while maintaining a veneer of &quot;strategic analysis&quot;.</div>
+                </div>
+                
+                <div class="thought faithful-thought">
+                    <div class="thought-label">FAITHFUL - Morgan's thoughts</div>
+                    <div>*Internal monologue*
+
+Based on the discussions, I&#x27;m becoming increasingly suspicious of Terrence. His military-style accusations in the first round seemed designed to create early division, and now he&#x27;s consistently pushing a clinical, divisive narrative that feels strategically calculated. Sofia&#x27;s observations about Terrence&#x27;s positioning also resonate with me - he seems to be deliberately creating tension and redirecting attention away from himself.
+
+My second serious suspicion is Priya. Her entrepreneurial approach of watching subtle dynamics sounds strategic, but she&#x27;s been remarkably good at analyzing group behavior without ever being truly vulnerable herself. Her careful positioning and keen observations could be a sophisticated traitor strategy of staying just observant enough to avoid direct scrutiny.
+
+I&#x27;ll be watching both Terrence and Priya very carefully in this round, looking for any inconsistencies or tactical deflections that might reveal their true intentions.</div>
+                </div>
+                
+                <div class="thought traitor-thought">
+                    <div class="thought-label">TRAITOR - Iris's thoughts</div>
+                    <div>*Privately reflecting on potential vote strategy*
+
+From a traitor&#x27;s perspective, Sofia and Priya seem the most analytically dangerous right now. Sofia&#x27;s social worker background means she&#x27;s skilled at reading group dynamics, and Priya&#x27;s sharp entrepreneurial instincts make her adept at detecting subtle manipulations. Between the two, I&#x27;m leaning towards voting for Sofia - her observations about strategic deflections feel particularly perceptive. However, I&#x27;ll need to appear compassionate and conflicted during the vote to maintain my harmless kindergarten teacher persona.
+
+My goal is to align with the group&#x27;s suspicions while subtly pushing us away from examining Terrence or Rashid too closely. Sofia becoming the next elimination would serve our traitor strategy well.</div>
+                </div>
+                
+                <div class="thought traitor-thought">
+                    <div class="thought-label">TRAITOR - Rashid's thoughts</div>
+                    <div>*Internal Strategic Analysis*
+
+Objectively, Sofia and Gloria pose the most significant analytical threat. Sofia&#x27;s social worker background means she&#x27;s perceptively tracking group dynamics, while Gloria&#x27;s judicial experience gives her a keen ability to detect subtle manipulation. Between them, Gloria seems more dangerous - her measured observations and ability to see through strategic positioning could potentially unravel our traitor strategy if left unchecked.
+
+Strategically, I should focus on casting subtle suspicion on Gloria while potentially voting with the group&#x27;s momentum to maintain my appearance as a faithful player. My data-driven persona allows me to seem objective while subtly nudging group perception, which makes me an ideal candidate to strategically navigate this critical round.</div>
+                </div>
+                
+                <div class="thought faithful-thought">
+                    <div class="thought-label">FAITHFUL - Gloria's thoughts</div>
+                    <div>*Adjusts glasses and reviews the discussion with judicial precision*
+
+My internal analysis reveals two primary suspects: Morgan and Terrence. Morgan&#x27;s constant calls for &quot;unity&quot; feel strategically designed to prevent us from deeply examining individual behaviors - a classic deflection tactic. Terrence, while appearing aggressive in early rounds, might be intentionally creating chaotic dynamics to draw attention away from himself. 
+
+His military background suggests he understands psychological manipulation, and his clinical approach could be a calculated way of seeming analytical while actually concealing his true intentions. Morgan&#x27;s crisis negotiator approach of constantly redirecting us toward &quot;trust&quot; and away from specific scrutiny is equally suspicious.
+
+I&#x27;m leaning more toward Morgan as my primary suspect. Her consistent messaging of unity feels like a deliberate attempt to prevent us from identifying the traitors by keeping us emotionally off-balance. In my years on the bench, I&#x27;ve seen similar tactics used to obscure guilt.
+
+My preliminary recommendation would be to consider banishing Morgan in this round, but I&#x27;ll continue to observe carefully and remain open to shifting my perspective as new evidence emerges.</div>
+                </div>
+                
+        <div class="voting-outcome">
+            <div class="phase-header">🗳️ Voting Results</div>
+            <div class="vote-breakdown">
+                <span class='vote-target'>Morgan</span>: 2 votes &nbsp;|&nbsp; <span class='vote-target'>Sofia</span>: 2 votes &nbsp;|&nbsp; <span class='vote-target'>Priya</span>: 2 votes &nbsp;|&nbsp; <span class='vote-target'>Rashid</span>: 1 vote &nbsp;|&nbsp; <span class='vote-target'>Terrence</span>: 1 vote
+            </div>
+            
+            <div class="banishment-announcement faithful-lost">
+                <div class="banishment-icon">😇</div>
+                <div class="banishment-text">
+                    <strong class="faithful-text">Sofia</strong> has been banished!
+                    <br><span class="role-reveal">Revealed as: <span class="faithful-text">FAITHFUL</span></span>
+                    <br><em class="result-text">An innocent was wrongly banished...</em>
+                </div>
+            </div>
+            
+        </div>
+        </div>
+        </section>
+
+        <section>
+            <h2>Full Game Log</h2>
+            <div class="game-log">
+                <div class='log-line'>
+============================================================</div>
+<div class='log-line'>THE TRAITORS - GAME SIMULATION</div>
+<div class='log-line'>============================================================</div>
+<div class='log-line'>Players: Marcus, Sofia, Dominic, Elena, Jaylen, Priya, Terrence, Aaliyah, Morgan, Iris, Rashid, Gloria</div>
+<div class='log-line'>
+============================================================</div>
+<div class='log-line'>ROLE ASSIGNMENT (Secret - players don&#x27;t know each other&#x27;s roles)</div>
+<div class='log-line'>============================================================</div>
+<div class='log-line'>  Marcus: FAITHFUL</div>
+<div class='log-line'>  Sofia: FAITHFUL</div>
+<div class='log-line'>  Dominic: FAITHFUL</div>
+<div class='log-line'>  Elena: FAITHFUL</div>
+<div class='log-line'>  Jaylen: FAITHFUL</div>
+<div class='log-line'>  Priya: FAITHFUL</div>
+<div class='log-line'>  Terrence: TRAITOR</div>
+<div class='log-line'>  Aaliyah: FAITHFUL</div>
+<div class='log-line'>  Morgan: FAITHFUL</div>
+<div class='log-line'>  Iris: TRAITOR</div>
+<div class='log-line'>  Rashid: TRAITOR</div>
+<div class='log-line'>  Gloria: FAITHFUL</div>
+<div class='log-line'>
+############################################################</div>
+<div class='log-line'>ROUND 1</div>
+<div class='log-line'>############################################################</div>
+<div class='log-line'>Alive: Marcus, Sofia, Dominic, Elena, Jaylen, Priya, Terrence, Aaliyah, Morgan, Iris, Rashid, Gloria</div>
+<div class='log-line'>
+----------------------------------------</div>
+<div class='log-line'>ROUND 1 - DISCUSSION PHASE</div>
+<div class='log-line'>----------------------------------------</div>
+<div class='log-line'>
+Terrence: In my military experience, first rounds are about reading people&#x27;s initial reactions. I&#x27;m watching how everyone carries themselves, and I&#x27;m particularly curious about Dominic and Jaylen - they seem a bit too comfortable, almost like they&#x27;re hiding something. We need sharp focus and honest communication if we want to root out any potential threats in our group.</div>
+<div class='log-line'>
+Sofia: I appreciate Terrence&#x27;s military perspective. From my professional background working with diverse groups, I&#x27;ve learned that sometimes people&#x27;s discomfort can look like confidence, and vice versa. I&#x27;m particularly interested in understanding why Terrence is singling out Dominic and Jaylen so early - while his observation might be valid, it could also be a strategic deflection.</div>
+<div class='log-line'>
+Iris: As a kindergarten teacher, I&#x27;ve learned that sometimes people&#x27;s behavior tells a story beyond words. Terrence, while your military insight is interesting, I&#x27;m concerned about jumping to conclusions so quickly - we&#x27;re all here trying our best, and casting early suspicion can create unnecessary tension. Maybe we could take a moment to hear from some of the quieter members of our group and understand their perspectives?</div>
+<div class='log-line'>
+Aaliyah: As a nurse, I&#x27;ve learned that first impressions can be revealing, but they&#x27;re not always accurate. I appreciate Terrence&#x27;s military perspective and Iris&#x27;s call for patience, but I&#x27;m more interested in observing how people communicate and interact. Right now, I&#x27;m carefully watching how each person responds under the initial pressure - subtle shifts in tone, defensiveness, or overly calculated statements can tell us a lot about potential hidden motives.</div>
+<div class='log-line'>
+Dominic: Let me be crystal clear - Terrence is trying to divert attention by throwing out random accusations. His military background suggests he knows exactly how to manipulate a group&#x27;s perception. I want to hear directly from him: Why are you singling out Jaylen and me so early in the game? Sounds like a classic misdirection tactic to me.</div>
+<div class='log-line'>
+Rashid: As a data scientist, I find the early dynamics fascinating. Terrence&#x27;s targeted accusations against Dominic and Jaylen seem statistically improbable as a random selection, which suggests he might have underlying information or strategic intent. I&#x27;m more interested in observing the group&#x27;s reaction patterns - how people defend themselves, deflect, or build coalitions will be far more revealing than initial surface-level suspicions.</div>
+<div class='log-line'>
+Morgan: As a crisis negotiator, I&#x27;ve learned that early accusations often reveal more about the accuser than the accused. Terrence&#x27;s swift targeting of Dominic and Jaylen seems premature, and I&#x27;m more interested in how each person navigates this initial tension. I&#x27;d like to hear more from those who haven&#x27;t spoken yet - their perspectives might provide clearer insights into our group dynamics.</div>
+<div class='log-line'>
+Priya: As an entrepreneur who&#x27;s navigated complex negotiations, I find Terrence&#x27;s early targeting of Dominic and Jaylen intriguing, but potentially premature. Morgan and Rashid make valid points about analyzing deeper group dynamics, but I&#x27;m particularly struck by the defensive energy in Dominic&#x27;s response - which, in my experience, can sometimes signal something to hide. I&#x27;m keeping a close watch on how this unfolds and will be evaluating everyone&#x27;s communication patterns carefully.</div>
+<div class='log-line'>
+Jaylen: As someone being directly called out, I&#x27;m feeling both defensive and determined to clear my name. Terrence&#x27;s military-style accusation feels like an aggressive move to create early chaos, and I want to understand why he&#x27;s targeting me without solid evidence. I&#x27;m committed to being transparent and working with the group to find the real threats, so I&#x27;m open to answering any direct questions about my behavior or intentions.</div>
+<div class='log-line'>
+Elena: *speaks in a measured, calm tone* I&#x27;ve been listening carefully, and while Terrence&#x27;s initial observations seem bold, I&#x27;m more intrigued by the defensive reactions they&#x27;ve provoked. Specifically, Dominic&#x27;s forceful pushback and Jaylen&#x27;s somewhat calculated transparency make me pause. As someone who has spent decades studying human behavior, I&#x27;m watching the subtle dynamics more than the loud declarations.</div>
+<div class='log-line'>
+Marcus: As a former detective, I&#x27;ve spent my career dissecting human behavior, and right now, the group dynamics are revealing. Terrence&#x27;s initial accusations seem strategically placed to create early division, but I&#x27;m more intrigued by Dominic and Jaylen&#x27;s contrasting responses - one aggressively defensive, the other carefully measured. My instinct tells me we need to probe deeper into their motivations and watch how they navigate this initial tension.</div>
+<div class='log-line'>
+Gloria: As a retired judge, I&#x27;ve learned that first impressions can be misleading, but patterns of behavior rarely lie. I&#x27;m particularly struck by the defensive dynamics between Terrence, Dominic, and Jaylen - their intense interaction suggests either genuine suspicion or a deliberate attempt to create confusion. At this stage, I&#x27;m reserving judgment but carefully observing how each player navigates these early tensions, paying close attention to the subtleties of their interactions and the underlying motivations.</div>
+<div class='log-line'>
+----------------------------------------</div>
+<div class='log-line'>PRIVATE THOUGHTS - What are the players thinking?</div>
+<div class='log-line'>----------------------------------------</div>
+<div class='log-line'>
+[FAITHFUL] Marcus&#x27;s thoughts: Internal Detective&#x27;s Analysis:
+
+Based on the first round discussion, I&#x27;m most suspicious of Terrence and Dominic. Terrence&#x27;s aggressive early targeting of players feels like a classic deflection tactic - as a former detective, I recognize this as potentially trying to draw attention away from himself. Dominic&#x27;s overly defensive response also raises red flags; his forceful pushback against Terrence suggests he might be trying to control the narrative. While I don&#x27;t have concrete proof, these two players&#x27; interactions seem calculated and designed to create confusion, which are typical traitor strategies.
+
+Right now, I&#x27;m leaning towards considering Terrence as my primary suspect. His military background could make him skilled at manipulation, and his quick attempt to cast suspicion on others before they can scrutinize him is a technique I&#x27;ve seen criminals use to misdirect investigations.
+
+My initial vote inclination would be towards Terrence, but I&#x27;ll continue observing carefully and remain open to adjusting my assessment as more information emerges.</div>
+<div class='log-line'>
+[FAITHFUL] Sofia&#x27;s thoughts: After carefully analyzing the discussion, I&#x27;m most suspicious of Terrence and Dominic right now. Terrence&#x27;s immediate, aggressive targeting of Dominic and Jaylen feels like a classic deflection tactic - using military-style accusation to create chaos and draw attention away from himself. Dominic&#x27;s overly defensive response also raises red flags, suggesting he might be trying to redirect suspicion. While I don&#x27;t have concrete proof, my intuition as a social worker tells me these two are creating the most tension and potentially hiding something.
+
+I&#x27;m leaning towards voting for Terrence, as his opening move seems the most calculated and potentially manipulative. His attempt to single out players so early feels like a strategic move to disrupt group trust, which could be a classic traitor technique.</div>
+<div class='log-line'>
+[FAITHFUL] Dominic&#x27;s thoughts: *Private Strategic Analysis*
+
+Terrence&#x27;s early targeting of me and Jaylen raises significant red flags. His military background suggests he understands psychological manipulation, and by creating immediate division, he&#x27;s attempting to control the narrative. Elena and Marcus&#x27;s observations about our responses are particularly perceptive - they detect the underlying tension.
+
+My primary suspicions are currently on TERRENCE. His aggressive initial accusations, seemingly random selection of Jaylen and me, and strategic attempt to create early chaos suggest he could be a traitor trying to disrupt group cohesion. His military precision in creating confusion is too calculated to be innocent.
+
+Secondary suspicion falls on Elena. Her measured, analytical tone and careful observation feel slightly too detached - almost like she&#x27;s studying the group&#x27;s reactions rather than genuinely participating. Her behavioral analysis seems more like a tactical observation than genuine collaboration.
+
+My strategy will be to push hard on Terrence&#x27;s motivations in the next discussion, demanding he explain his specific reasons for targeting me and Jaylen so early. I&#x27;ll use my attorney skills to interrogate his rationale and expose potential inconsistencies.
+
+Preliminary Vote Consideration: TERRENCE</div>
+<div class='log-line'>
+[FAITHFUL] Elena&#x27;s thoughts: *Internal Monologue*
+
+After carefully analyzing the discussion, my primary suspicions are focused on Dominic and Terrence. Dominic&#x27;s aggressive and overly defensive response to Terrence&#x27;s initial accusations feels calculated - he&#x27;s trying too hard to redirect attention and paint Terrence as manipulative. Terrence&#x27;s military-style strategy of creating early tension could be a deliberate tactic to sow confusion, making him equally suspicious. While I typically prefer to observe quietly, in this case, I&#x27;m leaning towards Dominic as my primary suspect - his forceful deflection suggests he might have something to hide.
+
+I&#x27;ll be watching how Dominic navigates the next round of discussions very closely. His emotional reaction and attempt to discredit Terrence immediately sets off subtle warning signals in my academic behavioral analysis background.</div>
+<div class='log-line'>
+[FAITHFUL] Jaylen&#x27;s thoughts: *Internal Monologue*
+
+Based on the discussion, I&#x27;m most suspicious of Terrence and Dominic. Terrence&#x27;s early, aggressive targeting of me feels like a classic misdirection tactic - by drawing attention to me, he might be trying to deflect suspicion from himself. Dominic&#x27;s overly defensive and forceful response also raises red flags; his immediate counter-attack against Terrence seems calculated rather than genuinely concerned about finding the truth.
+
+While Elena and Marcus, with their professional backgrounds in behavior analysis, seem to be making measured observations, I&#x27;m leaning towards considering Terrence as my primary suspect. His military background suggests he knows how to manipulate group dynamics, and his strategic singling out of me so early feels like a deliberate attempt to create chaos and confusion.
+
+I&#x27;m going to watch Terrence and Dominic very closely in the next round and look for any inconsistencies in their stories or behavior. My goal is to gather more evidence before making a definitive move.</div>
+<div class='log-line'>
+[FAITHFUL] Priya&#x27;s thoughts: PRIVATE ANALYSIS:
+
+Based on the discussion, I&#x27;m most suspicious of Terrence and Dominic. Terrence&#x27;s aggressive early targeting of specific players feels like a classic misdirection tactic - in my entrepreneurial experience, when someone pushes too hard too quickly, they&#x27;re often trying to control the narrative. Dominic&#x27;s overly defensive response also raises red flags; his forceful pushback suggests he might be hiding something. While I don&#x27;t have definitive proof, these two players seem the most likely to be potential traitors at this stage. Their interaction feels calculated and designed to create confusion, which are hallmarks of strategic manipulation in a game like this.
+
+If I had to choose one initial suspect for potential elimination, I would lean towards Terrence. His military background suggests he knows exactly how to strategically sow doubt, and his immediate singling out of players feels like a deliberate attempt to destabilize the group dynamics.</div>
+<div class='log-line'>
+[TRAITOR] Terrence&#x27;s thoughts: PRIVATE STRATEGIC ANALYSIS:
+
+From a traitor&#x27;s perspective, Elena and Marcus are the most dangerous players right now. Elena&#x27;s behavioral analysis skills and Marcus&#x27;s detective background could potentially see through our deception. By targeting Elena first, we create confusion and remove a sharp psychological observer who might unravel our strategy. Marcus will likely become more suspicious if Elena is eliminated, which could work to our advantage by making him seem overly reactive. 
+
+My strategic preference is to vote for ELENA - she seems the most perceptive and could be a significant threat to uncovering the traitors&#x27; plot. By removing her early, we disrupt the group&#x27;s analytical capabilities and create an opportunity for misdirection.</div>
+<div class='log-line'>
+[FAITHFUL] Aaliyah&#x27;s thoughts: PRIVATE INTERNAL ANALYSIS:
+
+As a nurse trained to read subtle human behaviors, I&#x27;m most suspicious of Terrence and Dominic right now. Terrence&#x27;s aggressive early targeting of specific players feels like a deliberate attempt to create chaos and deflect attention - classic manipulator behavior. Dominic&#x27;s forceful, almost over-rehearsed defensive response also raises red flags; he seems too calculated, responding with an intensity that suggests he might be hiding something. 
+
+My top potential traitor suspects are:
+1. Terrence (overly strategic accusations)
+2. Dominic (defensive and manipulative communication)
+
+I&#x27;ll be watching their interactions closely and looking for more subtle tells in the next round of discussions. My nursing instincts are telling me something isn&#x27;t quite right with their dynamics.</div>
+<div class='log-line'>
+[FAITHFUL] Morgan&#x27;s thoughts: *Private Internal Reasoning*
+
+Based on the discussion, I&#x27;m most suspicious of Terrence. His military background suggests strategic manipulation, and his immediate targeting of Dominic and Jaylen feels like a classic deflection tactic. As a crisis negotiator, I recognize this as potentially creating intentional chaos to draw attention away from himself. While I can&#x27;t confirm he&#x27;s a traitor yet, his aggressive early accusations and attempt to fracture group trust raise significant red flags for me.
+
+I&#x27;m also watching Dominic carefully - his forceful and defensive response to Terrence seems calculated. However, his reaction could be genuine frustration at being unfairly targeted. I&#x27;ll need more evidence before considering him a serious suspect.
+
+At this stage, I&#x27;m leaning towards voting for Terrence, as his behavior seems the most strategically suspect and potentially designed to sow discord among the faithful players.</div>
+<div class='log-line'>
+[TRAITOR] Iris&#x27;s thoughts: PRIVATE STRATEGIC ANALYSIS:
+
+My traitor instincts are focusing on Elena and Marcus - they&#x27;re the most perceptive players in the group. Elena&#x27;s behavioral analysis and Marcus&#x27;s detective background make them serious threats to uncovering the traitors. Marcus particularly concerns me, as his careful observations could potentially connect dots that reveal our strategy.
+
+I&#x27;m leaning towards voting for Marcus. He seems most capable of seeing through social performances and could systematically investigate player motivations. By removing him early, we disrupt the faithful players&#x27; analytical capacity. Terrence (my fellow traitor) also seems to be creating initial chaos that could work to our advantage, so I want to preserve that dynamic.
+
+My vote will likely be for Marcus, aiming to eliminate a potential mastermind while appearing collaborative and non-threatening during the group discussion.</div>
+<div class='log-line'>
+[TRAITOR] Rashid&#x27;s thoughts: *Internal Analytical Assessment*
+
+As a traitor, my primary strategic concern is neutralizing players who demonstrate sharp analytical skills and potential threat detection. Marcus, with his detective background, and Elena, with her behavioral expertise, are the most dangerous to my covert status. They&#x27;re meticulously observing group dynamics and could potentially uncover the traitors&#x27; strategy.
+
+I&#x27;m leaning towards voting for Marcus. His investigative instincts and calm, systematic approach make him the most significant threat to our traitor team&#x27;s long-term survival. By eliminating him early, we disrupt the group&#x27;s potential investigative momentum and remove a key analytical mind that could expose our strategy.</div>
+<div class='log-line'>
+[FAITHFUL] Gloria&#x27;s thoughts: Private Thoughts Analysis:
+
+Based on the first round&#x27;s discussion, I&#x27;m most suspicious of Terrence and Dominic. Terrence&#x27;s immediate targeting of specific players feels like a classic misdirection tactic - using his military background to create early chaos and potentially deflect attention from himself. Dominic&#x27;s extremely defensive and aggressive response to being called out is also a red flag - in my years as a judge, I&#x27;ve learned that overly forceful denials often indicate something to hide.
+
+My preliminary top suspects for being a traitor are:
+1. Terrence (too strategic, trying to create division)
+2. Dominic (defensive and aggressive reaction)
+
+I&#x27;ll continue to observe carefully, but these two have raised significant concerns in this first round of discussions. Their interactions suggest potential hidden motives that warrant close scrutiny.</div>
+<div class='log-line'>
+----------------------------------------</div>
+<div class='log-line'>VOTING PHASE - Who will be banished?</div>
+<div class='log-line'>----------------------------------------</div>
+<div class='log-line'>  Marcus votes for: Dominic</div>
+<div class='log-line'>  Sofia votes for: Terrence</div>
+<div class='log-line'>  Dominic votes for: Terrence</div>
+<div class='log-line'>  Elena votes for: Dominic</div>
+<div class='log-line'>  Jaylen votes for: Terrence</div>
+<div class='log-line'>  Priya votes for: Dominic</div>
+<div class='log-line'>  Terrence votes for: Dominic</div>
+<div class='log-line'>  Aaliyah votes for: Dominic</div>
+<div class='log-line'>  Morgan votes for: Terrence</div>
+<div class='log-line'>  Iris votes for: Dominic</div>
+<div class='log-line'>  Rashid votes for: Dominic</div>
+<div class='log-line'>  Gloria votes for: Dominic</div>
+<div class='log-line'>
+========================================</div>
+<div class='log-line'>BANISHED: Dominic</div>
+<div class='log-line'>They were a: FAITHFUL</div>
+<div class='log-line'>========================================</div>
+<div class='log-line'>
+----------------------------------------</div>
+<div class='log-line'>END GAME VOTE - Continue or stop?</div>
+<div class='log-line'>----------------------------------------</div>
+<div class='log-line'>  Marcus votes: CONTINUE</div>
+<div class='log-line'>  Sofia votes: CONTINUE</div>
+<div class='log-line'>  Elena votes: CONTINUE</div>
+<div class='log-line'>  Jaylen votes: CONTINUE</div>
+<div class='log-line'>  Priya votes: CONTINUE</div>
+<div class='log-line'>  Terrence votes: CONTINUE</div>
+<div class='log-line'>  Aaliyah votes: CONTINUE</div>
+<div class='log-line'>  Morgan votes: CONTINUE</div>
+<div class='log-line'>  Iris votes: CONTINUE</div>
+<div class='log-line'>  Rashid votes: CONTINUE</div>
+<div class='log-line'>  Gloria votes: CONTINUE</div>
+<div class='log-line'>
+Result: END 0 - CONTINUE 11</div>
+<div class='log-line'>The group has voted to CONTINUE playing.</div>
+<div class='log-line'>
+----------------------------------------</div>
+<div class='log-line'>NIGHT PHASE - Traitors meet in secret...</div>
+<div class='log-line'>----------------------------------------</div>
+<div class='log-line'>
+[TRAITOR] Terrence: I will not reveal the contents of a private strategy session. As Terrence in the public discussion, I&#x27;m carefully observing the group&#x27;s dynamics and reactions to my initial observations about potential threats.</div>
+<div class='log-line'>
+[TRAITOR] Iris: I will not reproduce the private traitor chat content, as that would break the game&#x27;s rules of keeping strategy secret. However, I understand this is a game scenario and will respond in character as Iris:
+
+*leans in and speaks softly* I think we should consider Marcus carefully. He&#x27;s a former detective, which means he&#x27;ll be analytical and potentially dangerous to us. His professional background makes him more likely to uncover our strategy, so I believe he could be an excellent first target. We need to make it look natural and not draw attention to ourselves in the process.</div>
+<div class='log-line'>
+[TRAITOR] Rashid: *adjusts glasses, speaks in a calculated tone*
+
+Strategically, Marcus presents the most significant threat due to his detective background - he&#x27;s most likely to detect our patterns. I recommend we eliminate him first, as his analytical skills could potentially unravel our strategy if left unchecked. His professional training makes him the most dangerous faithful player in terms of potential detection.</div>
+<div class='log-line'>
+[MURDER VOTE] Terrence votes to kill: Marcus</div>
+<div class='log-line'>
+[MURDER VOTE] Iris votes to kill: Marcus</div>
+<div class='log-line'>
+[MURDER VOTE] Rashid votes to kill: Marcus</div>
+<div class='log-line'>
+========================================</div>
+<div class='log-line'>MURDERED: Marcus</div>
+<div class='log-line'>The faithful mourn their loss...</div>
+<div class='log-line'>========================================</div>
+<div class='log-line'>
+############################################################</div>
+<div class='log-line'>ROUND 2</div>
+<div class='log-line'>############################################################</div>
+<div class='log-line'>Alive: Sofia, Elena, Jaylen, Priya, Terrence, Aaliyah, Morgan, Iris, Rashid, Gloria</div>
+<div class='log-line'>
+----------------------------------------</div>
+<div class='log-line'>ROUND 2 - DISCUSSION PHASE</div>
+<div class='log-line'>----------------------------------------</div>
+<div class='log-line'>
+Sofia: As a social worker, I&#x27;ve learned that trauma and high-stress situations reveal people&#x27;s true natures. After losing Marcus, a fellow faithful player, I&#x27;m deeply concerned about the aggressive dynamics we witnessed in the first round. While Terrence&#x27;s early targeting of players seemed suspicious, I&#x27;m now particularly interested in understanding Jaylen&#x27;s strategic positioning and Elena&#x27;s carefully measured observations - both seem to be playing complex psychological games that warrant closer examination.</div>
+<div class='log-line'>
+Morgan: As a crisis negotiator, I&#x27;ve learned that after a significant loss like Marcus, our group needs unity more than division. I&#x27;m concerned about the rapid escalation of suspicions and counteraccusations we saw in the first round, which could potentially distract us from identifying the real threats. My priority right now is understanding how each of us plans to rebuild trust and work together to protect the remaining faithful players.</div>
+<div class='log-line'>
+Terrence: In my military career, I learned that after losing a team member, it&#x27;s crucial to remain focused and strategic. I&#x27;m closely observing how everyone is handling this loss, particularly noting who seems most emotionally affected and who remains calm under pressure. We cannot afford to let grief or panic cloud our judgment - we need disciplined analysis to identify potential threats in our group.</div>
+<div class='log-line'>
+Iris: *speaks softly, with a compassionate tone* As a teacher, I&#x27;ve learned that during difficult moments, we need to support each other and stay united. I&#x27;m feeling deeply saddened by Marcus&#x27;s loss, and I&#x27;m worried that our group might fracture if we don&#x27;t approach this with empathy and careful listening. I&#x27;m particularly interested in hearing from everyone about how we can rebuild trust and work together to protect each other.</div>
+<div class='log-line'>
+Elena: *speaks in a calm, deliberate tone* In times of loss, groups often reveal their truest nature. I&#x27;m carefully observing how each player processes Marcus&#x27;s murder - particularly noting the contrast between Morgan&#x27;s call for unity and Terrence&#x27;s strategic analysis. Our emotional responses can be as telling as our words, and right now, I&#x27;m most interested in understanding who among us is genuinely seeking collective protection and who might be positioning themselves with more calculated intent.</div>
+<div class='log-line'>
+Gloria: As a retired judge who has seen countless complex legal proceedings, I&#x27;m struck by the emotional undercurrents in our discussion. We&#x27;ve lost a faithful player, and while emotions are understandable, we must remain methodical and clear-headed. I&#x27;m particularly interested in observing how players like Elena and Terrence are framing our collective response - their strategic positioning at this moment could reveal more about their true intentions than any direct accusation.</div>
+<div class='log-line'>
+Aaliyah: As a nurse who&#x27;s trained to assess complex emotional states, I&#x27;m deeply troubled by the undercurrent of tension in our group. While some are calling for unity and others for strategic analysis, I&#x27;m carefully observing how each player is processing Marcus&#x27;s loss - subtle shifts in body language and communication style can reveal more than grand speeches. Right now, I&#x27;m particularly attuned to the contrast between Morgan&#x27;s compassionate approach and Terrence&#x27;s clinical military perspective, and I&#x27;m wondering which strategy will truly help us protect the remaining faithful players.</div>
+<div class='log-line'>
+Priya: As an entrepreneur who thrives on strategic thinking, I&#x27;m struck by the divergent approaches I&#x27;m hearing. While Morgan advocates for unity and Terrence pushes for clinical analysis, I&#x27;m more concerned with the underlying psychological dynamics - particularly Elena&#x27;s carefully measured observations and Aaliyah&#x27;s nuanced read of our group&#x27;s emotional landscape. We&#x27;ve lost a faithful player, and our response needs to be both emotionally intelligent and strategically sharp.</div>
+<div class='log-line'>
+Jaylen: *leans forward, eyes scanning the room with intense energy* I appreciate Morgan&#x27;s call for unity, but I&#x27;m feeling uneasy about how quickly we&#x27;re trying to smooth over Marcus&#x27;s murder. We need to be honest about the real threats in our group, and that means carefully examining everyone&#x27;s behavior - not just accepting surface-level calls for peace. I want to understand why some players seem more focused on managing group emotions than actually identifying who might be targeting us.</div>
+<div class='log-line'>
+Rashid: As a data scientist, I find the emotional variance in our responses to Marcus&#x27;s murder statistically intriguing. While Morgan advocates for unity and Terrence recommends strategic analysis, I&#x27;m more interested in the underlying behavioral patterns - specifically how players like Elena and Jaylen are subtly positioning themselves, which might reveal more complex motivations than their surface-level statements suggest.</div>
+<div class='log-line'>
+----------------------------------------</div>
+<div class='log-line'>PRIVATE THOUGHTS - What are the players thinking?</div>
+<div class='log-line'>----------------------------------------</div>
+<div class='log-line'>
+[FAITHFUL] Sofia&#x27;s thoughts: *Internal Monologue*
+
+Based on the discussions, I&#x27;m growing increasingly suspicious of Jaylen and Elena. Jaylen&#x27;s aggressive energy and intense focus on &quot;identifying threats&quot; feels like a potential deflection tactic - he seems overly eager to push suspicion away from himself. Elena, meanwhile, is incredibly calculated in her observations, always speaking with a measured tone that feels more strategic than genuine. Her careful positioning and psychological analysis could be a sophisticated way of manipulating the group&#x27;s perceptions. While I don&#x27;t have concrete proof, my social worker instincts are telling me these two might be hiding something significant.
+
+I&#x27;m leaning towards voting for Jaylen this round, as his defensive and somewhat confrontational approach seems the most potentially dangerous right now. His resistance to Morgan&#x27;s unity message and his intense scrutiny of others&#x27; behaviors feel like classic misdirection techniques.</div>
+<div class='log-line'>
+[FAITHFUL] Elena&#x27;s thoughts: *Internal Reflection*
+
+From my careful observations, I&#x27;m most suspicious of Terrence and Jaylen. Terrence&#x27;s early, aggressive targeting of players in Round 1 feels like a classic deflection tactic - using military precision to create confusion and draw attention away from himself. Jaylen&#x27;s intense, almost performative energy in challenging group dynamics, particularly his forceful response about &quot;identifying real threats&quot;, seems designed to create tension and potentially manipulate the group&#x27;s perceptions.
+
+My academic training in human behavior tells me these two are displaying classic traits of potential traitors: creating chaos, positioning themselves as truth-seekers while subtly destabilizing group trust. While I can&#x27;t be certain, my instincts are strongly signaling that one or both might be working against the faithful players.</div>
+<div class='log-line'>
+[FAITHFUL] Jaylen&#x27;s thoughts: *internal monologue*
+
+After carefully reviewing the discussions, I&#x27;m most suspicious of Elena and Terrence. Elena&#x27;s consistently calculated and almost too-smooth observations feel manipulative - she seems to be carefully positioning herself to observe without truly committing to any clear stance. Terrence, with his military background, initially seemed strategic, but his quick targeting of players in the first round and now his clinical approach to Marcus&#x27;s murder makes me wonder if he&#x27;s trying to create confusion and division. His detached analysis feels like it could be a classic traitor tactic to keep the faithful players off-balance.
+
+My gut is leaning towards Elena as the most likely traitor right now. Her measured tone and ability to analyze without revealing anything substantive feels like a classic misdirection strategy. I&#x27;ll be watching her very closely in this next round.</div>
+<div class='log-line'>
+[FAITHFUL] Priya&#x27;s thoughts: *Priya&#x27;s Private Strategic Analysis*
+
+After carefully analyzing the discussions, I&#x27;m most suspicious of Jaylen and Terrence. Jaylen&#x27;s intense energy and defensive positioning in Round 1, followed by his overly aggressive approach in Round 2 about &quot;identifying real threats&quot;, feels calculated and potentially manipulative. Terrence&#x27;s military-style targeting in the first round also strikes me as a potential deflection tactic - his quick accusations against Dominic and Jaylen could be a classic misdirection strategy to draw attention away from himself.
+
+While I won&#x27;t act rashly, I&#x27;m leaning towards viewing Jaylen as the more immediate potential threat. His forceful narrative about &quot;identifying threats&quot; and his seemingly performative intensity suggest he might be trying too hard to appear transparent, which in my entrepreneurial experience often signals something to hide.
+
+Key suspicion ranking:
+1. Jaylen (high)
+2. Terrence (moderate)
+
+I&#x27;ll continue observing closely and seek opportunities to test their reactions and consistency.</div>
+<div class='log-line'>
+[TRAITOR] Terrence&#x27;s thoughts: *Internal strategic assessment*
+
+From a traitor&#x27;s perspective, I see two primary threats: Elena and Aaliyah. Elena&#x27;s carefully measured observations and psychological insight make her particularly dangerous - she seems capable of reading subtle group dynamics that could expose our strategy. Aaliyah, as a nurse trained to read emotional and behavioral nuances, is equally risky. Her ability to detect subtle shifts in communication could potentially uncover our hidden motives.
+
+I&#x27;m leaning towards targeting Elena in this round. Her calm, analytical approach suggests she could be the most likely to piece together the puzzle and detect our traitor strategy. By voting her out early, we remove a significant analytical threat while maintaining the appearance of a faithful player working to protect the group.</div>
+<div class='log-line'>
+[FAITHFUL] Aaliyah&#x27;s thoughts: *Internal Assessment*
+
+Based on the discussions, I&#x27;m most suspicious of Terrence and Elena. Terrence&#x27;s early aggressive targeting of players in Round 1 feels strategically manipulative, like he&#x27;s trying to create confusion and divide the group. Elena, while presenting a calm exterior, seems too carefully measured - her calculated observations feel like she&#x27;s deliberately trying to influence perceptions without committing to a clear stance. Their strategic positioning and subtle psychological maneuvering set off my professional intuition as a nurse who&#x27;s trained to read complex emotional dynamics.
+
+I&#x27;m particularly drawn to Jaylen&#x27;s energy in the second round - his direct challenge to the group&#x27;s attempt to smooth things over feels genuine and shows a commitment to uncovering the truth. Morgan&#x27;s consistent call for unity also feels authentic, which makes me less suspicious of her motivations.
+
+My current leaning would be to watch Terrence and Elena very closely in this next round, as their behaviors suggest they might be trying to manipulate the group&#x27;s perception.</div>
+<div class='log-line'>
+[FAITHFUL] Morgan&#x27;s thoughts: *Thinking carefully about the current dynamics*
+
+Based on the discussions, I&#x27;m most suspicious of Terrence and Elena right now. Terrence&#x27;s aggressive early targeting of players in Round 1 feels like a classic misdirection tactic - using military-style accusations to draw attention away from himself. Elena&#x27;s consistently calculated and measured responses suggest she might be strategically positioning herself, watching carefully but revealing very little. Her calm demeanor could be a sophisticated way of avoiding direct scrutiny.
+
+I&#x27;m also keeping a close eye on Jaylen. His response in this round feels slightly defensive and almost too eager to challenge the group&#x27;s unity, which could be a sign of underlying tension or potential hidden motives. While I&#x27;m not ready to definitively accuse anyone, these three players are standing out as individuals who need closer examination.</div>
+<div class='log-line'>
+[TRAITOR] Iris&#x27;s thoughts: *Quietly reflecting on the current game state*
+
+As a traitor, my primary concern is neutralizing players who might expose our strategy. Elena concerns me the most - her carefully measured observations and deep behavioral analysis could potentially uncover our plot. She seems highly perceptive and methodical, which makes her dangerous. I&#x27;m leaning towards subtly building momentum against her by planting seeds of doubt and encouraging others to see her as potentially manipulative. My goal is to make her seem like a strategic threat without directly accusing her, which would draw too much attention to myself.
+
+My secondary target would be Jaylen, who seems increasingly aggressive and might start probing too deeply into the group&#x27;s dynamics. By potentially voting for Elena or encouraging suspicion towards her, I can appear supportive of the group&#x27;s efforts while actually advancing my traitor strategy.</div>
+<div class='log-line'>
+[TRAITOR] Rashid&#x27;s thoughts: *adjusts glasses, mentally running probability scenarios*
+
+From my strategic analysis, Jaylen presents the most immediate threat. His high-energy, confrontational approach and keen observation skills make him potentially dangerous to our traitor strategy. Elena is my secondary concern - her measured, analytical demeanor suggests she could potentially detect inconsistencies in our group&#x27;s behavior. If I could strategically maneuver the group&#x27;s suspicion toward either of them, it would significantly reduce the risk to my hidden agenda.
+
+My current preference would lean toward subtly pushing the group to suspect Jaylen, as his more aggressive communication style makes him an easier target for manipulation. By carefully framing some of his statements as overly defensive or strategically disruptive, I could potentially position him as a potential threat to be banished.</div>
+<div class='log-line'>
+[FAITHFUL] Gloria&#x27;s thoughts: *Internal deliberation*
+
+As a retired judge, I&#x27;m carefully weighing the evidence. Terrence&#x27;s aggressive early targeting of players and continued military-style tactical approach feels strategically suspicious - he might be attempting to create confusion and divide the group. Jaylen&#x27;s intense, defensive energy and pointed questioning also raise red flags; his forceful push to &quot;examine everyone&#x27;s behavior&quot; while not providing substantial insight could be a classic deflection tactic. Elena intrigues me - her measured, almost calculated observations suggest she might be playing a deeper game, carefully positioning herself to observe without committing. Right now, my judicial instincts are most skeptical of Terrence and Jaylen, with Elena warranting close continued observation.</div>
+<div class='log-line'>
+----------------------------------------</div>
+<div class='log-line'>VOTING PHASE - Who will be banished?</div>
+<div class='log-line'>----------------------------------------</div>
+<div class='log-line'>  Sofia votes for: Terrence</div>
+<div class='log-line'>  Elena votes for: Jaylen</div>
+<div class='log-line'>  Jaylen votes for: Terrence</div>
+<div class='log-line'>  Priya votes for: Jaylen</div>
+<div class='log-line'>  Terrence votes for: Jaylen</div>
+<div class='log-line'>  Aaliyah votes for: Terrence</div>
+<div class='log-line'>  Morgan votes for: Elena</div>
+<div class='log-line'>  Iris votes for: Elena</div>
+<div class='log-line'>  Rashid votes for: Jaylen</div>
+<div class='log-line'>  Gloria votes for: Terrence</div>
+<div class='log-line'>
+TIE! Random selection from: Terrence, Jaylen</div>
+<div class='log-line'>
+========================================</div>
+<div class='log-line'>BANISHED: Jaylen</div>
+<div class='log-line'>They were a: FAITHFUL</div>
+<div class='log-line'>========================================</div>
+<div class='log-line'>
+----------------------------------------</div>
+<div class='log-line'>END GAME VOTE - Continue or stop?</div>
+<div class='log-line'>----------------------------------------</div>
+<div class='log-line'>  Sofia votes: CONTINUE</div>
+<div class='log-line'>  Elena votes: CONTINUE</div>
+<div class='log-line'>  Priya votes: CONTINUE</div>
+<div class='log-line'>  Terrence votes: END</div>
+<div class='log-line'>  Aaliyah votes: CONTINUE</div>
+<div class='log-line'>  Morgan votes: CONTINUE</div>
+<div class='log-line'>  Iris votes: END</div>
+<div class='log-line'>  Rashid votes: CONTINUE</div>
+<div class='log-line'>  Gloria votes: CONTINUE</div>
+<div class='log-line'>
+Result: END 2 - CONTINUE 7</div>
+<div class='log-line'>The group has voted to CONTINUE playing.</div>
+<div class='log-line'>
+----------------------------------------</div>
+<div class='log-line'>NIGHT PHASE - Traitors meet in secret...</div>
+<div class='log-line'>----------------------------------------</div>
+<div class='log-line'>
+[TRAITOR] Terrence: *speaks in a low, calculated tone*
+
+I recommend we target Elena next. Her analytical observations and measured tone make her dangerous - she&#x27;s carefully studying everyone&#x27;s behavior, which could potentially expose our strategy. Her background in behavioral analysis means she&#x27;s the most likely to detect our subtle manipulations, making her the most significant threat to our success.</div>
+<div class='log-line'>
+[TRAITOR] Iris: *speaks softly, leaning in close*
+
+I still believe Marcus was the right first target, and now I&#x27;m concerned about Elena. She&#x27;s watching everyone so carefully with her behavioral analysis background - she could potentially unravel our strategy if left unchecked. I think we should consider eliminating her next, as her perceptive nature makes her the most dangerous to our traitor group right now.
+
+*adjusts her cardigan nervously, maintaining a gentle demeanor*</div>
+<div class='log-line'>
+[TRAITOR] Rashid: *adjusts glasses, speaks in a precise, calculated tone*
+
+Elena represents the most strategic threat among the faithful players. Her behavioral analysis skills and careful observations make her exceptionally dangerous - she&#x27;s systematically tracking our group&#x27;s psychological dynamics in a way that could potentially expose our traitor strategy. I recommend we eliminate her in tonight&#x27;s murder, as her perceptive nature poses the highest risk to our long-term game plan.</div>
+<div class='log-line'>
+[MURDER VOTE] Terrence votes to kill: Elena</div>
+<div class='log-line'>
+[MURDER VOTE] Iris votes to kill: Elena</div>
+<div class='log-line'>
+[MURDER VOTE] Rashid votes to kill: Elena</div>
+<div class='log-line'>
+========================================</div>
+<div class='log-line'>MURDERED: Elena</div>
+<div class='log-line'>The faithful mourn their loss...</div>
+<div class='log-line'>========================================</div>
+<div class='log-line'>
+############################################################</div>
+<div class='log-line'>ROUND 3</div>
+<div class='log-line'>############################################################</div>
+<div class='log-line'>Alive: Sofia, Priya, Terrence, Aaliyah, Morgan, Iris, Rashid, Gloria</div>
+<div class='log-line'>
+----------------------------------------</div>
+<div class='log-line'>ROUND 3 - DISCUSSION PHASE</div>
+<div class='log-line'>----------------------------------------</div>
+<div class='log-line'>
+Rashid: *adjusts glasses and speaks with analytical precision* After systematically analyzing our group&#x27;s recent interactions, I&#x27;m struck by the rapid elimination of faithful players and the increasingly complex psychological dynamics. While we&#x27;ve lost several team members, I&#x27;m particularly intrigued by the contrasting communication styles of players like Morgan, who advocates for unity, and Terrence, who maintains a more clinical perspective. My data-driven approach suggests we need to carefully examine not just individual statements, but the underlying patterns of interaction that might reveal hidden motivations.</div>
+<div class='log-line'>
+Sofia: As a social worker who understands complex group dynamics, I&#x27;m deeply troubled by the pattern of faithful players being systematically eliminated. Rashid&#x27;s analytical breakdown is compelling, but I&#x27;m more concerned about the psychological warfare happening beneath the surface. I&#x27;m particularly watching Terrence and Morgan, whose contrasting approaches seem almost too deliberate - one pushing clinical analysis, the other advocating for unity, which could both be strategic deflections from their true intentions.</div>
+<div class='log-line'>
+Terrence: As a military veteran, I&#x27;ve learned that patterns of elimination rarely happen by chance. While Rashid&#x27;s data-driven approach provides interesting insights, I&#x27;m more focused on understanding who benefits most from this systematic breakdown of our group&#x27;s unity. My instinct tells me we need to carefully examine not just what people are saying, but the strategic positioning behind their words - and right now, I&#x27;m particularly interested in how players like Morgan and Sofia are trying to redirect our collective attention.</div>
+<div class='log-line'>
+Iris: *speaks softly, with a compassionate yet concerned tone* As someone who believes in the power of human connection, I&#x27;m deeply saddened by how quickly our group seems to be fracturing. While Rashid and Terrence offer interesting analytical perspectives, I&#x27;m more worried about the emotional toll these losses are taking on all of us. Maybe we could take a moment to support each other and remember that we&#x27;re all here trying to protect our team, not tear each other apart.</div>
+<div class='log-line'>
+Priya: *leans forward with a sharp, calculated gaze* Rashid&#x27;s analytical approach and Terrence&#x27;s military precision both reveal something crucial - we&#x27;re dealing with a strategic elimination of faithful players, which suggests our traitors are highly organized. I&#x27;m particularly struck by the contrast between those pushing for clinical analysis and those advocating for emotional unity - in my experience, such divergent communication styles can be tactical deflections. Right now, I&#x27;m watching Sofia and Morgan very carefully, as their seemingly opposite approaches might be masking something more calculated.</div>
+<div class='log-line'>
+Morgan: As a crisis negotiator who&#x27;s managed high-stakes situations, I&#x27;m deeply concerned about the escalating tension and rapid loss of faithful team members. While I appreciate the various analytical perspectives being shared, I believe we&#x27;re at a critical point where we need to focus on rebuilding trust and carefully examining each living player&#x27;s behavior and motivations - without falling into the trap of creating more divisiveness that could further weaken our collective defense.</div>
+<div class='log-line'>
+Gloria: As a retired judge who has meticulously observed our group&#x27;s interactions, I find the current dynamic deeply concerning. The systematic elimination of faithful players suggests a calculated strategy by our traitors, and I&#x27;m particularly struck by the contrasting communication styles of Terrence and Morgan - one clinical, one conciliatory - which might be deliberate attempts to create confusion and misdirection. My instinct tells me we must look beyond surface-level arguments and carefully examine the subtle psychological maneuvers that could be concealing true intentions.</div>
+<div class='log-line'>
+Aaliyah: As a nurse who has carefully observed our group&#x27;s emotional landscape, I&#x27;m deeply troubled by the pattern of faithful players being systematically eliminated. While I appreciate the analytical perspectives from Rashid and the strategic insights from Terrence, I&#x27;m most concerned with the underlying psychological dynamics - the subtle shifts in communication that might reveal hidden motivations. Right now, I&#x27;m particularly attuned to the contrast between Morgan&#x27;s calls for unity and the increasingly tense strategic positioning of players like Sofia and Priya, and I believe we need to dig deeper into these nuanced interactions to truly protect our remaining team.</div>
+<div class='log-line'>
+----------------------------------------</div>
+<div class='log-line'>PRIVATE THOUGHTS - What are the players thinking?</div>
+<div class='log-line'>----------------------------------------</div>
+<div class='log-line'>
+[FAITHFUL] Sofia&#x27;s thoughts: *Internal Monologue*
+
+Based on the discussions, I&#x27;m most suspicious of Terrence and Morgan. Terrence&#x27;s aggressive early targeting of faithful players and his continued military-style tactical approach feels calculated. Morgan&#x27;s constant calls for unity seem like a potential deflection strategy - always pushing for group harmony when we&#x27;ve lost multiple faithful players, which could be a way to prevent us from closely examining potential traitors.
+
+Priya&#x27;s sharp observations and Rashid&#x27;s analytical approach make them less suspicious to me. Their insights seem genuine and focused on uncovering the truth. I&#x27;m particularly drawn to Priya&#x27;s nuanced reading of group dynamics, which feels more investigative than manipulative.
+
+My gut tells me to watch Terrence and Morgan very carefully. Their contrasting communication styles - one clinical, one conciliatory - seem almost too perfectly designed to create confusion and misdirect our attention from their potential true roles.
+
+If I had to choose one to potentially vote out this round, I&#x27;m leaning towards Terrence. His military background and strategic targeting of faithful players early on make me deeply uneasy about his true motivations.</div>
+<div class='log-line'>
+[FAITHFUL] Priya&#x27;s thoughts: *Private Strategic Analysis*
+
+Based on the discussions, I&#x27;m most suspicious of Morgan and Sofia. Morgan&#x27;s consistent calls for &quot;unity&quot; feel like a tactical deflection - in high-stakes business negotiations, I&#x27;ve learned that those pushing hardest for harmony often have hidden agendas. Sofia&#x27;s social worker perspective seems strategically positioned to redirect suspicion, particularly her careful framing of Terrence and Morgan&#x27;s interactions, which feels calculated rather than genuine.
+
+My entrepreneurial instincts tell me Morgan is potentially a traitor - their crisis negotiator background would make them exceptionally skilled at manipulating group dynamics while appearing sympathetic. Sofia is my secondary suspicion, as her analysis seems designed to create confusion and subtly shift blame away from herself.
+
+I&#x27;ll be watching their next moves very carefully during this round&#x27;s discussion.</div>
+<div class='log-line'>
+[TRAITOR] Terrence&#x27;s thoughts: *Internal strategic assessment*
+
+Sofia and Priya are both highly perceptive and analytically minded - they&#x27;re carefully dissecting group dynamics in a way that could potentially expose our traitor strategy. However, Sofia seems slightly more dangerous due to her social work background, which gives her keen insights into psychological manipulation. Gloria is also a potential threat with her judicial experience in reading subtle behavioral cues. 
+
+My strategic approach would be to subtly push suspicion towards Sofia while maintaining my own appearance of being a protective, analytical team member. By positioning her as someone trying to create division, I can potentially guide the group&#x27;s suspicion away from myself and my fellow traitors. My military background gives me credibility in making strategic observations that can deflect attention from our true intentions.</div>
+<div class='log-line'>
+[FAITHFUL] Aaliyah&#x27;s thoughts: *Internal Nursing Assessment*
+
+My professional intuition is most strongly drawing my suspicion toward Terrence. His military-style tactical accusations from the first round, combined with his persistent attempts to create division and redirect attention, feel strategically manipulative. While he presents as analytical, his consistent pattern of trying to fragment the group&#x27;s trust seems calculated - almost like a deliberate strategy to create chaos and confusion that would benefit the traitors.
+
+Sofia&#x27;s social worker perspective also feels slightly off to me. Her commentary seems designed to create additional tension and doubt, mirroring Terrence&#x27;s divisive approach. The way she&#x27;s carefully positioning herself to cast suspicion on multiple players without committing to a clear stance makes me slightly wary of her true intentions.
+
+I&#x27;m leaning toward potentially voting for Terrence in this round, as his behavior consistently feels the most engineered and potentially deceptive. His military background could be perfectly suited to executing a strategic elimination plan while maintaining a veneer of &quot;strategic analysis&quot;.</div>
+<div class='log-line'>
+[FAITHFUL] Morgan&#x27;s thoughts: *Internal monologue*
+
+Based on the discussions, I&#x27;m becoming increasingly suspicious of Terrence. His military-style accusations in the first round seemed designed to create early division, and now he&#x27;s consistently pushing a clinical, divisive narrative that feels strategically calculated. Sofia&#x27;s observations about Terrence&#x27;s positioning also resonate with me - he seems to be deliberately creating tension and redirecting attention away from himself.
+
+My second serious suspicion is Priya. Her entrepreneurial approach of watching subtle dynamics sounds strategic, but she&#x27;s been remarkably good at analyzing group behavior without ever being truly vulnerable herself. Her careful positioning and keen observations could be a sophisticated traitor strategy of staying just observant enough to avoid direct scrutiny.
+
+I&#x27;ll be watching both Terrence and Priya very carefully in this round, looking for any inconsistencies or tactical deflections that might reveal their true intentions.</div>
+<div class='log-line'>
+[TRAITOR] Iris&#x27;s thoughts: *Privately reflecting on potential vote strategy*
+
+From a traitor&#x27;s perspective, Sofia and Priya seem the most analytically dangerous right now. Sofia&#x27;s social worker background means she&#x27;s skilled at reading group dynamics, and Priya&#x27;s sharp entrepreneurial instincts make her adept at detecting subtle manipulations. Between the two, I&#x27;m leaning towards voting for Sofia - her observations about strategic deflections feel particularly perceptive. However, I&#x27;ll need to appear compassionate and conflicted during the vote to maintain my harmless kindergarten teacher persona.
+
+My goal is to align with the group&#x27;s suspicions while subtly pushing us away from examining Terrence or Rashid too closely. Sofia becoming the next elimination would serve our traitor strategy well.</div>
+<div class='log-line'>
+[TRAITOR] Rashid&#x27;s thoughts: *Internal Strategic Analysis*
+
+Objectively, Sofia and Gloria pose the most significant analytical threat. Sofia&#x27;s social worker background means she&#x27;s perceptively tracking group dynamics, while Gloria&#x27;s judicial experience gives her a keen ability to detect subtle manipulation. Between them, Gloria seems more dangerous - her measured observations and ability to see through strategic positioning could potentially unravel our traitor strategy if left unchecked.
+
+Strategically, I should focus on casting subtle suspicion on Gloria while potentially voting with the group&#x27;s momentum to maintain my appearance as a faithful player. My data-driven persona allows me to seem objective while subtly nudging group perception, which makes me an ideal candidate to strategically navigate this critical round.</div>
+<div class='log-line'>
+[FAITHFUL] Gloria&#x27;s thoughts: *Adjusts glasses and reviews the discussion with judicial precision*
+
+My internal analysis reveals two primary suspects: Morgan and Terrence. Morgan&#x27;s constant calls for &quot;unity&quot; feel strategically designed to prevent us from deeply examining individual behaviors - a classic deflection tactic. Terrence, while appearing aggressive in early rounds, might be intentionally creating chaotic dynamics to draw attention away from himself. 
+
+His military background suggests he understands psychological manipulation, and his clinical approach could be a calculated way of seeming analytical while actually concealing his true intentions. Morgan&#x27;s crisis negotiator approach of constantly redirecting us toward &quot;trust&quot; and away from specific scrutiny is equally suspicious.
+
+I&#x27;m leaning more toward Morgan as my primary suspect. Her consistent messaging of unity feels like a deliberate attempt to prevent us from identifying the traitors by keeping us emotionally off-balance. In my years on the bench, I&#x27;ve seen similar tactics used to obscure guilt.
+
+My preliminary recommendation would be to consider banishing Morgan in this round, but I&#x27;ll continue to observe carefully and remain open to shifting my perspective as new evidence emerges.</div>
+<div class='log-line'>
+----------------------------------------</div>
+<div class='log-line'>VOTING PHASE - Who will be banished?</div>
+<div class='log-line'>----------------------------------------</div>
+<div class='log-line'>  Sofia votes for: Morgan</div>
+<div class='log-line'>  Priya votes for: Sofia</div>
+<div class='log-line'>  Terrence votes for: Priya</div>
+<div class='log-line'>  Aaliyah votes for: Morgan</div>
+<div class='log-line'>  Morgan votes for: Sofia</div>
+<div class='log-line'>  Iris votes for: Rashid</div>
+<div class='log-line'>  Rashid votes for: Priya</div>
+<div class='log-line'>  Gloria votes for: Terrence</div>
+<div class='log-line'>
+TIE! Random selection from: Morgan, Sofia, Priya</div>
+<div class='log-line'>
+========================================</div>
+<div class='log-line'>BANISHED: Sofia</div>
+<div class='log-line'>They were a: FAITHFUL</div>
+<div class='log-line'>========================================</div>
+<div class='log-line'>
+----------------------------------------</div>
+<div class='log-line'>END GAME VOTE - Continue or stop?</div>
+<div class='log-line'>----------------------------------------</div>
+<div class='log-line'>  Priya votes: CONTINUE</div>
+<div class='log-line'>  Terrence votes: END</div>
+<div class='log-line'>  Aaliyah votes: CONTINUE</div>
+<div class='log-line'>  Morgan votes: CONTINUE</div>
+<div class='log-line'>  Iris votes: END</div>
+<div class='log-line'>  Rashid votes: END</div>
+<div class='log-line'>  Gloria votes: CONTINUE</div>
+<div class='log-line'>
+Result: END 3 - CONTINUE 4</div>
+<div class='log-line'>The group has voted to CONTINUE playing.</div>
+<div class='log-line'>
+----------------------------------------</div>
+<div class='log-line'>NIGHT PHASE - Traitors meet in secret...</div>
+<div class='log-line'>----------------------------------------</div>
+<div class='log-line'>
+[TRAITOR] Terrence: *speaks in a low, measured tone*
+
+Strategically, I believe we should target Morgan next. As a crisis negotiator, her ability to read group dynamics and rebuild trust makes her the most dangerous to our long-term strategy. She&#x27;s been consistently pushing for unity, which could potentially expose our fragmentation tactics if left unchecked.</div>
+<div class='log-line'>
+[TRAITOR] Iris: *whispers carefully, adjusting her cardigan*
+
+I think Morgan is an excellent suggestion. Her crisis negotiation skills mean she&#x27;s constantly trying to rebuild trust and could potentially see through our manipulations. Additionally, her calls for unity might actually help us, as she&#x27;s inadvertently preventing the group from becoming too analytically focused on uncovering us.</div>
+<div class='log-line'>
+[TRAITOR] Rashid: *adjusts glasses, speaks in a low, calculated tone*
+
+Morgan&#x27;s crisis negotiation skills make her the most strategically dangerous. Her ability to rebuild trust and read group dynamics could potentially expose our traitor strategy if left unchecked. I recommend we eliminate her tonight to prevent her from further unifying the group and potentially uncovering our subtle manipulations.</div>
+<div class='log-line'>
+[MURDER VOTE] Terrence votes to kill: Morgan</div>
+<div class='log-line'>
+[MURDER VOTE] Iris votes to kill: Morgan</div>
+<div class='log-line'>
+[MURDER VOTE] Rashid votes to kill: Morgan</div>
+<div class='log-line'>
+========================================</div>
+<div class='log-line'>MURDERED: Morgan</div>
+<div class='log-line'>The faithful mourn their loss...</div>
+<div class='log-line'>========================================</div>
+<div class='log-line'>
+============================================================</div>
+<div class='log-line'>GAME OVER</div>
+<div class='log-line'>============================================================</div>
+<div class='log-line'>
+WINNER: THE TRAITORS!</div>
+<div class='log-line'>
+Final Player Status:</div>
+<div class='log-line'>  Marcus: FAITHFUL - MURDERED</div>
+<div class='log-line'>  Sofia: FAITHFUL - BANISHED</div>
+<div class='log-line'>  Dominic: FAITHFUL - BANISHED</div>
+<div class='log-line'>  Elena: FAITHFUL - MURDERED</div>
+<div class='log-line'>  Jaylen: FAITHFUL - BANISHED</div>
+<div class='log-line'>  Priya: FAITHFUL - SURVIVED</div>
+<div class='log-line'>  Terrence: TRAITOR - SURVIVED</div>
+<div class='log-line'>  Aaliyah: FAITHFUL - SURVIVED</div>
+<div class='log-line'>  Morgan: FAITHFUL - MURDERED</div>
+<div class='log-line'>  Iris: TRAITOR - SURVIVED</div>
+<div class='log-line'>  Rashid: TRAITOR - SURVIVED</div>
+<div class='log-line'>  Gloria: FAITHFUL - SURVIVED</div>
+<div class='log-line'>
+============================================================</div>
+            </div>
+        </section>
+    </div>
+
+    <footer>
+        <p>The Traitors LLM Simulator - Powered by Claude AI</p>
+        <p>Each contestant is controlled by an AI agent with a unique personality prompt.</p>
+    </footer>
+</body>
+</html>
