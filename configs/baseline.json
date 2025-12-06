@@ -1,0 +1,20 @@
+{
+  "name": "baseline",
+  "description": "Original 12 contestants - baseline for comparison",
+  "num_games": 10,
+  "num_traitors": 3,
+  "contestants": [
+    {"source": "original", "name": "Marcus"},
+    {"source": "original", "name": "Sofia"},
+    {"source": "original", "name": "Derek"},
+    {"source": "original", "name": "Elena"},
+    {"source": "original", "name": "Jaylen"},
+    {"source": "original", "name": "Priya"},
+    {"source": "original", "name": "Terrence"},
+    {"source": "original", "name": "Aaliyah"},
+    {"source": "original", "name": "Victor"},
+    {"source": "original", "name": "Camille"},
+    {"source": "original", "name": "Rashid"},
+    {"source": "original", "name": "Gloria"}
+  ]
+}

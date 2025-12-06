@@ -3,11 +3,10 @@
 Run multiple game iterations and generate summary statistics.
 
 Usage:
-    python run_games.py [num_iterations]
-    python run_games.py 5 --experimental   # Use experimental contestants
+    python run_games.py --config configs/baseline.json
+    python run_games.py --config configs/experimental_v1.json
 
-Example:
-    python run_games.py 5   # Run 5 game iterations
+The config file specifies contestants, number of games, and other parameters.
 """
 
 import argparse
@@ -24,6 +23,57 @@ from main import EXAMPLE_CONTESTANTS
 from traitors import TraitorsGame
 from traitors.types import PlayerStatus
 from generate_html import generate_game_html
+
+
+# Build lookup for original contestants
+ORIGINAL_CONTESTANTS = {c["name"]: c for c in EXAMPLE_CONTESTANTS}
+
+
+def load_config(config_path: str) -> dict:
+    """Load a game configuration file."""
+    with open(config_path) as f:
+        return json.load(f)
+
+
+def load_contestants_from_config(config: dict) -> list[dict]:
+    """
+    Load contestants based on config specification.
+
+    Each contestant entry can be:
+    - {"source": "original", "name": "Marcus"} - use original contestant
+    - {"source": "prompt", "file": "improved_v1.json"} - use prompt file
+    """
+    prompts_dir = Path(__file__).parent / "prompts"
+    contestants = []
+
+    for entry in config.get("contestants", []):
+        source = entry.get("source", "original")
+
+        if source == "original":
+            name = entry["name"]
+            if name not in ORIGINAL_CONTESTANTS:
+                raise ValueError(f"Unknown original contestant: {name}")
+            contestants.append(ORIGINAL_CONTESTANTS[name].copy())
+
+        elif source == "prompt":
+            prompt_file = entry["file"]
+            path = prompts_dir / prompt_file
+            if not path.exists():
+                raise ValueError(f"Prompt file not found: {prompt_file}")
+
+            with open(path) as f:
+                data = json.load(f)
+
+            contestants.append({
+                "name": data["name"],
+                "personality_prompt": data["personality_prompt"],
+                "_prompt_file": prompt_file,
+                "_version": data.get("version", "1.0"),
+            })
+        else:
+            raise ValueError(f"Unknown source type: {source}")
+
+    return contestants
 
 
 def run_single_game(client, contestants, num_traitors, game_log):
@@ -406,7 +456,9 @@ def update_main_index(runs_dir: str):
                     "faithful_wins": metadata.get("faithful_wins", 0),
                     "num_contestants": metadata.get("num_contestants", 12),
                     "num_traitors": metadata.get("num_traitors", 3),
-                    "experimental": metadata.get("experimental", False),
+                    "config_name": metadata.get("config_name", ""),
+                    "config_description": metadata.get("config_description", ""),
+                    "prompt_versions": metadata.get("prompt_versions", {}),
                     "contestants": metadata.get("contestants", []),
                     "avg_rounds": metadata.get("avg_rounds", 0),
                     "timestamp": metadata.get("timestamp", ""),
@@ -438,11 +490,23 @@ def update_main_index(runs_dir: str):
 
             # Build badges
             badges = []
-            if run["experimental"]:
-                badges.append('<span class="badge experimental">Experimental</span>')
+            if run["config_name"]:
+                badges.append(f'<span class="badge config">{html.escape(run["config_name"])}</span>')
 
-            # Contestant list (abbreviated)
-            contestants_str = ", ".join(run["contestants"][:6])
+            # Count custom prompts
+            custom_prompts = sum(1 for v in run["prompt_versions"].values() if v != "original")
+            if custom_prompts > 0:
+                badges.append(f'<span class="badge custom">{custom_prompts} custom</span>')
+
+            # Contestant list with version info
+            contestants_display = []
+            for name in run["contestants"][:6]:
+                version = run["prompt_versions"].get(name, "original")
+                if version != "original":
+                    contestants_display.append(f"{name} (v{version})")
+                else:
+                    contestants_display.append(name)
+            contestants_str = ", ".join(contestants_display)
             if len(run["contestants"]) > 6:
                 contestants_str += f" +{len(run['contestants']) - 6} more"
 
@@ -454,14 +518,15 @@ def update_main_index(runs_dir: str):
                 </div>
                 <div class="run-meta">
                     <span class="meta-item">
-                        <span class="meta-icon">👥</span>
+                        <span class="meta-icon">*</span>
                         {run['num_contestants']} contestants ({run['num_traitors']} traitors)
                     </span>
                     <span class="meta-item">
-                        <span class="meta-icon">🎮</span>
+                        <span class="meta-icon">#</span>
                         {run['games']} games, ~{run['avg_rounds']:.1f} rounds avg
                     </span>
                 </div>
+                <div class="run-description">{html.escape(run['config_description']) if run['config_description'] else ''}</div>
                 <div class="run-contestants">{html.escape(contestants_str) if contestants_str else 'Original contestants'}</div>
                 <div class="run-stats">
                     <div class="run-stat">
@@ -557,10 +622,10 @@ def update_prompt_stats(contestants: list, games_data: list):
 
 def main():
     parser = argparse.ArgumentParser(description="Run multiple Traitors games")
-    parser.add_argument("num_games", type=int, nargs="?", default=3,
-                        help="Number of games to run (default: 3)")
-    parser.add_argument("--experimental", "-e", action="store_true",
-                        help="Include experimental contestants (replaces some originals)")
+    parser.add_argument("--config", "-c", type=str, required=True,
+                        help="Path to game configuration file (e.g., configs/baseline.json)")
+    parser.add_argument("--num-games", "-n", type=int,
+                        help="Override number of games from config")
     args = parser.parse_args()
 
     # Check for API key
@@ -571,37 +636,51 @@ def main():
 
     client = anthropic.Anthropic(api_key=api_key)
 
-    # Select contestants
-    if args.experimental:
-        try:
-            from contestants import create_test_roster
-            contestants = create_test_roster()
-            print("Using EXPERIMENTAL roster with improved prompts")
-        except ImportError:
-            print("Warning: contestants.py not found, using original contestants")
-            contestants = EXAMPLE_CONTESTANTS
-    else:
-        contestants = EXAMPLE_CONTESTANTS
+    # Load configuration
+    if not os.path.exists(args.config):
+        print(f"Error: Config file not found: {args.config}")
+        return 1
+
+    config = load_config(args.config)
+    config_name = config.get("name", os.path.basename(args.config))
+
+    # Load contestants from config
+    try:
+        contestants = load_contestants_from_config(config)
+    except ValueError as e:
+        print(f"Error loading contestants: {e}")
+        return 1
+
+    # Get run parameters (command line overrides config)
+    num_games = args.num_games if args.num_games else config.get("num_games", 3)
+    num_traitors = config.get("num_traitors", 3)
 
     # Create run directory
     run_id = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
     run_dir = os.path.join("runs", run_id)
     os.makedirs(run_dir, exist_ok=True)
 
+    # Save a copy of the config used
+    with open(os.path.join(run_dir, "config.json"), "w") as f:
+        json.dump(config, f, indent=2)
+
     print(f"Starting run: {run_id}")
-    print(f"Running {args.num_games} game(s)...")
+    print(f"Config: {config_name}")
+    if config.get("description"):
+        print(f"Description: {config['description']}")
+    print(f"Running {num_games} game(s) with {num_traitors} traitors...")
     print(f"Contestants: {', '.join(c['name'] for c in contestants)}")
     print("=" * 60)
 
     games_data = []
 
-    for i in range(1, args.num_games + 1):
+    for i in range(1, num_games + 1):
         print(f"\n{'='*60}")
-        print(f"GAME {i} of {args.num_games}")
+        print(f"GAME {i} of {num_games}")
         print(f"{'='*60}\n")
 
         game_log = []
-        results = run_single_game(client, contestants, 3, game_log)
+        results = run_single_game(client, contestants, num_traitors, game_log)
         games_data.append(results)
 
         # Generate individual game HTML
@@ -629,20 +708,26 @@ def main():
     metadata = {
         "run_id": run_id,
         "timestamp": datetime.now().isoformat(),
-        "num_games": args.num_games,
+        "config_name": config_name,
+        "config_description": config.get("description", ""),
+        "num_games": num_games,
         "num_contestants": len(contestants),
-        "num_traitors": 3,
+        "num_traitors": num_traitors,
         "traitor_wins": sum(1 for g in games_data if g["winner"] == "traitors"),
         "faithful_wins": sum(1 for g in games_data if g["winner"] == "faithful"),
-        "experimental": args.experimental,
         "contestants": [c["name"] for c in contestants],
+        "prompt_versions": {
+            c["name"]: c.get("_version", "original")
+            for c in contestants
+        },
         "avg_rounds": sum(g["rounds_played"] for g in games_data) / len(games_data) if games_data else 0,
     }
     with open(os.path.join(run_dir, "metadata.json"), "w") as f:
         json.dump(metadata, f, indent=2)
 
     # Update prompt stats for contestants with prompt files
-    if args.experimental:
+    has_custom_prompts = any(c.get("_prompt_file") for c in contestants)
+    if has_custom_prompts:
         print("Updating prompt stats...")
         update_prompt_stats(contestants, games_data)
 

@@ -1,0 +1,20 @@
+{
+  "name": "experimental_v1",
+  "description": "Testing improved prompts: Morgan (v1), Dominic (aggressive), Iris (social) replacing Victor, Derek, Camille",
+  "num_games": 10,
+  "num_traitors": 3,
+  "contestants": [
+    {"source": "original", "name": "Marcus"},
+    {"source": "original", "name": "Sofia"},
+    {"source": "prompt", "file": "experimental_aggressive.json"},
+    {"source": "original", "name": "Elena"},
+    {"source": "original", "name": "Jaylen"},
+    {"source": "original", "name": "Priya"},
+    {"source": "original", "name": "Terrence"},
+    {"source": "original", "name": "Aaliyah"},
+    {"source": "prompt", "file": "improved_v1.json"},
+    {"source": "prompt", "file": "experimental_social.json"},
+    {"source": "original", "name": "Rashid"},
+    {"source": "original", "name": "Gloria"}
+  ]
+}
