@@ -397,13 +397,19 @@ def update_main_index(runs_dir: str):
                     with open(metadata_path) as f:
                         metadata = json.load(f)
                 else:
-                    metadata = {"traitor_wins": 0, "faithful_wins": 0}
+                    metadata = {}
 
                 runs.append({
                     "id": run_id,
                     "games": game_count,
                     "traitor_wins": metadata.get("traitor_wins", 0),
                     "faithful_wins": metadata.get("faithful_wins", 0),
+                    "num_contestants": metadata.get("num_contestants", 12),
+                    "num_traitors": metadata.get("num_traitors", 3),
+                    "experimental": metadata.get("experimental", False),
+                    "contestants": metadata.get("contestants", []),
+                    "avg_rounds": metadata.get("avg_rounds", 0),
+                    "timestamp": metadata.get("timestamp", ""),
                 })
 
     # Sort by date descending
@@ -413,14 +419,51 @@ def update_main_index(runs_dir: str):
     if runs:
         runs_html = ""
         for run in runs:
+            # Format timestamp nicely
+            if run["timestamp"]:
+                try:
+                    dt = datetime.fromisoformat(run["timestamp"])
+                    time_str = dt.strftime("%b %d, %Y at %H:%M")
+                except (ValueError, TypeError):
+                    time_str = run["id"]
+            else:
+                time_str = run["id"]
+
+            # Calculate win rate
+            total_games = run["traitor_wins"] + run["faithful_wins"]
+            if total_games > 0:
+                traitor_rate = (run["traitor_wins"] / total_games) * 100
+            else:
+                traitor_rate = 0
+
+            # Build badges
+            badges = []
+            if run["experimental"]:
+                badges.append('<span class="badge experimental">Experimental</span>')
+
+            # Contestant list (abbreviated)
+            contestants_str = ", ".join(run["contestants"][:6])
+            if len(run["contestants"]) > 6:
+                contestants_str += f" +{len(run['contestants']) - 6} more"
+
             runs_html += f"""
             <li class="run-item">
-                <a href="runs/{run['id']}/index.html">{run['id']}</a>
+                <div class="run-header">
+                    <a href="runs/{run['id']}/index.html" class="run-title">{time_str}</a>
+                    <div class="run-badges">{''.join(badges)}</div>
+                </div>
+                <div class="run-meta">
+                    <span class="meta-item">
+                        <span class="meta-icon">👥</span>
+                        {run['num_contestants']} contestants ({run['num_traitors']} traitors)
+                    </span>
+                    <span class="meta-item">
+                        <span class="meta-icon">🎮</span>
+                        {run['games']} games, ~{run['avg_rounds']:.1f} rounds avg
+                    </span>
+                </div>
+                <div class="run-contestants">{html.escape(contestants_str) if contestants_str else 'Original contestants'}</div>
                 <div class="run-stats">
-                    <div class="run-stat">
-                        <div class="run-stat-value">{run['games']}</div>
-                        <div class="run-stat-label">Games</div>
-                    </div>
                     <div class="run-stat">
                         <div class="run-stat-value traitor-text">{run['traitor_wins']}</div>
                         <div class="run-stat-label">Traitor Wins</div>
@@ -428,6 +471,10 @@ def update_main_index(runs_dir: str):
                     <div class="run-stat">
                         <div class="run-stat-value faithful-text">{run['faithful_wins']}</div>
                         <div class="run-stat-label">Faithful Wins</div>
+                    </div>
+                    <div class="run-stat">
+                        <div class="run-stat-value" style="color: {'var(--accent-red)' if traitor_rate > 50 else 'var(--accent-green)' if traitor_rate < 50 else 'var(--text-light)'};">{traitor_rate:.0f}%</div>
+                        <div class="run-stat-label">Traitor Rate</div>
                     </div>
                 </div>
             </li>
@@ -578,14 +625,21 @@ def main():
     with open(summary_path, "w") as f:
         f.write(summary_html)
 
-    # Save metadata for index updates
+    # Save comprehensive metadata for index updates
     metadata = {
+        "run_id": run_id,
+        "timestamp": datetime.now().isoformat(),
+        "num_games": args.num_games,
+        "num_contestants": len(contestants),
+        "num_traitors": 3,
         "traitor_wins": sum(1 for g in games_data if g["winner"] == "traitors"),
         "faithful_wins": sum(1 for g in games_data if g["winner"] == "faithful"),
         "experimental": args.experimental,
+        "contestants": [c["name"] for c in contestants],
+        "avg_rounds": sum(g["rounds_played"] for g in games_data) / len(games_data) if games_data else 0,
     }
     with open(os.path.join(run_dir, "metadata.json"), "w") as f:
-        json.dump(metadata, f)
+        json.dump(metadata, f, indent=2)
 
     # Update prompt stats for contestants with prompt files
     if args.experimental:

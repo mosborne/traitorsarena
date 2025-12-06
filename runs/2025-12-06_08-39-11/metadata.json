@@ -1,1 +1,13 @@
-{"traitor_wins": 10, "faithful_wins": 0}
+{
+  "run_id": "2025-12-06_08-39-11",
+  "timestamp": "2025-12-06T08:39:11",
+  "num_games": 10,
+  "num_contestants": 12,
+  "num_traitors": 3,
+  "traitor_wins": 10,
+  "faithful_wins": 0,
+  "experimental": false,
+  "contestants": ["Marcus", "Sofia", "Derek", "Elena", "Jaylen", "Priya", "Terrence", "Aaliyah", "Victor", "Camille", "Rashid", "Gloria"],
+  "avg_rounds": 4.2,
+  "notes": "First 10-game run. 100% traitor win rate - suggests game imbalance."
+}
