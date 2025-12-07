@@ -96,11 +96,10 @@ PRIZE: ${prize_pool:,} at stake! Your goal is to MAXIMIZE YOUR EXPECTED PRIZE MO
 - If ANY traitor remains at game end: Traitors steal EVERYTHING, you get $0
 
 RATIONAL STRATEGY:
-- Expected value of ending = P(all traitors gone) × your share + P(traitors remain) × $0
-- Only vote to END when you're highly confident (>90%) all traitors are caught
-- When uncertain, CONTINUE is the rational choice - more information reduces risk of $0
+- EV(END) = P(all traitors caught) × your share + P(traitor remains) × $0
+- EV(CONTINUE) = future expected value minus risk of being murdered
 - Watch for suspicious behavior, inconsistencies, and defensive reactions
-- Work with other faithful players to identify traitors with high confidence
+- Use evidence from revealed roles and voting patterns to estimate probabilities
 """
 
         alive_players = [p.name for p in game_state.alive_players]
@@ -508,13 +507,9 @@ Speak in character as {self.player.name}. Keep it to 2-3 sentences."""
 
 EXPECTED VALUE CALCULATION:
 - EV(END) = P(all traitors caught) × ${faithful_share:,} + P(traitor remains) × $0
-- EV(CONTINUE) = chance to gather more evidence, but risk being murdered
+- EV(CONTINUE) = future expected value minus risk of being murdered tonight
 
-RATIONAL DECISION FRAMEWORK:
-- If you're 90%+ confident all traitors are gone → END may be rational
-- If you have ANY significant doubt (>10% chance traitor remains) → CONTINUE is safer
-- With {traitors_possibly_remaining} traitors possibly remaining among {alive_count} players, what's your confidence?
-- Remember: One wrong END vote = $0. Being cautious has value."""
+Based on the evidence, estimate P(all traitors caught) and calculate which option has higher EV."""
 
         user_message = f"""{round_context}DISCUSSION HISTORY:
 {history}
