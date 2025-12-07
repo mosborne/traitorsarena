@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The Traitors - Prompt Changelog</title>
+    <style>
+        :root {
+            --bg-dark: #1a1a2e;
+            --bg-card: #16213e;
+            --accent: #e94560;
+            --accent-secondary: #0f3460;
+            --text-primary: #eee;
+            --text-secondary: #aaa;
+            --faithful-color: #4ade80;
+            --traitor-color: #f87171;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            background: var(--bg-dark);
+            color: var(--text-primary);
+            line-height: 1.6;
+            padding: 2rem;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+        }
+
+        h1 {
+            color: var(--accent);
+            margin-bottom: 0.5rem;
+            font-size: 2.5rem;
+        }
+
+        .subtitle {
+            color: var(--text-secondary);
+            margin-bottom: 2rem;
+            font-size: 1.1rem;
+        }
+
+        .back-link {
+            display: inline-block;
+            color: var(--accent);
+            text-decoration: none;
+            margin-bottom: 2rem;
+            padding: 0.5rem 1rem;
+            border: 1px solid var(--accent);
+            border-radius: 4px;
+            transition: all 0.3s;
+        }
+
+        .back-link:hover {
+            background: var(--accent);
+            color: var(--bg-dark);
+        }
+
+        .changelog-entry {
+            background: var(--bg-card);
+            border-radius: 8px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            border-left: 4px solid var(--accent);
+        }
+
+        .changelog-entry.major {
+            border-left-color: var(--accent);
+        }
+
+        .changelog-entry.minor {
+            border-left-color: var(--accent-secondary);
+        }
+
+        .entry-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+        }
+
+        .version {
+            font-size: 1.3rem;
+            font-weight: bold;
+            color: var(--accent);
+        }
+
+        .date {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+        }
+
+        .entry-title {
+            font-size: 1.1rem;
+            margin-bottom: 1rem;
+            color: var(--text-primary);
+        }
+
+        .entry-description {
+            color: var(--text-secondary);
+            margin-bottom: 1rem;
+        }
+
+        .changes-list {
+            list-style: none;
+            padding-left: 0;
+        }
+
+        .changes-list li {
+            padding: 0.5rem 0;
+            padding-left: 1.5rem;
+            position: relative;
+        }
+
+        .changes-list li::before {
+            content: ">";
+            position: absolute;
+            left: 0;
+            color: var(--accent);
+            font-weight: bold;
+        }
+
+        .tag {
+            display: inline-block;
+            padding: 0.2rem 0.5rem;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            font-weight: bold;
+            margin-right: 0.5rem;
+        }
+
+        .tag.faithful {
+            background: var(--faithful-color);
+            color: #000;
+        }
+
+        .tag.traitor {
+            background: var(--traitor-color);
+            color: #000;
+        }
+
+        .tag.system {
+            background: var(--accent-secondary);
+            color: var(--text-primary);
+        }
+
+        .rationale {
+            background: rgba(233, 69, 96, 0.1);
+            border-radius: 4px;
+            padding: 1rem;
+            margin-top: 1rem;
+        }
+
+        .rationale-title {
+            font-weight: bold;
+            color: var(--accent);
+            margin-bottom: 0.5rem;
+        }
+
+        .expected-impact {
+            background: rgba(74, 222, 128, 0.1);
+            border-radius: 4px;
+            padding: 1rem;
+            margin-top: 1rem;
+        }
+
+        .expected-impact-title {
+            font-weight: bold;
+            color: var(--faithful-color);
+            margin-bottom: 0.5rem;
+        }
+
+        .runs-affected {
+            margin-top: 1rem;
+            padding-top: 1rem;
+            border-top: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .runs-affected-title {
+            font-weight: bold;
+            color: var(--text-secondary);
+            margin-bottom: 0.5rem;
+        }
+
+        .run-link {
+            color: var(--accent);
+            text-decoration: none;
+        }
+
+        .run-link:hover {
+            text-decoration: underline;
+        }
+
+        code {
+            background: rgba(255,255,255,0.1);
+            padding: 0.1rem 0.3rem;
+            border-radius: 3px;
+            font-family: 'Consolas', monospace;
+            font-size: 0.9em;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <a href="index.html" class="back-link">&larr; Back to Game Runs</a>
+
+        <h1>Prompt Changelog</h1>
+        <p class="subtitle">Tracking changes to agent prompts and their effects on game dynamics</p>
+
+        <!-- VERSION 1.2.0 -->
+        <div class="changelog-entry major">
+            <div class="entry-header">
+                <span class="version">v1.2.0</span>
+                <span class="date">2025-12-07</span>
+            </div>
+            <h3 class="entry-title">Retrospective Analysis: Leverage Departed Player Information</h3>
+            <p class="entry-description">
+                Major overhaul to encourage players to analyze departed players' revealed roles and past behavior
+                as crucial evidence, rather than ignoring them.
+            </p>
+
+            <ul class="changes-list">
+                <li><span class="tag faithful">FAITHFUL</span> Removed instructions telling players to "only discuss living players" and that "eliminated players are no longer relevant"</li>
+                <li><span class="tag faithful">FAITHFUL</span> Added strategic context in system prompt showing REVEALED TRAITORS, MURDERED faithful, and WRONGLY BANISHED faithful with analysis hints</li>
+                <li><span class="tag faithful">FAITHFUL</span> New voting history tracking for revealed traitors - shows who they voted for (likely faithful threats)</li>
+                <li><span class="tag faithful">FAITHFUL</span> Enhanced private thoughts prompt with specific analysis checklist:
+                    <ul style="margin-left: 1rem; margin-top: 0.5rem;">
+                        <li>Who defended/voted with revealed traitors?</li>
+                        <li>What did murdered players suspect? (Their suspicions were likely correct)</li>
+                        <li>Who pushed to banish faithful players?</li>
+                        <li>Voting pattern analysis across multiple rounds</li>
+                    </ul>
+                </li>
+                <li><span class="tag traitor">TRAITOR</span> Added warning that faithful may analyze their alignment with revealed traitors</li>
+                <li><span class="tag system">SYSTEM</span> New <code>_build_voting_history_context()</code> method to track revealed traitors' voting patterns</li>
+            </ul>
+
+            <div class="rationale">
+                <div class="rationale-title">Rationale</div>
+                <p>
+                    Previous prompts explicitly told players to ignore departed players: "Eliminated players are no longer relevant"
+                    and "Base your current suspicions on the LIVING players' behavior". This was strategically wrong because:
+                </p>
+                <ul style="margin-left: 1rem; margin-top: 0.5rem;">
+                    <li>When players are eliminated, their role is REVEALED - this is crucial information</li>
+                    <li>Revealed traitors' past behavior shows traitor tactics (who they defended, who they targeted)</li>
+                    <li>Murdered players' suspicions were likely correct - traitors silence threats</li>
+                    <li>Voting patterns with revealed traitors expose remaining traitor alliances</li>
+                    <li>Who pushed to banish wrongly-eliminated faithful was likely a traitor</li>
+                </ul>
+            </div>
+
+            <div class="expected-impact">
+                <div class="expected-impact-title">Expected Impact</div>
+                <p>
+                    Should significantly help faithful players by giving them tools to use revealed information
+                    strategically. Faithful now have explicit prompts to perform retrospective analysis that
+                    could expose traitor alliances based on historical behavior with revealed players.
+                </p>
+            </div>
+
+            <div class="runs-affected">
+                <div class="runs-affected-title">Runs Using This Version</div>
+                <p><em>No runs yet - run games to test this version</em></p>
+            </div>
+        </div>
+
+        <!-- VERSION 1.1.0 -->
+        <div class="changelog-entry minor">
+            <div class="entry-header">
+                <span class="version">v1.1.0</span>
+                <span class="date">2025-12-07</span>
+            </div>
+            <h3 class="entry-title">Faithful-Optimized Character Prompts</h3>
+            <p class="entry-description">
+                Added 6 new character prompts specifically designed to help faithful players
+                identify traitors through different strategic approaches.
+            </p>
+
+            <ul class="changes-list">
+                <li><span class="tag faithful">FAITHFUL</span> <strong>Iris</strong> - Social intuition focus, reads emotional cues</li>
+                <li><span class="tag faithful">FAITHFUL</span> <strong>Quinn</strong> - Vote tracking and pattern analysis</li>
+                <li><span class="tag faithful">FAITHFUL</span> <strong>Harper</strong> - Devil's advocate, challenges narratives</li>
+                <li><span class="tag faithful">FAITHFUL</span> <strong>Rowan</strong> - Murder target analysis specialist</li>
+                <li><span class="tag faithful">FAITHFUL</span> <strong>Sage</strong> - Vote coordination and coalition building</li>
+                <li><span class="tag faithful">FAITHFUL</span> <strong>Finley</strong> - Quiet observer, watches reactions</li>
+            </ul>
+
+            <div class="runs-affected">
+                <div class="runs-affected-title">Runs Using This Version</div>
+                <p>
+                    <a href="runs/2025-12-07_14-53-58/index.html" class="run-link">experimental_v2 (2025-12-07)</a> -
+                    90% traitor win rate (9-1)
+                </p>
+            </div>
+        </div>
+
+        <!-- VERSION 1.0.0 -->
+        <div class="changelog-entry minor">
+            <div class="entry-header">
+                <span class="version">v1.0.0</span>
+                <span class="date">2025-12-06</span>
+            </div>
+            <h3 class="entry-title">Initial Release</h3>
+            <p class="entry-description">
+                Base implementation with original character prompts.
+            </p>
+
+            <ul class="changes-list">
+                <li><span class="tag system">SYSTEM</span> 12 original characters with personality-based prompts</li>
+                <li><span class="tag system">SYSTEM</span> Basic game loop: discussion, voting, night phase</li>
+                <li><span class="tag system">SYSTEM</span> End-game voting mechanic</li>
+            </ul>
+
+            <div class="runs-affected">
+                <div class="runs-affected-title">Runs Using This Version</div>
+                <p>
+                    <a href="runs/2025-12-06_08-39-11/index.html" class="run-link">baseline (2025-12-06)</a> -
+                    100% traitor win rate (10-0)
+                </p>
+                <p>
+                    <a href="runs/2025-12-06_18-56-03/index.html" class="run-link">experimental_v1 (2025-12-06)</a> -
+                    90% traitor win rate (9-1)
+                </p>
+            </div>
+        </div>
+
+    </div>
+</body>
+</html>

@@ -80,16 +80,36 @@ Work with other faithful players to figure out who the traitors are.
 
         alive_players = [p.name for p in game_state.alive_players]
 
-        # Build detailed elimination history
+        # Build detailed elimination history with strategic context
         eliminated_details = []
+        revealed_traitors = []
+        murdered_faithful = []
+        wrongly_banished = []
+
         for player in game_state.players.values():
             if not player.is_alive:
                 if player.status == PlayerStatus.BANISHED:
-                    eliminated_details.append(f"{player.name} - BANISHED (was {player.role.value.upper()})")
-                else:
+                    eliminated_details.append(f"{player.name} - BANISHED (revealed as {player.role.value.upper()})")
+                    if player.is_traitor:
+                        revealed_traitors.append(player.name)
+                    else:
+                        wrongly_banished.append(player.name)
+                else:  # MURDERED
                     eliminated_details.append(f"{player.name} - MURDERED (was {player.role.value.upper()})")
+                    murdered_faithful.append(player.name)
 
         eliminated_str = "\n  ".join(eliminated_details) if eliminated_details else "None yet"
+
+        # Build strategic analysis hints based on eliminations
+        strategic_hints = []
+        if revealed_traitors:
+            strategic_hints.append(f"REVEALED TRAITORS: {', '.join(revealed_traitors)} - Analyze who defended them, voted with them, or they tried to protect")
+        if murdered_faithful:
+            strategic_hints.append(f"MURDERED (by traitors): {', '.join(murdered_faithful)} - Their suspicions were likely correct. Who did they suspect? Who did they trust?")
+        if wrongly_banished:
+            strategic_hints.append(f"WRONGLY BANISHED (were faithful): {', '.join(wrongly_banished)} - Who pushed hardest to banish them? That person may be a traitor")
+
+        strategic_context = "\n".join(strategic_hints) if strategic_hints else ""
 
         return f"""You are a contestant in "The Traitors", a social deduction reality game show simulation.
 This is a GAME - you should fully commit to your role and play strategically to win.
@@ -105,12 +125,15 @@ Players still alive: {', '.join(alive_players)}
 Players eliminated:
   {eliminated_str}
 
+{strategic_context}
+
 CRITICAL RULES:
-- Only discuss players who are STILL ALIVE - eliminated players are gone from the game
+- You can only VOTE for living players, but departed players' behavior is CRUCIAL EVIDENCE
+- When a player is eliminated, their role is REVEALED - use this information!
+- Analyze: Who defended revealed traitors? Who voted with them? Who did murdered players suspect?
 - Stay in character as {self.player.name}
 - Keep responses concise (1-3 sentences)
 - If you're a traitor, NEVER explicitly reveal your role in public discussions
-- Base your current suspicions on the LIVING players' behavior
 - Play to WIN - this is a competitive game
 """
 
@@ -151,6 +174,37 @@ CRITICAL RULES:
 
         return "\n".join(formatted)
 
+    def _build_voting_history_context(self, game_state: GameState) -> str:
+        """Build context about voting patterns, especially involving revealed traitors."""
+        if not game_state.votes:
+            return ""
+
+        # Find revealed traitors
+        revealed_traitors = {p.name for p in game_state.players.values()
+                           if not p.is_alive and p.status == PlayerStatus.BANISHED and p.is_traitor}
+
+        if not revealed_traitors:
+            return ""
+
+        # Analyze voting patterns with revealed traitors
+        traitor_allies = {}  # Who voted same as traitors
+        traitor_defenders = {}  # Who voted against banishing traitors
+
+        for vote in game_state.votes:
+            # Track who revealed traitors voted for (their targets were likely faithful)
+            if vote.voter in revealed_traitors:
+                if vote.voter not in traitor_allies:
+                    traitor_allies[vote.voter] = []
+                traitor_allies[vote.voter].append(f"Round {vote.round_num}: voted for {vote.target}")
+
+        context_parts = []
+        for traitor, votes in traitor_allies.items():
+            context_parts.append(f"REVEALED TRAITOR {traitor}'s votes: {'; '.join(votes)}")
+
+        if context_parts:
+            return "VOTING HISTORY OF REVEALED TRAITORS (their targets were likely faithful threats):\n" + "\n".join(context_parts) + "\n\n"
+        return ""
+
     def _get_round_context(self, game_state: GameState) -> str:
         """Get context about what happened in previous rounds."""
         if game_state.current_round == 1:
@@ -164,9 +218,14 @@ CRITICAL RULES:
                 else:
                     context_parts.append(f"{player.name} was murdered by the traitors (was {player.role.value.upper()})")
 
+        result = ""
         if context_parts:
-            return "WHAT HAPPENED SO FAR:\n- " + "\n- ".join(context_parts) + "\n\n"
-        return ""
+            result = "WHAT HAPPENED SO FAR:\n- " + "\n- ".join(context_parts) + "\n\n"
+
+        # Add voting history context
+        result += self._build_voting_history_context(game_state)
+
+        return result
 
     def _log_interaction(
         self,
@@ -205,7 +264,7 @@ ROUND {game_state.current_round} - PUBLIC DISCUSSION
 Players still in the game: {', '.join(alive_names)}
 
 Your turn to speak. {prompt}
-IMPORTANT: Only discuss players who are still alive. Eliminated players are no longer relevant.
+STRATEGIC TIP: Reference departed players' revealed roles and past behavior as evidence. Who aligned with revealed traitors? What did murdered players suspect before they were silenced?
 What do you say to the group? (1-3 sentences, in character)
 Respond with your statement only, no quotation marks or name prefix."""
 
@@ -231,11 +290,16 @@ Respond with your statement only, no quotation marks or name prefix."""
         if self.player.is_traitor:
             role_context = """You're a TRAITOR thinking privately about who to vote for.
 Consider: Who is most dangerous to you? Who can you frame? How can you protect your fellow traitor(s)?
-You might vote for a faithful player to eliminate them, or strategically vote with the group to avoid suspicion."""
+You might vote for a faithful player to eliminate them, or strategically vote with the group to avoid suspicion.
+Be careful - if other traitors were revealed, the faithful may be analyzing who aligned with them."""
         else:
             role_context = """You're FAITHFUL thinking privately about who might be a traitor.
-Consider: Who has been acting suspiciously? Who has been deflecting? Who seems too eager or too quiet?
-Trust your gut but also consider the evidence from discussions."""
+CRITICAL ANALYSIS TO PERFORM:
+- Who defended or voted alongside any REVEALED TRAITORS? (Major red flag!)
+- What did MURDERED players suspect before the traitors silenced them? (Their suspicions were likely correct!)
+- Who pushed to banish players who turned out to be FAITHFUL? (Traitors eliminate threats)
+- Are there voting patterns or alliances that span multiple revealed traitors?
+Trust the evidence from revealed roles - it's your most reliable information."""
 
         user_message = f"""{round_context}DISCUSSION HISTORY:
 {history}
@@ -245,7 +309,7 @@ Players you can vote for (those still alive): {', '.join(voteable)}
 
 {role_context}
 
-Analyze ONLY the living players listed above. Who do you suspect and why?
+Analyze the living players, using departed players' revealed roles as evidence. Who do you suspect and why?
 Keep it to 2-4 sentences."""
 
         response = self.client.messages.create(
