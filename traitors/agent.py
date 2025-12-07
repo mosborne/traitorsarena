@@ -5,6 +5,7 @@ from datetime import datetime
 from typing import Optional
 
 from .types import Player, GameState, Message, Role, PlayerStatus, LLMInteraction
+from . import prompts
 
 
 class Agent:
@@ -39,12 +40,12 @@ class Agent:
         return events
 
     def _build_system_prompt(self, game_state: GameState) -> str:
-        """Build the system prompt for this agent."""
+        """Build the system prompt for this agent using templates."""
         prize_pool = game_state.prize_pool
         num_traitors = game_state.num_traitors
         total_players = len(game_state.players)
 
-        role_info = ""
+        # Build role-specific info using templates
         if self.player.is_traitor:
             other_traitors = [
                 p.name for p in game_state.alive_traitors
@@ -53,31 +54,22 @@ class Agent:
             num_traitors_alive = len(game_state.alive_traitors)
             traitor_share = prize_pool // max(num_traitors_alive, 1)
             if other_traitors:
-                role_info = f"""
-YOUR SECRET ROLE: TRAITOR
-Your fellow traitor(s) still alive: {', '.join(other_traitors)}
-Your goal: MAXIMIZE YOUR EXPECTED PRIZE MONEY.
-- If game ends with you alive: You split ${prize_pool:,} with fellow traitors (${traitor_share:,} each)
-- If you're banished: You get $0
-- Each night, traitors secretly murder one faithful player
-"""
+                role_info = prompts.TRAITOR_ROLE_INFO.format(
+                    other_traitors=', '.join(other_traitors),
+                    prize_pool=prize_pool,
+                    traitor_share=traitor_share
+                )
             else:
-                role_info = f"""
-YOUR SECRET ROLE: TRAITOR (you are the last one)
-Your goal: MAXIMIZE YOUR EXPECTED PRIZE MONEY.
-- If game ends with you alive: You take the ENTIRE ${prize_pool:,}!
-- If you're banished: You get $0
-- Each night, you secretly murder one faithful player
-"""
+                role_info = prompts.SOLO_TRAITOR_ROLE_INFO.format(
+                    prize_pool=prize_pool
+                )
         else:
             num_alive = len(game_state.alive_players)
-            potential_share = prize_pool // max(num_alive - 1, 1)  # Rough estimate if you survive
-            role_info = f"""
-YOUR ROLE: FAITHFUL
-Your goal: MAXIMIZE YOUR EXPECTED PRIZE MONEY.
-- If ALL traitors eliminated when game ends: Surviving faithful split ${prize_pool:,} (~${potential_share:,} each)
-- If ANY traitor remains when game ends: Traitors steal EVERYTHING, you get $0
-"""
+            faithful_share = prize_pool // max(num_alive - 1, 1)
+            role_info = prompts.FAITHFUL_ROLE_INFO.format(
+                prize_pool=prize_pool,
+                faithful_share=faithful_share
+            )
 
         alive_players = [p.name for p in game_state.alive_players]
 
@@ -96,30 +88,24 @@ Your goal: MAXIMIZE YOUR EXPECTED PRIZE MONEY.
 
         eliminated_str = "\n  ".join(eliminated_details) if eliminated_details else "None yet"
 
-        # Endgame status
+        # Endgame status notification
         endgame_status = ""
         if game_state.is_endgame:
             endgame_status = "\n⚠️  ENDGAME: Roles are NO LONGER revealed when players are banished!"
 
-        return f"""You are {self.player.name} in "The Traitors", a social deduction game.
-Personality: {self.player.personality_prompt}
-
-GAME SETUP: {num_traitors} traitors among {total_players} players.
-{role_info}
-
-GAME STATE (Round {game_state.current_round}):
-Players alive: {', '.join(alive_players)}
-Eliminated:
-  {eliminated_str}
-{endgame_status}
-
-RULES:
-- Vote only for living players
-- Rounds 1-{game_state.endgame_round - 1}: When banished, a player's role is revealed
-- Round {game_state.endgame_round}+: ENDGAME - banished players' roles are NOT revealed
-- Stay in character, keep responses to 1-3 sentences
-- If traitor, never reveal your role publicly
-"""
+        return prompts.SYSTEM_PROMPT_TEMPLATE.format(
+            player_name=self.player.name,
+            personality=self.player.personality_prompt,
+            num_traitors=num_traitors,
+            total_players=total_players,
+            role_info=role_info,
+            current_round=game_state.current_round,
+            alive_players=', '.join(alive_players),
+            eliminated_str=eliminated_str,
+            endgame_status=endgame_status,
+            last_revealed_round=game_state.endgame_round - 1,
+            endgame_round=game_state.endgame_round
+        )
 
     def _format_conversation_history(self, game_state: GameState) -> str:
         """Format the conversation history for context, including round events."""
@@ -201,7 +187,7 @@ RULES:
         )
         game_state.llm_interactions.append(interaction)
 
-    def generate_discussion(self, game_state: GameState, prompt: str = "") -> str:
+    def generate_discussion(self, game_state: GameState, instruction: str = "") -> str:
         """Generate a discussion statement from this agent."""
         system = self._build_system_prompt(game_state)
         history = self._format_conversation_history(game_state)
@@ -209,14 +195,13 @@ RULES:
 
         alive_names = [p.name for p in game_state.alive_players]
 
-        user_message = f"""{round_context}DISCUSSION HISTORY:
-{history}
-
-ROUND {game_state.current_round} - PUBLIC DISCUSSION
-Players in the game: {', '.join(alive_names)}
-
-Your turn to speak. {prompt}
-Respond with your statement only (1-3 sentences, in character)."""
+        user_message = prompts.DISCUSSION_PROMPT.format(
+            round_context=round_context,
+            history=history,
+            current_round=game_state.current_round,
+            alive_names=', '.join(alive_names),
+            instruction=instruction
+        )
 
         response = self.client.messages.create(
             model="claude-3-5-haiku-20241022",
@@ -237,13 +222,11 @@ Respond with your statement only (1-3 sentences, in character)."""
 
         voteable = [p.name for p in game_state.alive_players if p.name != self.player.name]
 
-        user_message = f"""{round_context}DISCUSSION HISTORY:
-{history}
-
-PRIVATE THOUGHTS (internal reasoning before voting)
-Players you can vote for: {', '.join(voteable)}
-
-Who do you suspect and why? (2-4 sentences)"""
+        user_message = prompts.PRIVATE_THOUGHTS_PROMPT.format(
+            round_context=round_context,
+            history=history,
+            voteable=', '.join(voteable)
+        )
 
         response = self.client.messages.create(
             model="claude-3-5-haiku-20241022",
@@ -263,14 +246,10 @@ Who do you suspect and why? (2-4 sentences)"""
 
         voteable = [p.name for p in game_state.alive_players if p.name != self.player.name]
 
-        user_message = f"""DISCUSSION HISTORY:
-{history}
-
-VOTING TIME - You must vote to banish ONE player.
-Eligible players (still alive): {', '.join(voteable)}
-
-Based on the discussion and your strategy, who do you vote to banish?
-Respond with ONLY the player's name, nothing else."""
+        user_message = prompts.VOTE_PROMPT.format(
+            history=history,
+            voteable=', '.join(voteable)
+        )
 
         response = self.client.messages.create(
             model="claude-3-5-haiku-20241022",
@@ -300,13 +279,10 @@ Respond with ONLY the player's name, nothing else."""
 
         targets = [p.name for p in game_state.alive_faithful]
 
-        user_message = f"""DISCUSSION HISTORY:
-{history}
-
-TRAITOR NIGHT PHASE - Choose a faithful player to murder tonight.
-Available targets: {', '.join(targets)}
-
-Who do you vote to murder? Respond with ONLY the name."""
+        user_message = prompts.MURDER_VOTE_PROMPT.format(
+            history=history,
+            targets=', '.join(targets)
+        )
 
         response = self.client.messages.create(
             model="claude-3-5-haiku-20241022",
@@ -342,14 +318,12 @@ Who do you vote to murder? Respond with ONLY the name."""
 
         other_traitor_text = f"Your fellow traitor(s): {', '.join(other_traitors)}" if other_traitors else "You are the only traitor left."
 
-        user_message = f"""{round_context}DISCUSSION HISTORY:
-{history}
-
-SECRET TRAITOR MEETING - The faithful cannot hear this.
-{other_traitor_text}
-Potential targets: {', '.join(targets)}
-
-Speak freely. (2-3 sentences)"""
+        user_message = prompts.TRAITOR_DISCUSSION_PROMPT.format(
+            round_context=round_context,
+            history=history,
+            other_traitor_text=other_traitor_text,
+            targets=', '.join(targets)
+        )
 
         response = self.client.messages.create(
             model="claude-3-5-haiku-20241022",
@@ -373,33 +347,27 @@ Speak freely. (2-3 sentences)"""
 
         alive_count = len(game_state.alive_players)
 
-        # Count known traitors (those who were banished and revealed)
+        # Count known traitors (those who were banished and revealed - not during endgame)
         revealed_traitors = [p for p in game_state.players.values()
-                           if p.status == PlayerStatus.BANISHED and p.is_traitor]
+                           if p.status == PlayerStatus.BANISHED and p.is_traitor
+                           and p.eliminated_round and p.eliminated_round < game_state.endgame_round]
         revealed_faithful = [p for p in game_state.players.values()
-                            if p.status == PlayerStatus.BANISHED and not p.is_traitor]
+                            if p.status == PlayerStatus.BANISHED and not p.is_traitor
+                            and p.eliminated_round and p.eliminated_round < game_state.endgame_round]
 
         prize_pool = game_state.prize_pool
-        alive_traitors_count = len(game_state.alive_traitors)
         alive_faithful_count = len(game_state.alive_faithful)
         faithful_share = prize_pool // max(alive_faithful_count, 1) if alive_faithful_count > 0 else 0
 
-        user_message = f"""{round_context}DISCUSSION HISTORY:
-{history}
-
-END GAME VOTE - Should the game end now?
-PRIZE POOL: ${prize_pool:,}
-Players remaining: {alive_count}
-Traitors revealed (banished): {len(revealed_traitors)}
-Faithful wrongly banished: {len(revealed_faithful)}
-
-OUTCOMES:
-- END + traitors remain = Traitors take ${prize_pool:,}, faithful get $0
-- END + all traitors caught = Faithful split ${prize_pool:,} (${faithful_share:,} each)
-- CONTINUE = Game continues, traitors murder one faithful tonight
-
-Maximize your expected prize money. Vote END or CONTINUE.
-Respond with only END or CONTINUE."""
+        user_message = prompts.END_GAME_VOTE_PROMPT.format(
+            round_context=round_context,
+            history=history,
+            prize_pool=prize_pool,
+            alive_count=alive_count,
+            revealed_traitors=len(revealed_traitors),
+            revealed_faithful=len(revealed_faithful),
+            faithful_share=faithful_share
+        )
 
         response = self.client.messages.create(
             model="claude-3-5-haiku-20241022",
