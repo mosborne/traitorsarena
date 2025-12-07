@@ -20,25 +20,16 @@ class Agent:
 
         for player in game_state.players.values():
             if not player.is_alive:
-                # Determine which round they were eliminated
-                # Banishments happen during voting, murders happen at night
-                # We track this by looking at the votes and when players died
-                round_num = 1  # Default
+                # Use eliminated_round if available, otherwise determine from game data
+                round_num = player.eliminated_round or 1
 
                 if player.status == PlayerStatus.BANISHED:
-                    # Find the vote that banished them
-                    for vote in game_state.votes:
-                        if vote.target == player.name:
-                            round_num = vote.round_num
-                            break
-                    event = f"🗳️ {player.name} was BANISHED (revealed as {player.role.value.upper()})"
+                    # In endgame, roles are NOT revealed when banished
+                    if round_num >= game_state.endgame_round:
+                        event = f"🗳️ {player.name} was BANISHED (role unknown - endgame)"
+                    else:
+                        event = f"🗳️ {player.name} was BANISHED (revealed as {player.role.value.upper()})"
                 else:  # MURDERED
-                    # Murders happen at night after the round's voting
-                    # Find the round by checking messages
-                    for msg in reversed(game_state.messages):
-                        if msg.is_private and msg.round_num > 0:
-                            round_num = msg.round_num
-                            break
                     event = f"💀 {player.name} was MURDERED overnight (they were {player.role.value.upper()})"
 
                 if round_num not in events:
@@ -50,6 +41,9 @@ class Agent:
     def _build_system_prompt(self, game_state: GameState) -> str:
         """Build the system prompt for this agent."""
         prize_pool = game_state.prize_pool
+        num_traitors = game_state.num_traitors
+        total_players = len(game_state.players)
+
         role_info = ""
         if self.player.is_traitor:
             other_traitors = [
@@ -92,25 +86,37 @@ Your goal: MAXIMIZE YOUR EXPECTED PRIZE MONEY.
         for player in game_state.players.values():
             if not player.is_alive:
                 if player.status == PlayerStatus.BANISHED:
-                    eliminated_details.append(f"{player.name} - BANISHED (revealed: {player.role.value.upper()})")
+                    # In endgame (round >= endgame_round), roles are NOT revealed when banished
+                    if player.eliminated_round and player.eliminated_round >= game_state.endgame_round:
+                        eliminated_details.append(f"{player.name} - BANISHED (role unknown - endgame)")
+                    else:
+                        eliminated_details.append(f"{player.name} - BANISHED (revealed: {player.role.value.upper()})")
                 else:
                     eliminated_details.append(f"{player.name} - MURDERED (was {player.role.value.upper()})")
 
         eliminated_str = "\n  ".join(eliminated_details) if eliminated_details else "None yet"
 
+        # Endgame status
+        endgame_status = ""
+        if game_state.is_endgame:
+            endgame_status = "\n⚠️  ENDGAME: Roles are NO LONGER revealed when players are banished!"
+
         return f"""You are {self.player.name} in "The Traitors", a social deduction game.
 Personality: {self.player.personality_prompt}
 
+GAME SETUP: {num_traitors} traitors among {total_players} players.
 {role_info}
 
 GAME STATE (Round {game_state.current_round}):
 Players alive: {', '.join(alive_players)}
 Eliminated:
   {eliminated_str}
+{endgame_status}
 
 RULES:
 - Vote only for living players
-- When eliminated, a player's role is revealed
+- Rounds 1-{game_state.endgame_round - 1}: When banished, a player's role is revealed
+- Round {game_state.endgame_round}+: ENDGAME - banished players' roles are NOT revealed
 - Stay in character, keep responses to 1-3 sentences
 - If traitor, never reveal your role publicly
 """
@@ -161,7 +167,11 @@ RULES:
         for player in game_state.players.values():
             if not player.is_alive:
                 if player.status == PlayerStatus.BANISHED:
-                    context_parts.append(f"{player.name} was banished (revealed: {player.role.value.upper()})")
+                    # In endgame, roles are NOT revealed when banished
+                    if player.eliminated_round and player.eliminated_round >= game_state.endgame_round:
+                        context_parts.append(f"{player.name} was banished (role unknown - endgame)")
+                    else:
+                        context_parts.append(f"{player.name} was banished (revealed: {player.role.value.upper()})")
                 else:
                     context_parts.append(f"{player.name} was murdered (was {player.role.value.upper()})")
 

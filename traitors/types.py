@@ -34,6 +34,7 @@ class Player:
     personality_prompt: str
     role: Role = Role.FAITHFUL
     status: PlayerStatus = PlayerStatus.ALIVE
+    eliminated_round: Optional[int] = None  # Round when eliminated (for endgame role reveal logic)
 
     @property
     def is_alive(self) -> bool:
@@ -95,6 +96,8 @@ class GameState:
     winner: Optional[str] = None  # "traitors" or "faithful" or None
     prize_pool: int = 10000  # Total prize money ($10,000)
     prize_distribution: dict[str, int] = field(default_factory=dict)  # Final winnings per player
+    num_traitors: int = 3  # Total number of traitors at game start
+    endgame_round: int = 4  # Round at which endgame begins (roles not revealed)
 
     @property
     def alive_players(self) -> list[Player]:
@@ -107,6 +110,11 @@ class GameState:
     @property
     def alive_faithful(self) -> list[Player]:
         return [p for p in self.alive_players if not p.is_traitor]
+
+    @property
+    def is_endgame(self) -> bool:
+        """Check if we're in endgame (roles not revealed when banished)."""
+        return self.current_round >= self.endgame_round
 
     def get_public_messages(self, up_to_round: Optional[int] = None) -> list[Message]:
         """Get all public messages up to a given round."""

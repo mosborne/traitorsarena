@@ -44,6 +44,7 @@ class TraitorsGame:
 
         # Create game state
         self.state = GameState()
+        self.state.num_traitors = num_traitors
 
         # Create players
         for contestant in contestants:
@@ -219,10 +220,16 @@ class TraitorsGame:
         if banished_name in self.state.players:
             banished = self.state.players[banished_name]
             banished.status = PlayerStatus.BANISHED
+            banished.eliminated_round = self.state.current_round
 
             self.log(f"\n{'=' * 40}")
             self.log(f"BANISHED: {banished_name}")
-            self.log(f"They were a: {banished.role.value.upper()}")
+
+            # In endgame, roles are NOT revealed (like the UK TV show finale)
+            if self.state.is_endgame:
+                self.log("(Role not revealed - this is the endgame)")
+            else:
+                self.log(f"They were a: {banished.role.value.upper()}")
             self.log(f"{'=' * 40}")
 
             return banished_name
@@ -284,6 +291,7 @@ class TraitorsGame:
         if victim_name in self.state.players:
             victim = self.state.players[victim_name]
             victim.status = PlayerStatus.MURDERED
+            victim.eliminated_round = self.state.current_round
 
             self.log(f"\n{'=' * 40}")
             self.log(f"MURDERED: {victim_name}")
