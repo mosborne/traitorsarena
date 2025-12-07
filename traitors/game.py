@@ -374,20 +374,57 @@ class TraitorsGame:
             "survivors": [p.name for p in self.state.alive_players],
             "traitors": [p.name for p in self.state.players.values() if p.is_traitor],
             "faithful": [p.name for p in self.state.players.values() if not p.is_traitor],
+            "prize_pool": self.state.prize_pool,
+            "prize_distribution": self.state.prize_distribution,
         }
+
+    def _distribute_prize_money(self) -> None:
+        """
+        Distribute the prize money based on game outcome.
+
+        Rules (matching the real show):
+        - If FAITHFUL WIN: Surviving faithful players split the prize pool equally
+        - If TRAITORS WIN: Surviving traitors take ALL the money, faithful get nothing
+        """
+        prize_pool = self.state.prize_pool
+
+        # Initialize all players to $0
+        for player in self.state.players.values():
+            self.state.prize_distribution[player.name] = 0
+
+        if self.state.winner == "faithful":
+            # Faithful win: surviving faithful split the pot
+            surviving_faithful = [p for p in self.state.alive_players if not p.is_traitor]
+            if surviving_faithful:
+                share = prize_pool // len(surviving_faithful)
+                for player in surviving_faithful:
+                    self.state.prize_distribution[player.name] = share
+        else:
+            # Traitors win: surviving traitors take everything
+            surviving_traitors = [p for p in self.state.alive_players if p.is_traitor]
+            if surviving_traitors:
+                share = prize_pool // len(surviving_traitors)
+                for player in surviving_traitors:
+                    self.state.prize_distribution[player.name] = share
 
     def _print_final_results(self) -> None:
         """Print the final game results."""
+        # Distribute prize money first
+        self._distribute_prize_money()
+
         self.log("\n" + "=" * 60)
         self.log("GAME OVER")
         self.log("=" * 60)
 
         self.log(f"\nWINNER: THE {self.state.winner.upper()}!")
 
+        self.log(f"\nPRIZE POOL: ${self.state.prize_pool:,}")
         self.log("\nFinal Player Status:")
         for player in self.state.players.values():
             status = "SURVIVED" if player.is_alive else player.status.value.upper()
             role = player.role.value.upper()
-            self.log(f"  {player.name}: {role} - {status}")
+            winnings = self.state.prize_distribution.get(player.name, 0)
+            winnings_str = f"${winnings:,}" if winnings > 0 else "$0"
+            self.log(f"  {player.name}: {role} - {status} - {winnings_str}")
 
         self.log("\n" + "=" * 60)

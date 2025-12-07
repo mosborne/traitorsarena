@@ -55,12 +55,18 @@ def build_game_summary(results: dict) -> str:
         if round_events:
             round_summaries.append(f"<p><strong>Round {round_num}:</strong> " + " ".join(round_events) + "</p>")
 
-    # Build the outcome narrative
+    # Build the outcome narrative with prize info
+    prize_pool = results.get("prize_pool", 10000)
+    prize_distribution = results.get("prize_distribution", {})
+
     if results["winner"] == "traitors":
         surviving_traitors = [p.name for p in players.values() if p.is_alive and p.is_traitor]
-        outcome = f"<p class='outcome traitor-outcome'>The traitors achieved victory! <strong>{', '.join(surviving_traitors)}</strong> successfully deceived the group and survived to the end.</p>"
+        traitor_winnings = sum(prize_distribution.get(name, 0) for name in surviving_traitors)
+        outcome = f"<p class='outcome traitor-outcome'>The traitors achieved victory! <strong>{', '.join(surviving_traitors)}</strong> successfully deceived the group and stole the entire <strong>${prize_pool:,}</strong> prize pool!</p>"
     else:
-        outcome = "<p class='outcome faithful-outcome'>The faithful prevailed! They successfully identified and banished all the traitors.</p>"
+        surviving_faithful = [p.name for p in players.values() if p.is_alive and not p.is_traitor]
+        share = prize_pool // len(surviving_faithful) if surviving_faithful else 0
+        outcome = f"<p class='outcome faithful-outcome'>The faithful prevailed! They successfully identified and banished all the traitors and split the <strong>${prize_pool:,}</strong> prize pool (<strong>${share:,}</strong> each).</p>"
 
     # Initial setup
     traitor_names = ", ".join(results["traitors"])
@@ -341,6 +347,7 @@ def generate_game_html(results: dict, game_log: list[str], contestants: list = N
     llm_interactions_html = build_llm_interactions_html(results, contestants)
 
     # Build contestant cards
+    prize_distribution = results.get("prize_distribution", {})
     contestant_cards = ""
     for contestant in contestants:
         role = "traitor" if contestant["name"] in results["traitors"] else "faithful"
@@ -361,11 +368,16 @@ def generate_game_html(results: dict, game_log: list[str], contestants: list = N
             fate = "Unknown"
             fate_class = ""
 
+        # Get winnings
+        winnings = prize_distribution.get(contestant["name"], 0)
+        winnings_html = f"<div class='contestant-winnings {'winner' if winnings > 0 else ''}'>${winnings:,}</div>" if winnings > 0 else "<div class='contestant-winnings'>$0</div>"
+
         contestant_cards += f"""
         <div class="contestant-card {role} {fate_class}">
             <div class="contestant-name">{html.escape(contestant["name"])}</div>
             <div class="contestant-role">{role.upper()}</div>
             <div class="contestant-fate">{fate}</div>
+            {winnings_html}
             <div class="contestant-personality">{html.escape(contestant["personality_prompt"][:150])}...</div>
         </div>
         """
@@ -809,6 +821,18 @@ def generate_game_html(results: dict, game_log: list[str], contestants: list = N
         .contestant-personality {{
             font-size: 0.9rem;
             color: var(--text-muted);
+        }}
+
+        .contestant-winnings {{
+            font-size: 1.1rem;
+            font-weight: bold;
+            color: var(--text-muted);
+            margin: 0.5rem 0;
+        }}
+
+        .contestant-winnings.winner {{
+            color: var(--accent-gold);
+            font-size: 1.3rem;
         }}
 
         .winner-banner {{
@@ -1431,6 +1455,10 @@ results = game.run()</code>
             </div>
 
             <div class="stats-grid">
+                <div class="stat-box">
+                    <div class="stat-value" style="color: var(--accent-gold);">${results.get('prize_pool', 10000):,}</div>
+                    <div class="stat-label">Prize Pool</div>
+                </div>
                 <div class="stat-box">
                     <div class="stat-value">{results['rounds_played']}</div>
                     <div class="stat-label">Rounds Played</div>

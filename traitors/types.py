@@ -93,6 +93,8 @@ class GameState:
     current_round: int = 1
     current_phase: GamePhase = GamePhase.SETUP
     winner: Optional[str] = None  # "traitors" or "faithful" or None
+    prize_pool: int = 10000  # Total prize money ($10,000)
+    prize_distribution: dict[str, int] = field(default_factory=dict)  # Final winnings per player
 
     @property
     def alive_players(self) -> list[Player]:
