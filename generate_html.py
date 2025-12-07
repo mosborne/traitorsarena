@@ -233,6 +233,85 @@ def build_rounds_table(results: dict) -> str:
     """
 
 
+def build_llm_interactions_html(results: dict, contestants: list) -> str:
+    """Build HTML section showing LLM interaction details for each player."""
+    llm_interactions = results.get("llm_interactions", [])
+    if not llm_interactions:
+        return "<p><em>No LLM interaction data available for this game.</em></p>"
+
+    # Build a lookup for contestant prompts
+    contestant_prompts = {c["name"]: c.get("personality_prompt", "N/A") for c in contestants}
+
+    # Group interactions by player
+    by_player = {}
+    for interaction in llm_interactions:
+        if interaction.player not in by_player:
+            by_player[interaction.player] = []
+        by_player[interaction.player].append(interaction)
+
+    players_html = ""
+    for player_name in sorted(by_player.keys()):
+        interactions = by_player[player_name]
+        player_obj = results["players"].get(player_name)
+        is_traitor = player_obj and player_obj.is_traitor
+        role_class = "traitor-text" if is_traitor else "faithful-text"
+        role_label = "TRAITOR" if is_traitor else "FAITHFUL"
+
+        # Build interaction cards for this player
+        interaction_cards = ""
+        for i, inter in enumerate(interactions):
+            interaction_cards += f"""
+            <div class="llm-interaction-card">
+                <div class="llm-interaction-header" onclick="toggleInteraction(this)">
+                    <span class="interaction-type">{html.escape(inter.action_type)}</span>
+                    <span class="interaction-round">Round {inter.round_num}</span>
+                    <span class="interaction-toggle">+</span>
+                </div>
+                <div class="llm-interaction-content" style="display: none;">
+                    <div class="llm-section">
+                        <div class="llm-section-label">System Prompt:</div>
+                        <pre class="llm-text">{html.escape(inter.system_prompt)}</pre>
+                    </div>
+                    <div class="llm-section">
+                        <div class="llm-section-label">User Message (Input):</div>
+                        <pre class="llm-text">{html.escape(inter.user_message)}</pre>
+                    </div>
+                    <div class="llm-section">
+                        <div class="llm-section-label">Response (Output):</div>
+                        <pre class="llm-text llm-response">{html.escape(inter.response)}</pre>
+                    </div>
+                    <div class="llm-meta">
+                        Model: {html.escape(inter.model)} | Timestamp: {html.escape(inter.timestamp)}
+                    </div>
+                </div>
+            </div>
+            """
+
+        players_html += f"""
+        <div class="player-interactions">
+            <div class="player-interactions-header" onclick="togglePlayer(this)">
+                <span class="player-name-header">{html.escape(player_name)}</span>
+                <span class="{role_class}">[{role_label}]</span>
+                <span class="interaction-count">{len(interactions)} interactions</span>
+                <span class="player-toggle">+</span>
+            </div>
+            <div class="player-interactions-content" style="display: none;">
+                <div class="personality-prompt-section">
+                    <div class="llm-section-label">Personality Prompt:</div>
+                    <pre class="llm-text personality-text">{html.escape(contestant_prompts.get(player_name, 'N/A'))}</pre>
+                </div>
+                {interaction_cards}
+            </div>
+        </div>
+        """
+
+    return f"""
+    <div class="llm-interactions-container">
+        {players_html}
+    </div>
+    """
+
+
 def generate_game_html(results: dict, game_log: list[str], contestants: list = None,
                        back_link: str = None, title: str = None) -> str:
     """Generate the HTML page for a single game with results.
@@ -257,6 +336,9 @@ def generate_game_html(results: dict, game_log: list[str], contestants: list = N
 
     # Build the rounds table
     rounds_table = build_rounds_table(results)
+
+    # Build LLM interactions section
+    llm_interactions_html = build_llm_interactions_html(results, contestants)
 
     # Build contestant cards
     contestant_cards = ""
@@ -1109,7 +1191,171 @@ def generate_game_html(results: dict, game_log: list[str], contestants: list = N
             border-radius: 4px;
             font-family: 'Consolas', monospace;
         }}
+
+        /* LLM Interactions Styles */
+        .llm-interactions-container {{
+            margin-top: 1rem;
+        }}
+
+        .player-interactions {{
+            margin-bottom: 1rem;
+            background: rgba(0,0,0,0.2);
+            border-radius: 8px;
+            overflow: hidden;
+        }}
+
+        .player-interactions-header {{
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            padding: 1rem;
+            background: rgba(255,255,255,0.05);
+            cursor: pointer;
+            transition: background 0.2s;
+        }}
+
+        .player-interactions-header:hover {{
+            background: rgba(255,255,255,0.1);
+        }}
+
+        .player-name-header {{
+            font-weight: bold;
+            font-size: 1.1rem;
+            color: var(--accent-gold);
+        }}
+
+        .interaction-count {{
+            margin-left: auto;
+            color: var(--text-muted);
+            font-size: 0.9rem;
+        }}
+
+        .player-toggle, .interaction-toggle {{
+            font-weight: bold;
+            color: var(--accent-gold);
+            font-size: 1.2rem;
+            width: 20px;
+            text-align: center;
+        }}
+
+        .player-interactions-content {{
+            padding: 1rem;
+        }}
+
+        .personality-prompt-section {{
+            margin-bottom: 1rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }}
+
+        .llm-interaction-card {{
+            margin: 0.75rem 0;
+            background: rgba(0,0,0,0.3);
+            border-radius: 6px;
+            overflow: hidden;
+        }}
+
+        .llm-interaction-header {{
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            padding: 0.75rem 1rem;
+            background: rgba(255,255,255,0.03);
+            cursor: pointer;
+            transition: background 0.2s;
+        }}
+
+        .llm-interaction-header:hover {{
+            background: rgba(255,255,255,0.08);
+        }}
+
+        .interaction-type {{
+            font-weight: bold;
+            color: var(--accent-green);
+            text-transform: uppercase;
+            font-size: 0.85rem;
+        }}
+
+        .interaction-round {{
+            color: var(--text-muted);
+            font-size: 0.85rem;
+            margin-left: auto;
+        }}
+
+        .llm-interaction-content {{
+            padding: 1rem;
+        }}
+
+        .llm-section {{
+            margin-bottom: 1rem;
+        }}
+
+        .llm-section-label {{
+            font-weight: bold;
+            color: var(--accent-gold);
+            font-size: 0.85rem;
+            margin-bottom: 0.5rem;
+            text-transform: uppercase;
+        }}
+
+        .llm-text {{
+            background: rgba(0,0,0,0.4);
+            padding: 1rem;
+            border-radius: 4px;
+            font-family: 'Consolas', monospace;
+            font-size: 0.8rem;
+            overflow-x: auto;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            max-height: 300px;
+            overflow-y: auto;
+            color: var(--text-light);
+            line-height: 1.4;
+        }}
+
+        .llm-response {{
+            background: rgba(42, 157, 143, 0.15);
+            border-left: 3px solid var(--accent-green);
+        }}
+
+        .personality-text {{
+            background: rgba(244, 162, 97, 0.1);
+            border-left: 3px solid var(--accent-gold);
+        }}
+
+        .llm-meta {{
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            margin-top: 0.5rem;
+            padding-top: 0.5rem;
+            border-top: 1px solid rgba(255,255,255,0.1);
+        }}
     </style>
+    <script>
+        function togglePlayer(header) {{
+            const content = header.nextElementSibling;
+            const toggle = header.querySelector('.player-toggle');
+            if (content.style.display === 'none') {{
+                content.style.display = 'block';
+                toggle.textContent = '-';
+            }} else {{
+                content.style.display = 'none';
+                toggle.textContent = '+';
+            }}
+        }}
+
+        function toggleInteraction(header) {{
+            const content = header.nextElementSibling;
+            const toggle = header.querySelector('.interaction-toggle');
+            if (content.style.display === 'none') {{
+                content.style.display = 'block';
+                toggle.textContent = '-';
+            }} else {{
+                content.style.display = 'none';
+                toggle.textContent = '+';
+            }}
+        }}
+    </script>
 </head>
 <body>
     <header>
@@ -1223,6 +1469,15 @@ results = game.run()</code>
         </section>
 
         <section>
+            <h2>LLM Interaction Details</h2>
+            <p style="margin-bottom: 1rem; color: var(--text-muted);">
+                Click on a player to see all their LLM interactions during the game.
+                Each interaction shows the exact system prompt, user message, and response.
+            </p>
+            {llm_interactions_html}
+        </section>
+
+        <section>
             <h2>Full Game Log</h2>
             <div class="game-log">
                 {game_log_html}
@@ -1273,6 +1528,7 @@ def main():
     results["messages"] = game.state.messages
     results["private_thoughts"] = getattr(game.state, 'private_thoughts', [])
     results["votes"] = game.state.votes
+    results["llm_interactions"] = getattr(game.state, 'llm_interactions', [])
 
     # Generate HTML
     html_content = generate_game_html(results, game_log, EXAMPLE_CONTESTANTS)

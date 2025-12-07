@@ -91,6 +91,7 @@ def run_single_game(client, contestants, num_traitors, game_log):
     results["messages"] = game.state.messages
     results["private_thoughts"] = getattr(game.state, 'private_thoughts', [])
     results["votes"] = game.state.votes
+    results["llm_interactions"] = getattr(game.state, 'llm_interactions', [])
 
     return results
 

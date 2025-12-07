@@ -1,9 +1,10 @@
 """LLM-powered agent for playing The Traitors."""
 
 import anthropic
+from datetime import datetime
 from typing import Optional
 
-from .types import Player, GameState, Message, Role, PlayerStatus
+from .types import Player, GameState, Message, Role, PlayerStatus, LLMInteraction
 
 
 class Agent:
@@ -167,6 +168,28 @@ CRITICAL RULES:
             return "WHAT HAPPENED SO FAR:\n- " + "\n- ".join(context_parts) + "\n\n"
         return ""
 
+    def _log_interaction(
+        self,
+        game_state: GameState,
+        action_type: str,
+        system_prompt: str,
+        user_message: str,
+        response: str,
+        model: str = "claude-3-5-haiku-20241022"
+    ) -> None:
+        """Log an LLM interaction for debugging/transparency."""
+        interaction = LLMInteraction(
+            player=self.player.name,
+            action_type=action_type,
+            round_num=game_state.current_round,
+            system_prompt=system_prompt,
+            user_message=user_message,
+            response=response,
+            model=model,
+            timestamp=datetime.now().isoformat()
+        )
+        game_state.llm_interactions.append(interaction)
+
     def generate_discussion(self, game_state: GameState, prompt: str = "") -> str:
         """Generate a discussion statement from this agent."""
         system = self._build_system_prompt(game_state)
@@ -193,7 +216,9 @@ Respond with your statement only, no quotation marks or name prefix."""
             messages=[{"role": "user", "content": user_message}]
         )
 
-        return response.content[0].text.strip()
+        result = response.content[0].text.strip()
+        self._log_interaction(game_state, "discussion", system, user_message, result)
+        return result
 
     def generate_private_thoughts(self, game_state: GameState) -> str:
         """Generate private thoughts before voting - reveals the player's internal reasoning."""
@@ -230,7 +255,9 @@ Keep it to 2-4 sentences."""
             messages=[{"role": "user", "content": user_message}]
         )
 
-        return response.content[0].text.strip()
+        result = response.content[0].text.strip()
+        self._log_interaction(game_state, "private_thoughts", system, user_message, result)
+        return result
 
     def generate_vote(self, game_state: GameState) -> str:
         """Generate a vote for who to banish."""
@@ -256,6 +283,7 @@ Respond with ONLY the player's name, nothing else."""
         )
 
         vote = response.content[0].text.strip()
+        self._log_interaction(game_state, "vote", system, user_message, vote)
 
         # Validate the vote is a valid player name
         for name in voteable:
@@ -296,6 +324,7 @@ Who do you vote to murder? Respond with ONLY the name."""
         )
 
         vote = response.content[0].text.strip()
+        self._log_interaction(game_state, "murder_vote", system, user_message, vote)
 
         # Validate the vote
         for name in targets:
@@ -342,7 +371,9 @@ Speak in character as {self.player.name}. Keep it to 2-3 sentences."""
             messages=[{"role": "user", "content": user_message}]
         )
 
-        return response.content[0].text.strip()
+        result = response.content[0].text.strip()
+        self._log_interaction(game_state, "traitor_discussion", system, user_message, result)
+        return result
 
     def generate_end_game_vote(self, game_state: GameState) -> bool:
         """Generate a vote on whether to end the game or continue playing.
@@ -399,4 +430,5 @@ Respond with only END or CONTINUE."""
         )
 
         vote_text = response.content[0].text.strip().upper()
+        self._log_interaction(game_state, "end_game_vote", system, user_message, vote_text)
         return "END" in vote_text

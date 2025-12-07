@@ -70,12 +70,26 @@ class PrivateThought:
 
 
 @dataclass
+class LLMInteraction:
+    """Record of a single LLM API call for debugging/transparency."""
+    player: str
+    action_type: str  # e.g., "discussion", "private_thoughts", "vote", "murder_vote", "traitor_discussion", "end_game_vote"
+    round_num: int
+    system_prompt: str
+    user_message: str
+    response: str
+    model: str = "claude-3-5-haiku-20241022"
+    timestamp: str = ""  # ISO format timestamp
+
+
+@dataclass
 class GameState:
     """Current state of the game."""
     players: dict[str, Player] = field(default_factory=dict)
     messages: list[Message] = field(default_factory=list)
     votes: list[Vote] = field(default_factory=list)
     private_thoughts: list[PrivateThought] = field(default_factory=list)
+    llm_interactions: list[LLMInteraction] = field(default_factory=list)
     current_round: int = 1
     current_phase: GamePhase = GamePhase.SETUP
     winner: Optional[str] = None  # "traitors" or "faithful" or None
