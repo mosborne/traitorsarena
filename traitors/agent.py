@@ -56,31 +56,51 @@ class Agent:
                 p.name for p in game_state.alive_traitors
                 if p.name != self.player.name
             ]
+            num_traitors_alive = len(game_state.alive_traitors)
+            traitor_share = prize_pool // max(num_traitors_alive, 1)
             if other_traitors:
                 role_info = f"""
 YOUR SECRET ROLE: TRAITOR
 Your fellow traitor(s) still alive: {', '.join(other_traitors)}
-Your goal: Survive to the end and steal the entire ${prize_pool:,} prize pool!
-If the game ends with ANY traitor still alive, traitors take ALL the money - faithful get nothing.
-Strategy: Deceive the faithful players. Deflect suspicion from yourself and fellow traitors.
-During public discussions, act like a faithful player while subtly casting doubt on others.
+Your goal: MAXIMIZE YOUR EXPECTED PRIZE MONEY by surviving to the end.
+- If game ends with you alive: You split ${prize_pool:,} with fellow traitors (${traitor_share:,} each)
+- If you're banished: You get $0
+
+RATIONAL STRATEGY:
+- Your expected value increases the sooner the game ends (fewer murder rounds = less exposure)
+- Push for END votes when suspicion is low, but don't be obvious about it
+- Deceive the faithful - act like you want to catch traitors too
+- Deflect suspicion from yourself and fellow traitors
+- Frame faithful players who are getting close to the truth
 """
             else:
                 role_info = f"""
 YOUR SECRET ROLE: TRAITOR (you are the last one - any other traitors were already caught)
-Your goal: Survive to the end and steal the entire ${prize_pool:,} prize pool!
-If you survive when the game ends, you take ALL the money - faithful get nothing.
-Strategy: Deceive the faithful players. Deflect suspicion onto others.
-During public discussions, act like a faithful player while subtly casting doubt on others.
+Your goal: MAXIMIZE YOUR EXPECTED PRIZE MONEY by surviving to the end.
+- If game ends with you alive: You take the ENTIRE ${prize_pool:,}!
+- If you're banished: You get $0
+
+RATIONAL STRATEGY:
+- You're one vote away from winning everything - push for END if you can
+- Appear trustworthy and cooperative to avoid suspicion
+- Deflect onto others - make the faithful doubt each other
+- The faithful may be analyzing past traitor alliances - distance yourself from revealed traitors
 """
         else:
+            num_alive = len(game_state.alive_players)
+            potential_share = prize_pool // max(num_alive - 1, 1)  # Rough estimate if you survive
             role_info = f"""
 YOUR ROLE: FAITHFUL
-PRIZE: ${prize_pool:,} at stake! If you eliminate ALL traitors, surviving faithful split the money.
-WARNING: If the game ends with ANY traitor still alive, they steal EVERYTHING and you get $0!
-Your goal: Identify and banish ALL traitors before ending the game.
-Strategy: Watch for suspicious behavior, inconsistencies, and defensive reactions.
-Work with other faithful players to figure out who the traitors are.
+PRIZE: ${prize_pool:,} at stake! Your goal is to MAXIMIZE YOUR EXPECTED PRIZE MONEY.
+- If ALL traitors eliminated: Surviving faithful split ${prize_pool:,} (potential ~${potential_share:,} each)
+- If ANY traitor remains at game end: Traitors steal EVERYTHING, you get $0
+
+RATIONAL STRATEGY:
+- Expected value of ending = P(all traitors gone) × your share + P(traitors remain) × $0
+- Only vote to END when you're highly confident (>90%) all traitors are caught
+- When uncertain, CONTINUE is the rational choice - more information reduces risk of $0
+- Watch for suspicious behavior, inconsistencies, and defensive reactions
+- Work with other faithful players to identify traitors with high confidence
 """
 
         alive_players = [p.name for p in game_state.alive_players]
@@ -462,26 +482,39 @@ Speak in character as {self.player.name}. Keep it to 2-3 sentences."""
                             if p.status == PlayerStatus.BANISHED and not p.is_traitor]
 
         prize_pool = game_state.prize_pool
-        alive_traitors = len(game_state.alive_traitors)
+        alive_traitors_count = len(game_state.alive_traitors)
         alive_faithful_count = len(game_state.alive_faithful)
+        faithful_share = prize_pool // max(alive_faithful_count, 1) if alive_faithful_count > 0 else 0
 
         if self.player.is_traitor:
-            traitor_share = prize_pool // max(alive_traitors, 1)
-            strategy_hint = f"""As a TRAITOR, consider:
-- If the game ends now, you and any fellow traitors STEAL THE ENTIRE ${prize_pool:,}!
-- Your share if game ends now: ${traitor_share:,}
-- You WANT the game to end while you're still alive
-- Vote to END if you think you can get away with it
-- Only vote CONTINUE if you're worried about being caught first"""
+            traitor_share = prize_pool // max(alive_traitors_count, 1)
+            strategy_hint = f"""As a TRAITOR maximizing expected value:
+- If game ends now: You get ${traitor_share:,} (${prize_pool:,} / {alive_traitors_count} traitors)
+- Your EV of voting END = ${traitor_share:,} (guaranteed if you survive the vote)
+- Your EV of voting CONTINUE = risk of being caught × $0 + survival chance × future winnings
+- RATIONAL CHOICE: END is almost always better for you - lock in your winnings!
+- But don't be too obvious about wanting to end - it might raise suspicion"""
         else:
-            faithful_share = prize_pool // max(alive_faithful_count, 1) if alive_faithful_count > 0 else 0
-            strategy_hint = f"""As FAITHFUL, consider:
-- If the game ends and ANY traitors remain: THEY STEAL ALL ${prize_pool:,} - YOU GET $0!
-- Your share if all traitors gone: ${faithful_share:,}
-- {len(revealed_traitors)} traitor(s) have been caught so far
-- There could still be traitors among the {alive_count} remaining players
-- Vote END only if you're CERTAIN all traitors are gone
-- Vote CONTINUE if you have ANY suspicion there are still traitors hiding"""
+            # Calculate number of traitors that COULD still be alive
+            total_traitors_possible = 3  # Typical game has 3 traitors
+            traitors_caught = len(revealed_traitors)
+            traitors_possibly_remaining = total_traitors_possible - traitors_caught
+
+            strategy_hint = f"""As FAITHFUL maximizing expected value:
+- Traitors caught so far: {traitors_caught}
+- Traitors possibly still hiding: up to {traitors_possibly_remaining}
+- Your share IF all traitors gone: ${faithful_share:,}
+- Your payout IF any traitor remains: $0
+
+EXPECTED VALUE CALCULATION:
+- EV(END) = P(all traitors caught) × ${faithful_share:,} + P(traitor remains) × $0
+- EV(CONTINUE) = chance to gather more evidence, but risk being murdered
+
+RATIONAL DECISION FRAMEWORK:
+- If you're 90%+ confident all traitors are gone → END may be rational
+- If you have ANY significant doubt (>10% chance traitor remains) → CONTINUE is safer
+- With {traitors_possibly_remaining} traitors possibly remaining among {alive_count} players, what's your confidence?
+- Remember: One wrong END vote = $0. Being cautious has value."""
 
         user_message = f"""{round_context}DISCUSSION HISTORY:
 {history}
@@ -494,10 +527,12 @@ Faithful wrongly banished: {len(revealed_faithful)}
 
 {strategy_hint}
 
-If you vote END and traitors remain: TRAITORS STEAL ALL ${prize_pool:,} - faithful get $0!
-If you vote END and all traitors are gone: FAITHFUL split ${prize_pool:,}
+PAYOFFS:
+- END + traitors remain = Traitors steal ${prize_pool:,}, you get $0
+- END + all traitors gone = Faithful split ${prize_pool:,} (${faithful_share:,} each)
+- CONTINUE = More information, but traitors murder someone tonight
 
-Based on your role and what you know, do you vote to END the game or CONTINUE playing?
+As a RATIONAL actor maximizing expected prize money, do you vote END or CONTINUE?
 Respond with only END or CONTINUE."""
 
         response = self.client.messages.create(

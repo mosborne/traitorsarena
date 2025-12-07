@@ -216,6 +216,58 @@
         <h1>Prompt Changelog</h1>
         <p class="subtitle">Tracking changes to agent prompts and their effects on game dynamics</p>
 
+        <!-- VERSION 1.4.0 -->
+        <div class="changelog-entry major">
+            <div class="entry-header">
+                <span class="version">v1.4.0</span>
+                <span class="date">2025-12-07</span>
+            </div>
+            <h3 class="entry-title">Rational Expected Value Framework</h3>
+            <p class="entry-description">
+                Reframed all player prompts around rational expected value maximization, making players think
+                like economists calculating EV before making decisions.
+            </p>
+
+            <ul class="changes-list">
+                <li><span class="tag faithful">FAITHFUL</span> Goal explicitly stated as "MAXIMIZE YOUR EXPECTED PRIZE MONEY"</li>
+                <li><span class="tag faithful">FAITHFUL</span> EV formula explained: EV(END) = P(all traitors caught) × share + P(traitor remains) × $0</li>
+                <li><span class="tag faithful">FAITHFUL</span> Decision framework: "Only vote END when 90%+ confident all traitors caught"</li>
+                <li><span class="tag faithful">FAITHFUL</span> Explicit warning: "When uncertain, CONTINUE is the rational choice"</li>
+                <li><span class="tag traitor">TRAITOR</span> Goal: "MAXIMIZE YOUR EXPECTED PRIZE MONEY by surviving"</li>
+                <li><span class="tag traitor">TRAITOR</span> Strategy: "Your EV increases the sooner the game ends"</li>
+                <li><span class="tag system">SYSTEM</span> End-game vote shows explicit EV calculations for both roles</li>
+                <li><span class="tag system">SYSTEM</span> Shows traitors possibly remaining count to help probability estimation</li>
+            </ul>
+
+            <div class="rationale">
+                <div class="rationale-title">Rationale</div>
+                <p>
+                    Players should act as rational economic agents maximizing expected prize money.
+                    This means:
+                </p>
+                <ul style="margin-left: 1rem; margin-top: 0.5rem;">
+                    <li>Faithful should be VERY conservative about ending - the downside ($0) is catastrophic</li>
+                    <li>With any uncertainty, EV(CONTINUE) > EV(END) for faithful players</li>
+                    <li>Traitors should push for early endings (but not too obviously)</li>
+                    <li>Making the math explicit should reduce premature END votes from faithful</li>
+                </ul>
+            </div>
+
+            <div class="expected-impact">
+                <div class="expected-impact-title">Expected Impact</div>
+                <p>
+                    Faithful players should vote CONTINUE more often when uncertain, since the explicit
+                    EV framework shows that a 10%+ chance of traitor remaining makes END a losing bet.
+                    This should significantly reduce premature game endings and improve faithful win rates.
+                </p>
+            </div>
+
+            <div class="runs-affected">
+                <div class="runs-affected-title">Runs Using This Version</div>
+                <p><em>No runs yet - run games to test this version</em></p>
+            </div>
+        </div>
+
         <!-- VERSION 1.3.0 -->
         <div class="changelog-entry major">
             <div class="entry-header">
