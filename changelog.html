@@ -216,31 +216,32 @@
         <h1>Prompt Changelog</h1>
         <p class="subtitle">Tracking changes to agent prompts and their effects on game dynamics</p>
 
-        <!-- VERSION 1.5.0 -->
+        <!-- VERSION 1.6.0 -->
         <div class="changelog-entry major">
             <div class="entry-header">
-                <span class="version">v1.5.0</span>
+                <span class="version">v1.6.0</span>
                 <span class="date">2025-12-07</span>
             </div>
-            <h3 class="entry-title">Minimal Prompts - Mechanics Only</h3>
+            <h3 class="entry-title">Pure Mechanics - Zero Guidance</h3>
             <p class="entry-description">
-                Stripped all strategic guidance from prompts. Players now receive only the game mechanics
-                and the goal to maximize expected prize money. No strategy hints, no probability thresholds.
+                Removed ALL strategic guidance. Players receive only: role, goal (maximize EV), payoffs, and game state.
+                No hints about what to analyze, no suggested strategies, no tips.
             </p>
 
             <ul class="changes-list">
-                <li><span class="tag faithful">FAITHFUL</span> Only states: goal is to maximize EV, payoffs for win/lose conditions</li>
-                <li><span class="tag traitor">TRAITOR</span> Only states: goal is to maximize EV, payoffs, murder mechanic</li>
-                <li><span class="tag system">SYSTEM</span> End-game vote shows only outcomes for END/CONTINUE</li>
-                <li><span class="tag system">SYSTEM</span> Removed all EV formulas, strategy hints, and guidance</li>
+                <li><span class="tag system">SYSTEM</span> Removed "STRATEGIC TIP" from discussion prompt</li>
+                <li><span class="tag system">SYSTEM</span> Removed "CRITICAL ANALYSIS TO PERFORM" checklist from faithful</li>
+                <li><span class="tag system">SYSTEM</span> Removed traitor strategy guidance (who to frame, how to deflect)</li>
+                <li><span class="tag system">SYSTEM</span> Removed strategic hints about revealed traitors/murdered players</li>
+                <li><span class="tag system">SYSTEM</span> Removed voting history analysis prompts</li>
+                <li><span class="tag system">SYSTEM</span> Simplified all prompts to bare minimum</li>
             </ul>
 
             <div class="rationale">
                 <div class="rationale-title">Rationale</div>
                 <p>
-                    Rational actors should figure out optimal strategy from the mechanics themselves.
-                    Previous prompts were too leading - telling players what to think rather than
-                    letting them reason from first principles.
+                    Rational actors derive strategy from mechanics. Any guidance biases behavior
+                    and prevents observing what strategies emerge naturally.
                 </p>
             </div>
 
