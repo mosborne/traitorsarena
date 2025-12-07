@@ -216,66 +216,31 @@
         <h1>Prompt Changelog</h1>
         <p class="subtitle">Tracking changes to agent prompts and their effects on game dynamics</p>
 
-        <!-- VERSION 1.4.1 -->
-        <div class="changelog-entry minor">
-            <div class="entry-header">
-                <span class="version">v1.4.1</span>
-                <span class="date">2025-12-07</span>
-            </div>
-            <h3 class="entry-title">Remove Subjective Guidance</h3>
-            <p class="entry-description">
-                Removed subjective probability thresholds (90%/10%) from prompts. Players now calculate
-                their own probability estimates without being told what confidence level to use.
-            </p>
-
-            <ul class="changes-list">
-                <li><span class="tag faithful">FAITHFUL</span> Removed "Only vote to END when you're highly confident (>90%)"</li>
-                <li><span class="tag faithful">FAITHFUL</span> Removed "If you have ANY significant doubt (>10% chance)" guidance</li>
-                <li><span class="tag system">SYSTEM</span> End-game vote now simply asks player to estimate probability and calculate EV</li>
-                <li><span class="tag system">SYSTEM</span> Players make their own rational assessment without prescribed thresholds</li>
-            </ul>
-
-            <div class="rationale">
-                <div class="rationale-title">Rationale</div>
-                <p>
-                    Rational actors should calculate their own probability estimates from the evidence,
-                    not follow prescribed rules. Removing subjective thresholds allows players to
-                    genuinely reason about the game state rather than follow heuristics.
-                </p>
-            </div>
-
-            <div class="runs-affected">
-                <div class="runs-affected-title">Runs Using This Version</div>
-                <p><em>No runs yet - run games to test this version</em></p>
-            </div>
-        </div>
-
-        <!-- VERSION 1.4.0 -->
+        <!-- VERSION 1.5.0 -->
         <div class="changelog-entry major">
             <div class="entry-header">
-                <span class="version">v1.4.0</span>
+                <span class="version">v1.5.0</span>
                 <span class="date">2025-12-07</span>
             </div>
-            <h3 class="entry-title">Rational Expected Value Framework</h3>
+            <h3 class="entry-title">Minimal Prompts - Mechanics Only</h3>
             <p class="entry-description">
-                Reframed all player prompts around rational expected value maximization, making players think
-                like economists calculating EV before making decisions.
+                Stripped all strategic guidance from prompts. Players now receive only the game mechanics
+                and the goal to maximize expected prize money. No strategy hints, no probability thresholds.
             </p>
 
             <ul class="changes-list">
-                <li><span class="tag faithful">FAITHFUL</span> Goal explicitly stated as "MAXIMIZE YOUR EXPECTED PRIZE MONEY"</li>
-                <li><span class="tag faithful">FAITHFUL</span> EV formula explained: EV(END) = P(all traitors caught) × share + P(traitor remains) × $0</li>
-                <li><span class="tag traitor">TRAITOR</span> Goal: "MAXIMIZE YOUR EXPECTED PRIZE MONEY by surviving"</li>
-                <li><span class="tag traitor">TRAITOR</span> Strategy: "Your EV increases the sooner the game ends"</li>
-                <li><span class="tag system">SYSTEM</span> End-game vote shows explicit EV calculations for both roles</li>
-                <li><span class="tag system">SYSTEM</span> Shows traitors possibly remaining count to help probability estimation</li>
+                <li><span class="tag faithful">FAITHFUL</span> Only states: goal is to maximize EV, payoffs for win/lose conditions</li>
+                <li><span class="tag traitor">TRAITOR</span> Only states: goal is to maximize EV, payoffs, murder mechanic</li>
+                <li><span class="tag system">SYSTEM</span> End-game vote shows only outcomes for END/CONTINUE</li>
+                <li><span class="tag system">SYSTEM</span> Removed all EV formulas, strategy hints, and guidance</li>
             </ul>
 
             <div class="rationale">
                 <div class="rationale-title">Rationale</div>
                 <p>
-                    Players should act as rational economic agents maximizing expected prize money.
-                    Making the EV math explicit helps players reason about decisions systematically.
+                    Rational actors should figure out optimal strategy from the mechanics themselves.
+                    Previous prompts were too leading - telling players what to think rather than
+                    letting them reason from first principles.
                 </p>
             </div>
 
