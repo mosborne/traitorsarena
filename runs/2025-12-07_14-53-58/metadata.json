@@ -1,0 +1,40 @@
+{
+  "run_id": "2025-12-07_14-53-58",
+  "timestamp": "2025-12-07T16:12:07.756965",
+  "config_name": "experimental_v2",
+  "config_description": "Testing 6 faithful-optimized strategies: Iris (social), Quinn (vote tracker), Harper (devil's advocate), Rowan (murder analyst), Sage (vote coordinator), Finley (quiet observer)",
+  "num_games": 10,
+  "num_contestants": 12,
+  "num_traitors": 3,
+  "traitor_wins": 9,
+  "faithful_wins": 1,
+  "contestants": [
+    "Marcus",
+    "Sofia",
+    "Elena",
+    "Jaylen",
+    "Priya",
+    "Gloria",
+    "Iris",
+    "Quinn",
+    "Harper",
+    "Rowan",
+    "Sage",
+    "Finley"
+  ],
+  "prompt_versions": {
+    "Marcus": "original",
+    "Sofia": "original",
+    "Elena": "original",
+    "Jaylen": "original",
+    "Priya": "original",
+    "Gloria": "original",
+    "Iris": "1.0",
+    "Quinn": "1.0",
+    "Harper": "1.0",
+    "Rowan": "1.0",
+    "Sage": "1.0",
+    "Finley": "1.0"
+  },
+  "avg_rounds": 3.6
+}
