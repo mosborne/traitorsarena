@@ -14,6 +14,7 @@ import html
 import json
 import os
 import re
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import datetime
 from pathlib import Path
 
@@ -76,13 +77,18 @@ def load_contestants_from_config(config: dict) -> list[dict]:
     return contestants
 
 
-def run_single_game(client, contestants, num_traitors, game_log):
+def run_single_game(client, contestants, num_traitors, game_log, verbose=True):
     """Run a single game and return results."""
+    def log_handler(msg):
+        game_log.append(msg)
+        if verbose:
+            print(msg)
+
     game = TraitorsGame(
         contestants=contestants,
         num_traitors=num_traitors,
         client=client,
-        log_callback=lambda msg: game_log.append(msg) or print(msg),
+        log_callback=log_handler,
     )
     results = game.run()
 
@@ -94,6 +100,24 @@ def run_single_game(client, contestants, num_traitors, game_log):
     results["llm_interactions"] = getattr(game.state, 'llm_interactions', [])
 
     return results
+
+
+def run_game_worker(args):
+    """Worker function for parallel game execution."""
+    game_num, contestants, num_traitors, api_key = args
+
+    # Each worker creates its own client for thread safety
+    client = anthropic.Anthropic(api_key=api_key)
+    game_log = []
+
+    # Run game silently (verbose=False) when in parallel mode
+    results = run_single_game(client, contestants, num_traitors, game_log, verbose=False)
+
+    return {
+        "game_num": game_num,
+        "results": results,
+        "game_log": game_log,
+    }
 
 
 def generate_run_summary_html(run_id: str, games_data: list, contestants: list) -> str:
@@ -627,6 +651,8 @@ def main():
                         help="Path to game configuration file (e.g., configs/baseline.json)")
     parser.add_argument("--num-games", "-n", type=int,
                         help="Override number of games from config")
+    parser.add_argument("--parallel", "-p", type=int, default=1, metavar="N",
+                        help="Run N games in parallel (default: 1, sequential)")
     args = parser.parse_args()
 
     # Check for API key
@@ -670,31 +696,77 @@ def main():
     if config.get("description"):
         print(f"Description: {config['description']}")
     print(f"Running {num_games} game(s) with {num_traitors} traitors...")
+    if args.parallel > 1:
+        print(f"Parallel execution: {args.parallel} games at a time")
     print(f"Contestants: {', '.join(c['name'] for c in contestants)}")
     print("=" * 60)
 
     games_data = []
+    game_logs = {}
 
-    for i in range(1, num_games + 1):
-        print(f"\n{'='*60}")
-        print(f"GAME {i} of {num_games}")
-        print(f"{'='*60}\n")
+    if args.parallel > 1:
+        # Parallel execution
+        print(f"\nRunning {num_games} games in parallel (max {args.parallel} concurrent)...")
 
-        game_log = []
-        results = run_single_game(client, contestants, num_traitors, game_log)
-        games_data.append(results)
+        # Prepare work items
+        work_items = [
+            (i, contestants, num_traitors, api_key)
+            for i in range(1, num_games + 1)
+        ]
 
-        # Generate individual game HTML
-        game_html = generate_game_html(results, game_log, contestants,
-                                       back_link=f"index.html",
-                                       title=f"Game {i}")
+        completed = 0
+        with ThreadPoolExecutor(max_workers=args.parallel) as executor:
+            futures = {executor.submit(run_game_worker, item): item[0] for item in work_items}
 
-        game_path = os.path.join(run_dir, f"game_{i}.html")
-        with open(game_path, "w") as f:
-            f.write(game_html)
+            for future in as_completed(futures):
+                game_num = futures[future]
+                try:
+                    result = future.result()
+                    games_data.append((result["game_num"], result["results"]))
+                    game_logs[result["game_num"]] = result["game_log"]
+                    completed += 1
+                    winner = result["results"]["winner"].upper()
+                    print(f"  Game {result['game_num']} complete: {winner} win ({completed}/{num_games})")
+                except Exception as e:
+                    print(f"  Game {game_num} failed: {e}")
 
-        print(f"\nGame {i} complete: {results['winner'].upper()} win")
-        print(f"Saved to: {game_path}")
+        # Sort by game number
+        games_data.sort(key=lambda x: x[0])
+        games_data = [g[1] for g in games_data]
+
+        # Generate HTML files for each game
+        print("\nGenerating HTML files...")
+        for i, results in enumerate(games_data, 1):
+            game_log = game_logs.get(i, [])
+            game_html = generate_game_html(results, game_log, contestants,
+                                           back_link=f"index.html",
+                                           title=f"Game {i}")
+            game_path = os.path.join(run_dir, f"game_{i}.html")
+            with open(game_path, "w") as f:
+                f.write(game_html)
+
+    else:
+        # Sequential execution (original behavior)
+        for i in range(1, num_games + 1):
+            print(f"\n{'='*60}")
+            print(f"GAME {i} of {num_games}")
+            print(f"{'='*60}\n")
+
+            game_log = []
+            results = run_single_game(client, contestants, num_traitors, game_log)
+            games_data.append(results)
+
+            # Generate individual game HTML
+            game_html = generate_game_html(results, game_log, contestants,
+                                           back_link=f"index.html",
+                                           title=f"Game {i}")
+
+            game_path = os.path.join(run_dir, f"game_{i}.html")
+            with open(game_path, "w") as f:
+                f.write(game_html)
+
+            print(f"\nGame {i} complete: {results['winner'].upper()} win")
+            print(f"Saved to: {game_path}")
 
     # Generate run summary
     print(f"\n{'='*60}")
