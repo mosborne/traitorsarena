@@ -216,6 +216,56 @@
         <h1>Prompt Changelog</h1>
         <p class="subtitle">Tracking changes to agent prompts and their effects on game dynamics</p>
 
+        <!-- VERSION 2.0.0 -->
+        <div class="changelog-entry major">
+            <div class="entry-header">
+                <span class="version">v2.0.0</span>
+                <span class="date">2025-12-07</span>
+            </div>
+            <h3 class="entry-title">UK Celebrity Traitors Format</h3>
+            <p class="entry-description">
+                Major update implementing the UK Celebrity Traitors 2025 format with finale mechanics,
+                pouch voting system, and test mode for rapid development.
+            </p>
+
+            <ul class="changes-list">
+                <li><span class="tag system">SYSTEM</span> Added <code>finale_round</code> parameter (default: 8) - rounds 1-8 are regular play</li>
+                <li><span class="tag system">SYSTEM</span> Implemented UK-style fire pit pouch voting: END_GAME vs BANISH_AGAIN</li>
+                <li><span class="tag system">SYSTEM</span> Finale rounds: no murders, no role reveal on banishment</li>
+                <li><span class="tag system">SYSTEM</span> If ANY player chooses BANISH_AGAIN, group must vote again</li>
+                <li><span class="tag system">SYSTEM</span> Final role reveal only when all choose END_GAME or win condition met</li>
+                <li><span class="tag system">SYSTEM</span> Added <code>test_mode</code> for instant testing without LLM API calls</li>
+                <li><span class="tag system">SYSTEM</span> TestAgent returns random decisions for rapid mechanic testing</li>
+                <li><span class="tag system">SYSTEM</span> Removed premature END GAME vote from regular rounds</li>
+                <li><span class="tag system">SYSTEM</span> Added 7 new player personalities: Olivia, Nathan, Simone, Wesley, Dahlia, Carlos, Freya</li>
+                <li><span class="tag system">SYSTEM</span> Updated baseline config to 19 contestants (matching UK show)</li>
+            </ul>
+
+            <div class="rationale">
+                <div class="rationale-title">Rationale</div>
+                <p>
+                    The UK Celebrity Traitors format creates more dramatic finales where players must
+                    collectively decide when to end. The pouch voting system forces strategic thinking:
+                    faithful want to keep voting until sure all traitors are gone, while traitors want
+                    to end early to steal the prize.
+                </p>
+            </div>
+
+            <div class="expected-impact">
+                <div class="expected-impact-title">Expected Impact</div>
+                <p>
+                    More engaging endgames with the tension of pouch voting. Test mode enables rapid
+                    iteration on game mechanics without API costs. Larger player pool (19) creates
+                    more complex social dynamics.
+                </p>
+            </div>
+
+            <div class="runs-affected">
+                <div class="runs-affected-title">Runs Using This Version</div>
+                <p><em>No runs yet - run games to test this version</em></p>
+            </div>
+        </div>
+
         <!-- VERSION 1.6.0 -->
         <div class="changelog-entry major">
             <div class="entry-header">

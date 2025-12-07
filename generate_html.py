@@ -2,7 +2,9 @@
 """Generate the HTML index page with game results."""
 
 import html
+import json
 import os
+from pathlib import Path
 from traitors import TraitorsGame
 from traitors.types import PlayerStatus
 from main import EXAMPLE_CONTESTANTS
@@ -1520,6 +1522,415 @@ results = game.run()</code>
 </body>
 </html>
 """
+
+
+def generate_players_page(output_path: str = "players.html") -> str:
+    """Generate an HTML page documenting all player prompts.
+
+    Args:
+        output_path: Path to write the HTML file
+
+    Returns:
+        The generated HTML content
+    """
+    prompts_dir = Path(__file__).parent / "prompts"
+
+    # Load all player JSON files
+    players = []
+    for json_file in sorted(prompts_dir.glob("*.json")):
+        with open(json_file) as f:
+            data = json.load(f)
+            data["_filename"] = json_file.name
+            players.append(data)
+
+    # Sort by name
+    players.sort(key=lambda p: p.get("name", "Unknown"))
+
+    # Build player cards
+    player_cards = ""
+    for player in players:
+        name = html.escape(player.get("name", "Unknown"))
+        version = html.escape(player.get("version", "1.0"))
+        design_notes = html.escape(player.get("design_notes", "No design notes available."))
+        hypothesis = html.escape(player.get("hypothesis", "No hypothesis defined."))
+        personality = html.escape(player.get("personality_prompt", "No personality prompt."))
+        filename = html.escape(player.get("_filename", ""))
+        created = html.escape(player.get("created", "Unknown"))
+
+        # Stats
+        stats = player.get("stats", {})
+        games_played = stats.get("games_played", 0)
+        times_traitor = stats.get("times_traitor", 0)
+        times_faithful = stats.get("times_faithful", 0)
+        wins_as_traitor = stats.get("wins_as_traitor", 0)
+        wins_as_faithful = stats.get("wins_as_faithful", 0)
+        survived = stats.get("survived", 0)
+        banished = stats.get("banished", 0)
+        murdered = stats.get("murdered", 0)
+
+        # Calculate rates
+        traitor_win_rate = (wins_as_traitor / times_traitor * 100) if times_traitor > 0 else 0
+        faithful_win_rate = (wins_as_faithful / times_faithful * 100) if times_faithful > 0 else 0
+        survival_rate = (survived / games_played * 100) if games_played > 0 else 0
+
+        stats_html = ""
+        if games_played > 0:
+            stats_html = f"""
+            <div class="player-stats">
+                <div class="stats-row">
+                    <div class="stat-item">
+                        <span class="stat-value">{games_played}</span>
+                        <span class="stat-label">Games</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-value">{survival_rate:.0f}%</span>
+                        <span class="stat-label">Survival</span>
+                    </div>
+                    <div class="stat-item traitor-stat">
+                        <span class="stat-value">{times_traitor}</span>
+                        <span class="stat-label">As Traitor</span>
+                    </div>
+                    <div class="stat-item faithful-stat">
+                        <span class="stat-value">{times_faithful}</span>
+                        <span class="stat-label">As Faithful</span>
+                    </div>
+                </div>
+                <div class="stats-row">
+                    <div class="stat-item traitor-stat">
+                        <span class="stat-value">{traitor_win_rate:.0f}%</span>
+                        <span class="stat-label">Traitor Win%</span>
+                    </div>
+                    <div class="stat-item faithful-stat">
+                        <span class="stat-value">{faithful_win_rate:.0f}%</span>
+                        <span class="stat-label">Faithful Win%</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-value">{banished}</span>
+                        <span class="stat-label">Banished</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-value">{murdered}</span>
+                        <span class="stat-label">Murdered</span>
+                    </div>
+                </div>
+            </div>
+            """
+        else:
+            stats_html = '<div class="no-stats">No games played yet</div>'
+
+        player_cards += f"""
+        <div class="player-card">
+            <div class="player-header">
+                <h3 class="player-name">{name}</h3>
+                <span class="player-version">v{version}</span>
+            </div>
+            <div class="player-meta">
+                <span class="player-file">{filename}</span>
+                <span class="player-created">Created: {created}</span>
+            </div>
+
+            <div class="player-section">
+                <h4>Design Notes</h4>
+                <p class="design-notes">{design_notes}</p>
+            </div>
+
+            <div class="player-section">
+                <h4>Hypothesis</h4>
+                <p class="hypothesis">{hypothesis}</p>
+            </div>
+
+            {stats_html}
+
+            <details class="prompt-details">
+                <summary>View Full Prompt</summary>
+                <pre class="personality-prompt">{personality}</pre>
+            </details>
+        </div>
+        """
+
+    html_content = f"""<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Player Guide - The Traitors</title>
+    <style>
+        :root {{
+            --bg-dark: #1a1a2e;
+            --bg-card: #16213e;
+            --accent-red: #e94560;
+            --accent-gold: #f4a261;
+            --accent-green: #2a9d8f;
+            --text-light: #eee;
+            --text-muted: #888;
+        }}
+
+        * {{
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }}
+
+        body {{
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            background: var(--bg-dark);
+            color: var(--text-light);
+            line-height: 1.6;
+        }}
+
+        .container {{
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem;
+        }}
+
+        header {{
+            text-align: center;
+            padding: 3rem 0;
+            background: linear-gradient(135deg, #1a1a2e 0%, #0f3460 100%);
+            border-bottom: 3px solid var(--accent-red);
+        }}
+
+        h1 {{
+            font-size: 3rem;
+            color: var(--accent-red);
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+            margin-bottom: 0.5rem;
+        }}
+
+        .subtitle {{
+            color: var(--accent-gold);
+            font-size: 1.2rem;
+        }}
+
+        .back-link {{
+            margin-top: 1rem;
+        }}
+
+        .back-link a {{
+            color: var(--accent-gold);
+            text-decoration: none;
+            border: 1px solid var(--accent-gold);
+            padding: 0.3rem 0.8rem;
+            border-radius: 4px;
+            font-size: 0.9rem;
+        }}
+
+        .back-link a:hover {{
+            background: var(--accent-gold);
+            color: var(--bg-dark);
+        }}
+
+        .intro {{
+            margin: 2rem 0;
+            padding: 2rem;
+            background: var(--bg-card);
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+        }}
+
+        .intro h2 {{
+            color: var(--accent-gold);
+            border-bottom: 2px solid var(--accent-red);
+            padding-bottom: 0.5rem;
+            margin-bottom: 1rem;
+        }}
+
+        .players-grid {{
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(500px, 1fr));
+            gap: 2rem;
+            margin-top: 2rem;
+        }}
+
+        .player-card {{
+            background: var(--bg-card);
+            border-radius: 10px;
+            padding: 1.5rem;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+            border: 1px solid rgba(255,255,255,0.1);
+        }}
+
+        .player-header {{
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.5rem;
+        }}
+
+        .player-name {{
+            color: var(--accent-gold);
+            font-size: 1.5rem;
+            margin: 0;
+        }}
+
+        .player-version {{
+            background: var(--accent-green);
+            color: var(--bg-dark);
+            padding: 0.2rem 0.6rem;
+            border-radius: 12px;
+            font-size: 0.8rem;
+            font-weight: bold;
+        }}
+
+        .player-meta {{
+            display: flex;
+            gap: 1rem;
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            margin-bottom: 1rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }}
+
+        .player-section {{
+            margin-bottom: 1rem;
+        }}
+
+        .player-section h4 {{
+            color: var(--accent-green);
+            font-size: 0.9rem;
+            margin-bottom: 0.5rem;
+            text-transform: uppercase;
+        }}
+
+        .design-notes {{
+            color: var(--text-light);
+            font-size: 0.95rem;
+        }}
+
+        .hypothesis {{
+            color: var(--text-muted);
+            font-style: italic;
+            font-size: 0.9rem;
+        }}
+
+        .player-stats {{
+            background: rgba(0,0,0,0.2);
+            padding: 1rem;
+            border-radius: 8px;
+            margin: 1rem 0;
+        }}
+
+        .stats-row {{
+            display: flex;
+            justify-content: space-around;
+            margin-bottom: 0.75rem;
+        }}
+
+        .stats-row:last-child {{
+            margin-bottom: 0;
+        }}
+
+        .stat-item {{
+            text-align: center;
+        }}
+
+        .stat-value {{
+            display: block;
+            font-size: 1.2rem;
+            font-weight: bold;
+            color: var(--text-light);
+        }}
+
+        .stat-label {{
+            font-size: 0.7rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+        }}
+
+        .traitor-stat .stat-value {{
+            color: var(--accent-red);
+        }}
+
+        .faithful-stat .stat-value {{
+            color: var(--accent-green);
+        }}
+
+        .no-stats {{
+            text-align: center;
+            color: var(--text-muted);
+            font-style: italic;
+            padding: 1rem;
+        }}
+
+        .prompt-details {{
+            margin-top: 1rem;
+        }}
+
+        .prompt-details summary {{
+            cursor: pointer;
+            color: var(--accent-gold);
+            font-weight: bold;
+            padding: 0.5rem;
+            background: rgba(0,0,0,0.2);
+            border-radius: 4px;
+        }}
+
+        .prompt-details summary:hover {{
+            background: rgba(0,0,0,0.3);
+        }}
+
+        .personality-prompt {{
+            background: rgba(0,0,0,0.4);
+            padding: 1rem;
+            border-radius: 4px;
+            margin-top: 0.5rem;
+            font-family: 'Consolas', monospace;
+            font-size: 0.8rem;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            max-height: 400px;
+            overflow-y: auto;
+            line-height: 1.5;
+        }}
+
+        footer {{
+            text-align: center;
+            padding: 2rem;
+            color: var(--text-muted);
+            font-size: 0.9rem;
+        }}
+
+        @media (max-width: 600px) {{
+            .players-grid {{
+                grid-template-columns: 1fr;
+            }}
+        }}
+    </style>
+</head>
+<body>
+    <header>
+        <h1>PLAYER GUIDE</h1>
+        <p class="subtitle">AI Contestant Prompts & Strategy Documentation</p>
+        <p class="back-link"><a href="index.html">Back to Game Runs</a></p>
+    </header>
+
+    <div class="container">
+        <div class="intro">
+            <h2>About This Guide</h2>
+            <p>This page documents all the AI player prompts used in The Traitors simulator. Each player has a unique personality and strategy embedded in their prompt. The design notes explain the reasoning behind each prompt, and the hypothesis describes what behavior we expect to see.</p>
+            <p style="margin-top: 1rem; color: var(--text-muted);">Players are defined as JSON files in the <code>prompts/</code> directory. Stats are updated after each game run.</p>
+        </div>
+
+        <div class="players-grid">
+            {player_cards}
+        </div>
+    </div>
+
+    <footer>
+        <p>The Traitors LLM Simulator - Player Documentation</p>
+        <p>{len(players)} players documented</p>
+    </footer>
+</body>
+</html>
+"""
+
+    # Write to file
+    with open(output_path, "w") as f:
+        f.write(html_content)
+
+    return html_content
 
 
 def main():

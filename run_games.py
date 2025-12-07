@@ -77,7 +77,7 @@ def load_contestants_from_config(config: dict) -> list[dict]:
     return contestants
 
 
-def run_single_game(client, contestants, num_traitors, game_log, verbose=True):
+def run_single_game(client, contestants, num_traitors, game_log, finale_round=8, verbose=True):
     """Run a single game and return results."""
     def log_handler(msg):
         game_log.append(msg)
@@ -87,6 +87,7 @@ def run_single_game(client, contestants, num_traitors, game_log, verbose=True):
     game = TraitorsGame(
         contestants=contestants,
         num_traitors=num_traitors,
+        finale_round=finale_round,
         client=client,
         log_callback=log_handler,
     )
@@ -98,20 +99,21 @@ def run_single_game(client, contestants, num_traitors, game_log, verbose=True):
     results["private_thoughts"] = getattr(game.state, 'private_thoughts', [])
     results["votes"] = game.state.votes
     results["llm_interactions"] = getattr(game.state, 'llm_interactions', [])
+    results["finale_round"] = finale_round
 
     return results
 
 
 def run_game_worker(args):
     """Worker function for parallel game execution."""
-    game_num, contestants, num_traitors, api_key = args
+    game_num, contestants, num_traitors, finale_round, api_key = args
 
     # Each worker creates its own client for thread safety
     client = anthropic.Anthropic(api_key=api_key)
     game_log = []
 
     # Run game silently (verbose=False) when in parallel mode
-    results = run_single_game(client, contestants, num_traitors, game_log, verbose=False)
+    results = run_single_game(client, contestants, num_traitors, game_log, finale_round, verbose=False)
 
     return {
         "game_num": game_num,
@@ -688,6 +690,7 @@ def main():
     # Get run parameters (command line overrides config)
     num_games = args.num_games if args.num_games else config.get("num_games", 3)
     num_traitors = config.get("num_traitors", 3)
+    finale_round = config.get("finale_round", 8)  # UK Celebrity format default
 
     # Create run directory
     run_id = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
@@ -702,10 +705,10 @@ def main():
     print(f"Config: {config_name}")
     if config.get("description"):
         print(f"Description: {config['description']}")
-    print(f"Running {num_games} game(s) with {num_traitors} traitors...")
+    print(f"Running {num_games} game(s) with {num_traitors} traitors (finale after round {finale_round})...")
     if args.parallel > 1:
         print(f"Parallel execution: {args.parallel} games at a time")
-    print(f"Contestants: {', '.join(c['name'] for c in contestants)}")
+    print(f"Contestants ({len(contestants)}): {', '.join(c['name'] for c in contestants)}")
     print("=" * 60)
 
     games_data = []
@@ -717,7 +720,7 @@ def main():
 
         # Prepare work items
         work_items = [
-            (i, contestants, num_traitors, api_key)
+            (i, contestants, num_traitors, finale_round, api_key)
             for i in range(1, num_games + 1)
         ]
 
@@ -760,7 +763,7 @@ def main():
             print(f"{'='*60}\n")
 
             game_log = []
-            results = run_single_game(client, contestants, num_traitors, game_log)
+            results = run_single_game(client, contestants, num_traitors, game_log, finale_round)
             games_data.append(results)
 
             # Generate individual game HTML

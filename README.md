@@ -55,18 +55,42 @@ contestants = [
 
 game = TraitorsGame(
     contestants=contestants,
-    num_traitors=1,  # Number of traitors to assign
-    num_rounds=3,    # Number of game rounds
+    num_traitors=3,       # Number of traitors to assign
+    finale_round=8,       # Finale begins after this round
 )
 
 results = game.run()
 ```
 
+### Batch Game Runs
+
+Run multiple games with a config file:
+
+```bash
+python run_games.py --config configs/baseline.json
+```
+
+This generates HTML reports in `runs/<timestamp>/` that you can view in a browser.
+
+### Test Mode
+
+For fast testing without LLM API calls:
+
+```python
+game = TraitorsGame(
+    contestants=contestants,
+    num_traitors=2,
+    finale_round=3,
+    test_mode=True,  # Random decisions, no API calls
+)
+```
+
 ### Configuration Options
 
 - `contestants`: List of dicts with `name` and `personality_prompt`
-- `num_traitors`: Number of traitors (default: 1)
-- `num_rounds`: Maximum rounds before game ends (default: 3)
+- `num_traitors`: Number of traitors (default: 3)
+- `finale_round`: Round after which finale/endgame begins (default: 8)
+- `test_mode`: Use random decisions instead of LLM calls (default: False)
 - `client`: Optional custom Anthropic client
 - `log_callback`: Optional function for custom logging
 
@@ -110,9 +134,15 @@ WINNER: THE FAITHFUL!
 traitors/
 ├── __init__.py     # Package exports
 ├── types.py        # Data models (Player, GameState, etc.)
-├── agent.py        # LLM agent implementation
-└── game.py         # Main game engine
-main.py             # Entry point with example contestants
+├── agent.py        # LLM agent implementation (Agent and TestAgent)
+├── game.py         # Main game engine
+└── prompts.py      # System prompt templates
+main.py             # Entry point with 19 example contestants
+run_games.py        # Batch runner with HTML output
+configs/            # Game configuration files
+prompts/            # Custom player personality prompts
+runs/               # HTML output from game runs
+index.html          # Web interface for viewing game results
 ```
 
 ## License

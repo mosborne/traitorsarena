@@ -1,8 +1,9 @@
 {
   "name": "baseline",
-  "description": "Original 12 contestants - baseline for comparison",
+  "description": "UK Celebrity Traitors format - 19 contestants, 3 traitors",
   "num_games": 10,
   "num_traitors": 3,
+  "finale_round": 8,
   "contestants": [
     {"source": "original", "name": "Marcus"},
     {"source": "original", "name": "Sofia"},
@@ -15,6 +16,13 @@
     {"source": "original", "name": "Victor"},
     {"source": "original", "name": "Camille"},
     {"source": "original", "name": "Rashid"},
-    {"source": "original", "name": "Gloria"}
+    {"source": "original", "name": "Gloria"},
+    {"source": "prompt", "file": "olivia.json"},
+    {"source": "prompt", "file": "nathan.json"},
+    {"source": "prompt", "file": "simone.json"},
+    {"source": "prompt", "file": "wesley.json"},
+    {"source": "prompt", "file": "dahlia.json"},
+    {"source": "prompt", "file": "carlos.json"},
+    {"source": "prompt", "file": "freya.json"}
   ]
 }

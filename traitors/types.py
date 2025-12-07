@@ -94,10 +94,10 @@ class GameState:
     current_round: int = 1
     current_phase: GamePhase = GamePhase.SETUP
     winner: Optional[str] = None  # "traitors" or "faithful" or None
-    prize_pool: int = 10000  # Total prize money ($10,000)
+    prize_pool: int = 100000  # Total prize money (£100,000 like UK show)
     prize_distribution: dict[str, int] = field(default_factory=dict)  # Final winnings per player
     num_traitors: int = 3  # Total number of traitors at game start
-    endgame_round: int = 4  # Round at which endgame begins (roles not revealed)
+    finale_round: int = 8  # Round at which finale/endgame begins (no more murders, pouch voting)
 
     @property
     def alive_players(self) -> list[Player]:
@@ -112,9 +112,9 @@ class GameState:
         return [p for p in self.alive_players if not p.is_traitor]
 
     @property
-    def is_endgame(self) -> bool:
-        """Check if we're in endgame (roles not revealed when banished)."""
-        return self.current_round >= self.endgame_round
+    def is_finale(self) -> bool:
+        """Check if we're in finale/endgame (no murders, pouch voting, roles not revealed when banished)."""
+        return self.current_round > self.finale_round
 
     def get_public_messages(self, up_to_round: Optional[int] = None) -> list[Message]:
         """Get all public messages up to a given round."""

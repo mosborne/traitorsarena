@@ -1,6 +1,7 @@
 """LLM-powered agent for playing The Traitors."""
 
 import anthropic
+import random
 from datetime import datetime
 from typing import Optional
 
@@ -25,9 +26,9 @@ class Agent:
                 round_num = player.eliminated_round or 1
 
                 if player.status == PlayerStatus.BANISHED:
-                    # In endgame, roles are NOT revealed when banished
-                    if round_num >= game_state.endgame_round:
-                        event = f"🗳️ {player.name} was BANISHED (role unknown - endgame)"
+                    # In finale, roles are NOT revealed when banished
+                    if round_num > game_state.finale_round:
+                        event = f"🗳️ {player.name} was BANISHED (role unknown - finale)"
                     else:
                         event = f"🗳️ {player.name} was BANISHED (revealed as {player.role.value.upper()})"
                 else:  # MURDERED
@@ -78,9 +79,9 @@ class Agent:
         for player in game_state.players.values():
             if not player.is_alive:
                 if player.status == PlayerStatus.BANISHED:
-                    # In endgame (round >= endgame_round), roles are NOT revealed when banished
-                    if player.eliminated_round and player.eliminated_round >= game_state.endgame_round:
-                        eliminated_details.append(f"{player.name} - BANISHED (role unknown - endgame)")
+                    # In finale (round > finale_round), roles are NOT revealed when banished
+                    if player.eliminated_round and player.eliminated_round > game_state.finale_round:
+                        eliminated_details.append(f"{player.name} - BANISHED (role unknown - finale)")
                     else:
                         eliminated_details.append(f"{player.name} - BANISHED (revealed: {player.role.value.upper()})")
                 else:
@@ -88,10 +89,10 @@ class Agent:
 
         eliminated_str = "\n  ".join(eliminated_details) if eliminated_details else "None yet"
 
-        # Endgame status notification
-        endgame_status = ""
-        if game_state.is_endgame:
-            endgame_status = "\n⚠️  ENDGAME: Roles are NO LONGER revealed when players are banished!"
+        # Finale status notification
+        finale_status = ""
+        if game_state.is_finale:
+            finale_status = "\n⚠️  FINALE: Roles are NO LONGER revealed when players are banished! No more murders."
 
         return prompts.SYSTEM_PROMPT_TEMPLATE.format(
             player_name=self.player.name,
@@ -102,9 +103,9 @@ class Agent:
             current_round=game_state.current_round,
             alive_players=', '.join(alive_players),
             eliminated_str=eliminated_str,
-            endgame_status=endgame_status,
-            last_revealed_round=game_state.endgame_round - 1,
-            endgame_round=game_state.endgame_round
+            endgame_status=finale_status,
+            last_revealed_round=game_state.finale_round,
+            endgame_round=game_state.finale_round + 1
         )
 
     def _format_conversation_history(self, game_state: GameState) -> str:
@@ -153,9 +154,9 @@ class Agent:
         for player in game_state.players.values():
             if not player.is_alive:
                 if player.status == PlayerStatus.BANISHED:
-                    # In endgame, roles are NOT revealed when banished
-                    if player.eliminated_round and player.eliminated_round >= game_state.endgame_round:
-                        context_parts.append(f"{player.name} was banished (role unknown - endgame)")
+                    # In finale, roles are NOT revealed when banished
+                    if player.eliminated_round and player.eliminated_round > game_state.finale_round:
+                        context_parts.append(f"{player.name} was banished (role unknown - finale)")
                     else:
                         context_parts.append(f"{player.name} was banished (revealed: {player.role.value.upper()})")
                 else:
@@ -347,13 +348,13 @@ class Agent:
 
         alive_count = len(game_state.alive_players)
 
-        # Count known traitors (those who were banished and revealed - not during endgame)
+        # Count known traitors (those who were banished and revealed - not during finale)
         revealed_traitors = [p for p in game_state.players.values()
                            if p.status == PlayerStatus.BANISHED and p.is_traitor
-                           and p.eliminated_round and p.eliminated_round < game_state.endgame_round]
+                           and p.eliminated_round and p.eliminated_round <= game_state.finale_round]
         revealed_faithful = [p for p in game_state.players.values()
                             if p.status == PlayerStatus.BANISHED and not p.is_traitor
-                            and p.eliminated_round and p.eliminated_round < game_state.endgame_round]
+                            and p.eliminated_round and p.eliminated_round <= game_state.finale_round]
 
         prize_pool = game_state.prize_pool
         alive_faithful_count = len(game_state.alive_faithful)
@@ -379,3 +380,109 @@ class Agent:
         vote_text = response.content[0].text.strip().upper()
         self._log_interaction(game_state, "end_game_vote", system, user_message, vote_text)
         return "END" in vote_text
+
+    def generate_finale_pouch_choice(self, game_state: GameState) -> str:
+        """Generate a pouch choice for the UK-style finale fire pit vote.
+
+        Returns "END_GAME" to end the game or "BANISH_AGAIN" to force another banishment.
+        """
+        system = self._build_system_prompt(game_state)
+        history = self._format_conversation_history(game_state)
+        round_context = self._get_round_context(game_state)
+
+        alive_count = len(game_state.alive_players)
+        prize_pool = game_state.prize_pool
+
+        # Count revealed traitors from pre-finale rounds
+        revealed_traitors = [p for p in game_state.players.values()
+                           if p.status == PlayerStatus.BANISHED and p.is_traitor
+                           and p.eliminated_round and p.eliminated_round <= game_state.finale_round]
+
+        # For traitors: they want to end the game to win
+        # For faithful: they want to banish again if they suspect traitors remain
+        if self.player.is_traitor:
+            role_hint = "As a traitor, if you end the game now, you WIN and take all the money!"
+        else:
+            role_hint = f"As faithful, if you end the game with a traitor still hidden, they win everything. {len(revealed_traitors)} traitor(s) have been revealed so far."
+
+        user_message = f"""{round_context}
+
+The conversation so far:
+{history}
+
+=== FIRE PIT VOTE ===
+It's the finale. You must choose one pouch to throw into the fire:
+- END_GAME: End the game now. All roles will be revealed.
+- BANISH_AGAIN: Force another round of voting (no role revealed after banishment).
+
+{role_hint}
+
+There are {alive_count} players remaining. Prize pool: ${prize_pool:,}
+
+If ANYONE chooses BANISH_AGAIN, the group must vote again.
+If EVERYONE chooses END_GAME, the game ends and roles are revealed.
+
+Respond with exactly one word: END_GAME or BANISH_AGAIN"""
+
+        response = self.client.messages.create(
+            model="claude-3-5-haiku-20241022",
+            max_tokens=20,
+            system=system,
+            messages=[{"role": "user", "content": user_message}]
+        )
+
+        choice_text = response.content[0].text.strip().upper()
+        self._log_interaction(game_state, "finale_pouch_choice", system, user_message, choice_text)
+
+        # Parse the response
+        if "BANISH" in choice_text:
+            return "BANISH_AGAIN"
+        return "END_GAME"
+
+
+class TestAgent(Agent):
+    """A test agent that returns random decisions without calling the LLM.
+
+    Useful for quickly testing game mechanics without API costs.
+    """
+
+    def __init__(self, player: Player, client: Optional[anthropic.Anthropic] = None):
+        self.player = player
+        self.client = None  # Don't need the client
+
+    def generate_discussion(self, game_state: GameState, instruction: str = "") -> str:
+        """Return empty discussion."""
+        return ""
+
+    def generate_private_thoughts(self, game_state: GameState) -> str:
+        """Return empty thoughts."""
+        return ""
+
+    def generate_vote(self, game_state: GameState) -> str:
+        """Vote for a random alive player (not self)."""
+        candidates = [p.name for p in game_state.alive_players if p.name != self.player.name]
+        return random.choice(candidates) if candidates else self.player.name
+
+    def generate_murder_vote(self, game_state: GameState) -> str:
+        """Vote to murder a random faithful player."""
+        faithful = [p.name for p in game_state.alive_faithful]
+        return random.choice(faithful) if faithful else ""
+
+    def generate_traitor_discussion(self, game_state: GameState) -> str:
+        """Return empty traitor discussion."""
+        return ""
+
+    def generate_end_game_vote(self, game_state: GameState) -> bool:
+        """Random vote on whether to end the game."""
+        return random.choice([True, False])
+
+    def generate_finale_pouch_choice(self, game_state: GameState) -> str:
+        """Random pouch choice for finale.
+
+        Traitors prefer END_GAME (70% chance) since it helps them win.
+        Faithful prefer BANISH_AGAIN (60% chance) to catch remaining traitors.
+        """
+        if self.player.is_traitor:
+            return "END_GAME" if random.random() < 0.7 else "BANISH_AGAIN"
+        else:
+            return "BANISH_AGAIN" if random.random() < 0.6 else "END_GAME"

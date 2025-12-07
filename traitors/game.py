@@ -7,7 +7,7 @@ from typing import Callable, Optional
 import anthropic
 
 from .types import Player, GameState, GamePhase, Role, PlayerStatus, Message, Vote, PrivateThought
-from .agent import Agent
+from .agent import Agent, TestAgent
 
 
 class TraitorsGame:
@@ -26,8 +26,10 @@ class TraitorsGame:
         self,
         contestants: list[dict],
         num_traitors: int = 1,
+        finale_round: int = 8,
         client: Optional[anthropic.Anthropic] = None,
         log_callback: Optional[Callable[[str], None]] = None,
+        test_mode: bool = False,
     ):
         """
         Initialize a new game.
@@ -35,16 +37,20 @@ class TraitorsGame:
         Args:
             contestants: List of dicts with 'name' and 'personality_prompt' keys
             num_traitors: Number of traitors to assign (default 1)
+            finale_round: Round after which finale begins (default 8, matching UK Celebrity format)
             client: Anthropic client (creates new one if not provided)
             log_callback: Optional callback for logging game events
+            test_mode: If True, use TestAgent (random decisions, no LLM calls) for fast testing
         """
-        self.client = client or anthropic.Anthropic()
+        self.test_mode = test_mode
+        self.client = None if test_mode else (client or anthropic.Anthropic())
         self.log = log_callback or print
         self.num_traitors = num_traitors
 
         # Create game state
         self.state = GameState()
         self.state.num_traitors = num_traitors
+        self.state.finale_round = finale_round
 
         # Create players
         for contestant in contestants:
@@ -54,10 +60,11 @@ class TraitorsGame:
             )
             self.state.players[player.name] = player
 
-        # Create agents
+        # Create agents (TestAgent for test mode, Agent for real games)
         self.agents: dict[str, Agent] = {}
+        AgentClass = TestAgent if test_mode else Agent
         for player in self.state.players.values():
-            self.agents[player.name] = Agent(player, self.client)
+            self.agents[player.name] = AgentClass(player, self.client)
 
     def _assign_roles(self) -> None:
         """Randomly assign traitor roles."""
@@ -118,6 +125,113 @@ class TraitorsGame:
         else:
             self.log("The group has voted to CONTINUE playing.")
             return False
+
+    def _run_finale_pouch_vote(self) -> bool:
+        """
+        Run the UK-style finale pouch voting.
+
+        Each player chooses "END_GAME" or "BANISH_AGAIN".
+        - If ANY player chose BANISH_AGAIN: run banishment vote (no role reveal)
+        - If ALL chose END_GAME: game ends, roles revealed
+
+        Returns True if game should end.
+        """
+        self.log("\n" + "-" * 40)
+        self.log("FIRE PIT - Pouch voting...")
+        self.log("Each player throws one pouch: END_GAME or BANISH_AGAIN")
+        self.log("-" * 40)
+
+        alive_players = self.state.alive_players
+        choices: dict[str, str] = {}
+
+        for player in alive_players:
+            agent = self.agents[player.name]
+            choice = agent.generate_finale_pouch_choice(self.state)
+            choices[player.name] = choice
+            self.log(f"  {player.name} throws: {choice}")
+
+        banish_count = sum(1 for c in choices.values() if c == "BANISH_AGAIN")
+        end_count = len(choices) - banish_count
+
+        self.log(f"\nResult: END_GAME {end_count} - BANISH_AGAIN {banish_count}")
+
+        if banish_count > 0:
+            # At least one player chose to banish again
+            self.log("\nSomeone wants to banish again! Back to voting...")
+            return False
+        else:
+            # All chose to end
+            self.log("\nAll players chose to END the game!")
+            return True
+
+    def _run_finale_voting_phase(self) -> Optional[str]:
+        """
+        Run voting during finale - no role reveal.
+        Returns name of banished player or None.
+        """
+        self.state.current_phase = GamePhase.VOTING
+
+        self.log("\n" + "-" * 40)
+        self.log("FINALE VOTING - Who will be banished?")
+        self.log("-" * 40)
+
+        votes: dict[str, str] = {}
+        alive_players = self.state.alive_players
+
+        for player in alive_players:
+            agent = self.agents[player.name]
+            vote_target = agent.generate_vote(self.state)
+            votes[player.name] = vote_target
+
+            vote = Vote(
+                voter=player.name,
+                target=vote_target,
+                round_num=self.state.current_round,
+            )
+            self.state.votes.append(vote)
+
+            self.log(f"  {player.name} votes for: {vote_target}")
+
+        # Count votes
+        vote_counts = Counter(votes.values())
+        if not vote_counts:
+            self.log("\nNo valid votes cast!")
+            return None
+
+        max_votes = max(vote_counts.values())
+        top_voted = [name for name, count in vote_counts.items() if count == max_votes]
+
+        if len(top_voted) > 1:
+            banished_name = random.choice(top_voted)
+            self.log(f"\nTIE! Random selection from: {', '.join(top_voted)}")
+        else:
+            banished_name = top_voted[0]
+
+        # Banish the player (no role reveal in finale)
+        if banished_name in self.state.players:
+            banished = self.state.players[banished_name]
+            banished.status = PlayerStatus.BANISHED
+            banished.eliminated_round = self.state.current_round
+
+            self.log(f"\n{'=' * 40}")
+            self.log(f"BANISHED: {banished_name}")
+            self.log("(Role not revealed - this is the finale)")
+            self.log(f"{'=' * 40}")
+
+            return banished_name
+
+        return None
+
+    def _reveal_all_roles(self) -> None:
+        """Reveal all roles at the end of the finale."""
+        self.log("\n" + "=" * 60)
+        self.log("FINAL REVEAL - All roles are revealed!")
+        self.log("=" * 60)
+
+        for player in self.state.players.values():
+            status = "SURVIVED" if player.is_alive else player.status.value.upper()
+            role = player.role.value.upper()
+            self.log(f"  {player.name}: {role} ({status})")
 
     def _run_discussion_phase(self) -> None:
         """Run the discussion phase where players talk."""
@@ -225,9 +339,9 @@ class TraitorsGame:
             self.log(f"\n{'=' * 40}")
             self.log(f"BANISHED: {banished_name}")
 
-            # In endgame, roles are NOT revealed (like the UK TV show finale)
-            if self.state.is_endgame:
-                self.log("(Role not revealed - this is the endgame)")
+            # In finale, roles are NOT revealed (like the UK TV show)
+            if self.state.is_finale:
+                self.log("(Role not revealed - this is the finale)")
             else:
                 self.log(f"They were a: {banished.role.value.upper()}")
             self.log(f"{'=' * 40}")
@@ -304,12 +418,16 @@ class TraitorsGame:
 
     def run(self) -> dict:
         """
-        Run the complete game simulation.
+        Run the complete game simulation (UK Celebrity Traitors format).
 
-        The game continues until:
+        Game structure:
+        - Rounds 1-8: Regular play (discussion → voting with role reveal → murder)
+        - Round 9+: Finale (discussion → voting without role reveal → pouch vote)
+
+        The game ends when:
         1. All traitors are banished (faithful win)
         2. Traitors outnumber or equal faithful (traitors win)
-        3. Players vote to end the game (traitors win if any remain, faithful win otherwise)
+        3. All players vote END_GAME in the finale pouch vote
 
         Returns:
             dict with game results including winner, final state, and game log
@@ -318,51 +436,71 @@ class TraitorsGame:
         self.log("THE TRAITORS - GAME SIMULATION")
         self.log("=" * 60)
         self.log(f"Players: {', '.join(self.state.players.keys())}")
+        self.log(f"Finale begins after round {self.state.finale_round}")
 
         # Assign roles
         self._assign_roles()
 
-        # Main game loop - continues until win condition or players vote to end
+        # Main game loop
         max_safety_rounds = 20  # Prevent infinite loops
         while self.state.current_round <= max_safety_rounds:
             self.log(f"\n{'#' * 60}")
-            self.log(f"ROUND {self.state.current_round}")
+            if self.state.is_finale:
+                self.log(f"FINALE - ROUND {self.state.current_round}")
+            else:
+                self.log(f"ROUND {self.state.current_round}")
             self.log(f"{'#' * 60}")
             self.log(f"Alive: {', '.join(p.name for p in self.state.alive_players)}")
 
             # Discussion phase
             self._run_discussion_phase()
 
-            # Voting phase (banishment)
-            self._run_voting_phase()
+            if self.state.is_finale:
+                # FINALE: Voting without role reveal, then pouch vote
+                self._run_finale_voting_phase()
 
-            # Check win condition after banishment
-            winner = self._check_win_condition()
-            if winner:
-                self.state.winner = winner
-                break
+                # Check win condition after banishment
+                winner = self._check_win_condition()
+                if winner:
+                    self.state.winner = winner
+                    self._reveal_all_roles()
+                    break
 
-            # End game vote - do players want to stop or continue?
-            if self._run_end_game_vote():
-                # Players voted to end - determine winner
-                if self.state.alive_traitors:
-                    self.state.winner = "traitors"
-                    self.log("\n⚠️  TRAITORS WERE STILL AMONG THEM!")
-                else:
-                    self.state.winner = "faithful"
-                    self.log("\n✓ All traitors had been eliminated!")
-                break
+                # Pouch vote - continue until all choose END_GAME
+                if self._run_finale_pouch_vote():
+                    # All chose to end - reveal roles and determine winner
+                    self._reveal_all_roles()
+                    if self.state.alive_traitors:
+                        self.state.winner = "traitors"
+                        self.log("\nTRAITORS WERE STILL AMONG THEM!")
+                    else:
+                        self.state.winner = "faithful"
+                        self.log("\nAll traitors had been eliminated!")
+                    break
 
-            # Night phase (traitors murder)
-            self._run_night_phase()
+                # Continue to next finale round (no murder in finale)
+                self.state.current_round += 1
+            else:
+                # REGULAR ROUNDS: Voting with role reveal, then murder
+                # (UK format: no early end vote - play through all rounds until finale)
+                self._run_voting_phase()
 
-            # Check win condition after murder
-            winner = self._check_win_condition()
-            if winner:
-                self.state.winner = winner
-                break
+                # Check win condition after banishment
+                winner = self._check_win_condition()
+                if winner:
+                    self.state.winner = winner
+                    break
 
-            self.state.current_round += 1
+                # Night phase (traitors murder) - only in regular rounds
+                self._run_night_phase()
+
+                # Check win condition after murder
+                winner = self._check_win_condition()
+                if winner:
+                    self.state.winner = winner
+                    break
+
+                self.state.current_round += 1
 
         # Game ended
         self.state.current_phase = GamePhase.ENDED
