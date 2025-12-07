@@ -135,6 +135,7 @@ def generate_run_summary_html(run_id: str, games_data: list, contestants: list) 
             "survived": 0,
             "banished": 0,
             "murdered": 0,
+            "total_prize": 0,
         }
 
     total_traitor_wins = 0
@@ -170,6 +171,10 @@ def generate_run_summary_html(run_id: str, games_data: list, contestants: list) 
             else:
                 stats["murdered"] += 1
 
+            # Add prize money from this game
+            prize = game.get("prize_distribution", {}).get(name, 0)
+            stats["total_prize"] += prize
+
     # Build games list HTML
     games_list = ""
     for i, game in enumerate(games_data, 1):
@@ -202,6 +207,7 @@ def generate_run_summary_html(run_id: str, games_data: list, contestants: list) 
             <td><span class="traitor-text">{stats["times_traitor"]}</span> / <span class="faithful-text">{stats["times_faithful"]}</span></td>
             <td>{stats["wins_as_traitor"] + stats["wins_as_faithful"]}</td>
             <td>{win_rate:.0f}%</td>
+            <td>${stats["total_prize"]:,}</td>
             <td>{stats["survived"]}</td>
             <td>{survival_rate:.0f}%</td>
             <td>{stats["banished"]}</td>
@@ -434,6 +440,7 @@ def generate_run_summary_html(run_id: str, games_data: list, contestants: list) 
                         <th>Role (T/F)</th>
                         <th>Wins</th>
                         <th>Win Rate</th>
+                        <th>Prize Won</th>
                         <th>Survived</th>
                         <th>Survival Rate</th>
                         <th>Banished</th>
