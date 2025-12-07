@@ -1,0 +1,385 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Run Summary - The Traitors</title>
+    <style>
+        :root {
+            --bg-dark: #1a1a2e;
+            --bg-card: #16213e;
+            --accent-red: #e94560;
+            --accent-gold: #f4a261;
+            --accent-green: #2a9d8f;
+            --text-light: #eee;
+            --text-muted: #888;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            background: var(--bg-dark);
+            color: var(--text-light);
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        header {
+            text-align: center;
+            padding: 2rem 0;
+            background: linear-gradient(135deg, #1a1a2e 0%, #0f3460 100%);
+            border-bottom: 3px solid var(--accent-red);
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            color: var(--accent-red);
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+            margin-bottom: 0.5rem;
+        }
+
+        .subtitle {
+            color: var(--accent-gold);
+            font-size: 1.1rem;
+        }
+
+        .back-link {
+            color: var(--accent-gold);
+            text-decoration: none;
+            display: inline-block;
+            margin-top: 1rem;
+        }
+
+        .back-link:hover {
+            text-decoration: underline;
+        }
+
+        section {
+            margin: 2rem 0;
+            padding: 2rem;
+            background: var(--bg-card);
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+        }
+
+        h2 {
+            color: var(--accent-gold);
+            border-bottom: 2px solid var(--accent-red);
+            padding-bottom: 0.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .stat-card {
+            background: rgba(255,255,255,0.05);
+            padding: 1.5rem;
+            border-radius: 8px;
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 2.5rem;
+            font-weight: bold;
+            color: var(--text-light);
+        }
+
+        .stat-label {
+            font-size: 0.9rem;
+            color: var(--text-muted);
+        }
+
+        .traitor-text {
+            color: var(--accent-red);
+        }
+
+        .faithful-text {
+            color: var(--accent-green);
+        }
+
+        .contestant-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 1rem;
+        }
+
+        .contestant-card {
+            background: rgba(255,255,255,0.05);
+            padding: 1rem;
+            border-radius: 8px;
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .contestant-name {
+            font-size: 1.2rem;
+            font-weight: bold;
+            color: var(--accent-gold);
+            margin-bottom: 0.5rem;
+        }
+
+        .contestant-stats {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 0.5rem;
+            font-size: 0.85rem;
+            color: var(--text-muted);
+        }
+
+        .games-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 1rem;
+        }
+
+        .game-card {
+            background: rgba(255,255,255,0.05);
+            padding: 1.5rem;
+            border-radius: 8px;
+            text-align: center;
+            text-decoration: none;
+            color: var(--text-light);
+            border: 2px solid rgba(255,255,255,0.1);
+            transition: all 0.2s;
+        }
+
+        .game-card:hover {
+            background: rgba(255,255,255,0.1);
+            border-color: var(--accent-gold);
+        }
+
+        .game-number {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: var(--accent-gold);
+        }
+
+        .game-winner {
+            font-size: 0.9rem;
+            margin-top: 0.5rem;
+        }
+
+        .loading {
+            text-align: center;
+            color: var(--text-muted);
+            padding: 2rem;
+        }
+
+        .error {
+            text-align: center;
+            color: var(--accent-red);
+            padding: 2rem;
+        }
+
+        footer {
+            text-align: center;
+            padding: 2rem;
+            color: var(--text-muted);
+            font-size: 0.9rem;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1 id="run-title">Loading...</h1>
+        <p class="subtitle" id="run-config"></p>
+        <a href="index.html" class="back-link">&larr; Back to all runs</a>
+    </header>
+
+    <div class="container">
+        <section>
+            <h2>Run Statistics</h2>
+            <div class="stats-grid" id="stats-grid">
+                <div class="loading">Loading statistics...</div>
+            </div>
+        </section>
+
+        <section>
+            <h2>Contestant Performance</h2>
+            <div class="contestant-grid" id="contestant-grid">
+                <div class="loading">Loading contestants...</div>
+            </div>
+        </section>
+
+        <section>
+            <h2>Games</h2>
+            <div class="games-grid" id="games-grid">
+                <div class="loading">Loading games...</div>
+            </div>
+        </section>
+    </div>
+
+    <footer>
+        <p>The Traitors LLM Simulator - Powered by Claude AI</p>
+    </footer>
+
+    <script>
+        function getRunId() {
+            const params = new URLSearchParams(window.location.search);
+            return params.get('run');
+        }
+
+        function formatDate(timestamp) {
+            const date = new Date(timestamp);
+            return date.toLocaleDateString('en-US', {
+                month: 'long',
+                day: 'numeric',
+                year: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+        }
+
+        function renderStats(data) {
+            const stats = data.stats || {};
+            const traitorRate = stats.total_games > 0
+                ? Math.round((stats.traitor_wins / stats.total_games) * 100)
+                : 0;
+
+            return `
+                <div class="stat-card">
+                    <div class="stat-value">${stats.total_games || 0}</div>
+                    <div class="stat-label">Total Games</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value traitor-text">${stats.traitor_wins || 0}</div>
+                    <div class="stat-label">Traitor Wins</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value faithful-text">${stats.faithful_wins || 0}</div>
+                    <div class="stat-label">Faithful Wins</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" style="color: var(--accent-red);">${traitorRate}%</div>
+                    <div class="stat-label">Traitor Win Rate</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value">${(stats.avg_rounds || 0).toFixed(1)}</div>
+                    <div class="stat-label">Avg Rounds</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value">${data.num_traitors || 3}</div>
+                    <div class="stat-label">Traitors per Game</div>
+                </div>
+            `;
+        }
+
+        function renderContestant(name, stats) {
+            const winRate = stats.games_played > 0
+                ? Math.round((stats.wins / stats.games_played) * 100)
+                : 0;
+
+            return `
+                <div class="contestant-card">
+                    <div class="contestant-name">${name}</div>
+                    <div class="contestant-stats">
+                        <span>Games: ${stats.games_played}</span>
+                        <span>Wins: ${stats.wins} (${winRate}%)</span>
+                        <span class="traitor-text">Traitor: ${stats.times_traitor}x</span>
+                        <span class="faithful-text">Faithful: ${stats.times_faithful}x</span>
+                        <span>Survived: ${stats.survived}</span>
+                        <span>Banished: ${stats.banished}</span>
+                        <span>Murdered: ${stats.murdered}</span>
+                        <span>Prize: $${(stats.total_prize || 0).toLocaleString()}</span>
+                    </div>
+                </div>
+            `;
+        }
+
+        function renderContestants(data) {
+            const contestantStats = data.contestant_stats || {};
+
+            if (Object.keys(contestantStats).length === 0) {
+                return '<p style="color: var(--text-muted); font-style: italic;">Detailed contestant statistics not available for this run.</p>';
+            }
+
+            // Sort by wins, then by games played
+            const sorted = Object.entries(contestantStats)
+                .sort((a, b) => {
+                    if (b[1].wins !== a[1].wins) return b[1].wins - a[1].wins;
+                    return b[1].games_played - a[1].games_played;
+                });
+
+            return sorted.map(([name, stats]) => renderContestant(name, stats)).join('');
+        }
+
+        function renderGames(data, runId) {
+            const games = data.games || [];
+
+            if (games.length === 0) {
+                return '<p style="color: var(--text-muted); font-style: italic;">No games found.</p>';
+            }
+
+            // For legacy runs, link to HTML files. For JSON runs, link to game.html
+            const isLegacy = data.legacy === true;
+
+            return games.map(gameNum => {
+                const gameUrl = isLegacy
+                    ? `runs/${runId}/game_${gameNum}.html`
+                    : `game.html?run=${runId}&game=${gameNum}`;
+
+                return `
+                    <a href="${gameUrl}" class="game-card">
+                        <div class="game-number">Game ${gameNum}</div>
+                        <div class="game-winner">View transcript</div>
+                    </a>
+                `;
+            }).join('');
+        }
+
+        async function loadRun() {
+            const runId = getRunId();
+
+            if (!runId) {
+                document.getElementById('run-title').textContent = 'Error';
+                document.getElementById('stats-grid').innerHTML = '<div class="error">No run ID specified</div>';
+                return;
+            }
+
+            try {
+                const response = await fetch(`runs/${runId}/run.json`);
+                if (!response.ok) throw new Error('Run not found');
+
+                const data = await response.json();
+
+                // Update header
+                document.getElementById('run-title').textContent = formatDate(data.timestamp);
+                document.getElementById('run-config').textContent = `${data.config_name}${data.config_description ? ' - ' + data.config_description : ''}`;
+                document.title = `Run ${runId} - The Traitors`;
+
+                // Update stats
+                document.getElementById('stats-grid').innerHTML = renderStats(data);
+
+                // Update contestants
+                document.getElementById('contestant-grid').innerHTML = renderContestants(data);
+
+                // Update games
+                document.getElementById('games-grid').innerHTML = renderGames(data, runId);
+
+            } catch (error) {
+                console.error('Error loading run:', error);
+                document.getElementById('run-title').textContent = 'Error';
+                document.getElementById('stats-grid').innerHTML = `<div class="error">Failed to load run data: ${error.message}</div>`;
+                document.getElementById('contestant-grid').innerHTML = '';
+                document.getElementById('games-grid').innerHTML = '';
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', loadRun);
+    </script>
+</body>
+</html>

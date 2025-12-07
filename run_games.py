@@ -24,6 +24,7 @@ from main import EXAMPLE_CONTESTANTS
 from traitors import TraitorsGame
 from traitors.types import PlayerStatus
 from generate_html import generate_game_html
+from data_store import save_game_json, save_run_json, update_runs_index
 
 
 # Build lookup for original contestants
@@ -744,10 +745,13 @@ def main():
         games_data.sort(key=lambda x: x[0])
         games_data = [g[1] for g in games_data]
 
-        # Generate HTML files for each game
-        print("\nGenerating HTML files...")
+        # Generate JSON and HTML files for each game
+        print("\nGenerating game files...")
         for i, results in enumerate(games_data, 1):
             game_log = game_logs.get(i, [])
+            # Save JSON
+            save_game_json(run_dir, i, results, game_log)
+            # Save HTML (for backwards compatibility)
             game_html = generate_game_html(results, game_log, contestants,
                                            back_link=f"index.html",
                                            title=f"Game {i}")
@@ -766,7 +770,10 @@ def main():
             results = run_single_game(client, contestants, num_traitors, game_log, finale_round)
             games_data.append(results)
 
-            # Generate individual game HTML
+            # Save JSON
+            json_path = save_game_json(run_dir, i, results, game_log)
+
+            # Generate individual game HTML (for backwards compatibility)
             game_html = generate_game_html(results, game_log, contestants,
                                            back_link=f"index.html",
                                            title=f"Game {i}")
@@ -776,18 +783,23 @@ def main():
                 f.write(game_html)
 
             print(f"\nGame {i} complete: {results['winner'].upper()} win")
-            print(f"Saved to: {game_path}")
+            print(f"Saved to: {json_path}")
 
     # Generate run summary
     print(f"\n{'='*60}")
     print("Generating run summary...")
 
+    # Save run JSON (new format)
+    run_json_path = save_run_json(run_dir, run_id, config, games_data, contestants)
+    print(f"Saved: {run_json_path}")
+
+    # Generate run summary HTML (for backwards compatibility)
     summary_html = generate_run_summary_html(run_id, games_data, contestants)
     summary_path = os.path.join(run_dir, "index.html")
     with open(summary_path, "w") as f:
         f.write(summary_html)
 
-    # Save comprehensive metadata for index updates
+    # Save comprehensive metadata for legacy index updates
     metadata = {
         "run_id": run_id,
         "timestamp": datetime.now().isoformat(),
@@ -814,12 +826,13 @@ def main():
         print("Updating prompt stats...")
         update_prompt_stats(contestants, games_data)
 
-    # Update main index
-    update_main_index("runs")
+    # Update global runs index (new JSON format)
+    update_runs_index("runs", "data")
 
     print(f"\nRun complete!")
-    print(f"Summary: {summary_path}")
-    print(f"Main index updated: index.html")
+    print(f"Run summary: {summary_path}")
+    print(f"Global index updated: data/runs.json")
+    print(f"View results at: index.html")
 
     return 0
 

@@ -1,0 +1,42 @@
+{
+  "run_id": "2025-12-06_08-39-11",
+  "timestamp": "2025-12-06T08:39:11",
+  "config_name": "baseline",
+  "config_description": "Original 12 contestants - first run",
+  "num_traitors": 3,
+  "finale_round": 8,
+  "contestants": [
+    "Marcus",
+    "Sofia",
+    "Derek",
+    "Elena",
+    "Jaylen",
+    "Priya",
+    "Terrence",
+    "Aaliyah",
+    "Victor",
+    "Camille",
+    "Rashid",
+    "Gloria"
+  ],
+  "games": [
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9,
+    10
+  ],
+  "stats": {
+    "total_games": 10,
+    "traitor_wins": 10,
+    "faithful_wins": 0,
+    "avg_rounds": 4.2
+  },
+  "contestant_stats": {},
+  "legacy": true
+}

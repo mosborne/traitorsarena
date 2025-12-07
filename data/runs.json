@@ -1,0 +1,109 @@
+{
+  "updated": "2025-12-07T21:44:37.830402",
+  "runs": [
+    {
+      "id": "2025-12-07_18-13-46",
+      "timestamp": "2025-12-07T19:44:03.177754",
+      "config_name": "v1.6_strategist",
+      "config_description": "Testing v1.6.0 pure mechanics prompts with Strategist player who has embedded strategic knowledge. Tests whether player-level strategy knowledge helps when system prompts have none.",
+      "total_games": 10,
+      "traitor_wins": 9,
+      "faithful_wins": 1,
+      "avg_rounds": 4.1,
+      "contestants": [
+        "Marcus",
+        "Sofia",
+        "Derek",
+        "Elena",
+        "Jaylen",
+        "Priya",
+        "Terrence",
+        "Aaliyah",
+        "Victor",
+        "Camille",
+        "Rashid",
+        "Strategist"
+      ],
+      "num_traitors": 3,
+      "has_json": true
+    },
+    {
+      "id": "2025-12-07_14-53-58",
+      "timestamp": "2025-12-07T16:12:07.756965",
+      "config_name": "experimental_v2",
+      "config_description": "Testing 6 faithful-optimized strategies: Iris (social), Quinn (vote tracker), Harper (devil's advocate), Rowan (murder analyst), Sage (vote coordinator), Finley (quiet observer)",
+      "total_games": 10,
+      "traitor_wins": 9,
+      "faithful_wins": 1,
+      "avg_rounds": 3.6,
+      "contestants": [
+        "Marcus",
+        "Sofia",
+        "Elena",
+        "Jaylen",
+        "Priya",
+        "Gloria",
+        "Iris",
+        "Quinn",
+        "Harper",
+        "Rowan",
+        "Sage",
+        "Finley"
+      ],
+      "num_traitors": 3,
+      "has_json": true
+    },
+    {
+      "id": "2025-12-06_18-56-03",
+      "timestamp": "2025-12-06T20:18:07.106667",
+      "config_name": "experimental_v1",
+      "config_description": "Testing improved prompts: Morgan (v1), Dominic (aggressive), Iris (social) replacing Victor, Derek, Camille",
+      "total_games": 10,
+      "traitor_wins": 9,
+      "faithful_wins": 1,
+      "avg_rounds": 3.7,
+      "contestants": [
+        "Marcus",
+        "Sofia",
+        "Dominic",
+        "Elena",
+        "Jaylen",
+        "Priya",
+        "Terrence",
+        "Aaliyah",
+        "Morgan",
+        "Iris",
+        "Rashid",
+        "Gloria"
+      ],
+      "num_traitors": 3,
+      "has_json": true
+    },
+    {
+      "id": "2025-12-06_08-39-11",
+      "timestamp": "2025-12-06T08:39:11",
+      "config_name": "baseline",
+      "config_description": "Original 12 contestants - first run",
+      "total_games": 10,
+      "traitor_wins": 10,
+      "faithful_wins": 0,
+      "avg_rounds": 4.2,
+      "contestants": [
+        "Marcus",
+        "Sofia",
+        "Derek",
+        "Elena",
+        "Jaylen",
+        "Priya",
+        "Terrence",
+        "Aaliyah",
+        "Victor",
+        "Camille",
+        "Rashid",
+        "Gloria"
+      ],
+      "num_traitors": 3,
+      "has_json": true
+    }
+  ]
+}

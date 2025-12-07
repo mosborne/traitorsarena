@@ -91,31 +91,6 @@
             margin-bottom: 0.5rem;
         }
 
-        .contestant-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-            gap: 1.5rem;
-        }
-
-        .contestant-card {
-            background: rgba(255,255,255,0.05);
-            padding: 1.5rem;
-            border-radius: 8px;
-            border: 2px solid rgba(255,255,255,0.1);
-        }
-
-        .contestant-name {
-            font-size: 1.3rem;
-            font-weight: bold;
-            color: var(--accent-gold);
-            margin-bottom: 0.5rem;
-        }
-
-        .contestant-personality {
-            font-size: 0.9rem;
-            color: var(--text-muted);
-        }
-
         .runs-list {
             list-style: none;
         }
@@ -165,19 +140,14 @@
             text-transform: uppercase;
         }
 
-        .badge.experimental {
-            background: var(--accent-gold);
-            color: var(--bg-dark);
-        }
-
         .badge.config {
             background: var(--accent-green);
             color: var(--bg-dark);
         }
 
-        .badge.custom {
-            background: var(--accent-red);
-            color: white;
+        .badge.legacy {
+            background: var(--text-muted);
+            color: var(--bg-dark);
         }
 
         .run-description {
@@ -250,6 +220,12 @@
             font-style: italic;
         }
 
+        .loading {
+            text-align: center;
+            color: var(--text-muted);
+            padding: 2rem;
+        }
+
         footer {
             text-align: center;
             padding: 2rem;
@@ -311,139 +287,7 @@
             <p style="margin-bottom: 1.5rem;">Each run consists of multiple game iterations with a specific set of contestants. Click a run to see the contestants, detailed statistics, and individual game transcripts.</p>
 
             <ul class="runs-list" id="runs-list">
-                
-            <li class="run-item">
-                <div class="run-header">
-                    <a href="runs/2025-12-07_18-13-46/index.html" class="run-title">Dec 07, 2025 at 19:44</a>
-                    <div class="run-badges"><span class="badge config">v1.6_strategist</span><span class="badge custom">1 custom</span></div>
-                </div>
-                <div class="run-meta">
-                    <span class="meta-item">
-                        <span class="meta-icon">*</span>
-                        12 contestants (3 traitors)
-                    </span>
-                    <span class="meta-item">
-                        <span class="meta-icon">#</span>
-                        10 games, ~4.1 rounds avg
-                    </span>
-                </div>
-                <div class="run-description">Testing v1.6.0 pure mechanics prompts with Strategist player who has embedded strategic knowledge. Tests whether player-level strategy knowledge helps when system prompts have none.</div>
-                <div class="run-contestants">Marcus, Sofia, Derek, Elena, Jaylen, Priya +6 more</div>
-                <div class="run-stats">
-                    <div class="run-stat">
-                        <div class="run-stat-value traitor-text">9</div>
-                        <div class="run-stat-label">Traitor Wins</div>
-                    </div>
-                    <div class="run-stat">
-                        <div class="run-stat-value faithful-text">1</div>
-                        <div class="run-stat-label">Faithful Wins</div>
-                    </div>
-                    <div class="run-stat">
-                        <div class="run-stat-value" style="color: var(--accent-red);">90%</div>
-                        <div class="run-stat-label">Traitor Rate</div>
-                    </div>
-                </div>
-            </li>
-            
-            <li class="run-item">
-                <div class="run-header">
-                    <a href="runs/2025-12-07_14-53-58/index.html" class="run-title">Dec 07, 2025 at 16:12</a>
-                    <div class="run-badges"><span class="badge config">experimental_v2</span><span class="badge custom">6 custom</span></div>
-                </div>
-                <div class="run-meta">
-                    <span class="meta-item">
-                        <span class="meta-icon">*</span>
-                        12 contestants (3 traitors)
-                    </span>
-                    <span class="meta-item">
-                        <span class="meta-icon">#</span>
-                        10 games, ~3.6 rounds avg
-                    </span>
-                </div>
-                <div class="run-description">Testing 6 faithful-optimized strategies: Iris (social), Quinn (vote tracker), Harper (devil&#x27;s advocate), Rowan (murder analyst), Sage (vote coordinator), Finley (quiet observer)</div>
-                <div class="run-contestants">Marcus, Sofia, Elena, Jaylen, Priya, Gloria +6 more</div>
-                <div class="run-stats">
-                    <div class="run-stat">
-                        <div class="run-stat-value traitor-text">9</div>
-                        <div class="run-stat-label">Traitor Wins</div>
-                    </div>
-                    <div class="run-stat">
-                        <div class="run-stat-value faithful-text">1</div>
-                        <div class="run-stat-label">Faithful Wins</div>
-                    </div>
-                    <div class="run-stat">
-                        <div class="run-stat-value" style="color: var(--accent-red);">90%</div>
-                        <div class="run-stat-label">Traitor Rate</div>
-                    </div>
-                </div>
-            </li>
-            
-            <li class="run-item">
-                <div class="run-header">
-                    <a href="runs/2025-12-06_18-56-03/index.html" class="run-title">Dec 06, 2025 at 20:18</a>
-                    <div class="run-badges"><span class="badge config">experimental_v1</span><span class="badge custom">3 custom</span></div>
-                </div>
-                <div class="run-meta">
-                    <span class="meta-item">
-                        <span class="meta-icon">*</span>
-                        12 contestants (3 traitors)
-                    </span>
-                    <span class="meta-item">
-                        <span class="meta-icon">#</span>
-                        10 games, ~3.7 rounds avg
-                    </span>
-                </div>
-                <div class="run-description">Testing improved prompts: Morgan (v1), Dominic (aggressive), Iris (social) replacing Victor, Derek, Camille</div>
-                <div class="run-contestants">Marcus, Sofia, Dominic (v1.0), Elena, Jaylen, Priya +6 more</div>
-                <div class="run-stats">
-                    <div class="run-stat">
-                        <div class="run-stat-value traitor-text">9</div>
-                        <div class="run-stat-label">Traitor Wins</div>
-                    </div>
-                    <div class="run-stat">
-                        <div class="run-stat-value faithful-text">1</div>
-                        <div class="run-stat-label">Faithful Wins</div>
-                    </div>
-                    <div class="run-stat">
-                        <div class="run-stat-value" style="color: var(--accent-red);">90%</div>
-                        <div class="run-stat-label">Traitor Rate</div>
-                    </div>
-                </div>
-            </li>
-            
-            <li class="run-item">
-                <div class="run-header">
-                    <a href="runs/2025-12-06_08-39-11/index.html" class="run-title">Dec 06, 2025 at 08:39</a>
-                    <div class="run-badges"><span class="badge config">baseline</span></div>
-                </div>
-                <div class="run-meta">
-                    <span class="meta-item">
-                        <span class="meta-icon">*</span>
-                        12 contestants (3 traitors)
-                    </span>
-                    <span class="meta-item">
-                        <span class="meta-icon">#</span>
-                        10 games, ~4.2 rounds avg
-                    </span>
-                </div>
-                <div class="run-description">Original 12 contestants - first run</div>
-                <div class="run-contestants">Marcus, Sofia, Derek, Elena, Jaylen, Priya +6 more</div>
-                <div class="run-stats">
-                    <div class="run-stat">
-                        <div class="run-stat-value traitor-text">10</div>
-                        <div class="run-stat-label">Traitor Wins</div>
-                    </div>
-                    <div class="run-stat">
-                        <div class="run-stat-value faithful-text">0</div>
-                        <div class="run-stat-label">Faithful Wins</div>
-                    </div>
-                    <div class="run-stat">
-                        <div class="run-stat-value" style="color: var(--accent-red);">100%</div>
-                        <div class="run-stat-label">Traitor Rate</div>
-                    </div>
-                </div>
-            </li>
-            
+                <li class="loading">Loading runs...</li>
             </ul>
         </section>
     </div>
@@ -452,5 +296,103 @@
         <p>The Traitors LLM Simulator - Powered by Claude AI</p>
         <p>Each contestant is controlled by an AI agent with a unique personality prompt.</p>
     </footer>
+
+    <script>
+        function formatDate(timestamp) {
+            const date = new Date(timestamp);
+            const options = { month: 'short', day: '2-digit', year: 'numeric' };
+            const timeOptions = { hour: '2-digit', minute: '2-digit' };
+            return date.toLocaleDateString('en-US', options) + ' at ' + date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false });
+        }
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        function renderRun(run) {
+            const traitorRate = run.total_games > 0
+                ? Math.round((run.traitor_wins / run.total_games) * 100)
+                : 0;
+
+            const contestants = run.contestants || [];
+            const displayContestants = contestants.slice(0, 6).join(', ');
+            const moreCount = contestants.length - 6;
+            const contestantsText = moreCount > 0
+                ? `${displayContestants} +${moreCount} more`
+                : displayContestants;
+
+            const runUrl = run.has_json
+                ? `run.html?run=${run.id}`
+                : `runs/${run.id}/index.html`;
+
+            const legacyBadge = run.has_json
+                ? ''
+                : '<span class="badge legacy">Legacy</span>';
+
+            return `
+                <li class="run-item">
+                    <div class="run-header">
+                        <a href="${runUrl}" class="run-title">${formatDate(run.timestamp)}</a>
+                        <div class="run-badges">
+                            <span class="badge config">${escapeHtml(run.config_name)}</span>
+                            ${legacyBadge}
+                        </div>
+                    </div>
+                    <div class="run-meta">
+                        <span class="meta-item">
+                            <span class="meta-icon">*</span>
+                            ${contestants.length} contestants (${run.num_traitors || 3} traitors)
+                        </span>
+                        <span class="meta-item">
+                            <span class="meta-icon">#</span>
+                            ${run.total_games} games, ~${run.avg_rounds.toFixed(1)} rounds avg
+                        </span>
+                    </div>
+                    <div class="run-description">${escapeHtml(run.config_description || '')}</div>
+                    <div class="run-contestants">${escapeHtml(contestantsText)}</div>
+                    <div class="run-stats">
+                        <div class="run-stat">
+                            <div class="run-stat-value traitor-text">${run.traitor_wins}</div>
+                            <div class="run-stat-label">Traitor Wins</div>
+                        </div>
+                        <div class="run-stat">
+                            <div class="run-stat-value faithful-text">${run.faithful_wins}</div>
+                            <div class="run-stat-label">Faithful Wins</div>
+                        </div>
+                        <div class="run-stat">
+                            <div class="run-stat-value" style="color: var(--accent-red);">${traitorRate}%</div>
+                            <div class="run-stat-label">Traitor Rate</div>
+                        </div>
+                    </div>
+                </li>
+            `;
+        }
+
+        async function loadRuns() {
+            const runsList = document.getElementById('runs-list');
+
+            try {
+                const response = await fetch('data/runs.json');
+                if (!response.ok) throw new Error('Failed to load runs data');
+
+                const data = await response.json();
+
+                if (!data.runs || data.runs.length === 0) {
+                    runsList.innerHTML = '<li class="no-runs">No game runs available yet.</li>';
+                    return;
+                }
+
+                runsList.innerHTML = data.runs.map(renderRun).join('');
+            } catch (error) {
+                console.error('Error loading runs:', error);
+                runsList.innerHTML = '<li class="no-runs">Failed to load runs. Make sure you\'re running from a web server.</li>';
+            }
+        }
+
+        // Load runs when page loads
+        document.addEventListener('DOMContentLoaded', loadRuns);
+    </script>
 </body>
 </html>

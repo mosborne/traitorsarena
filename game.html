@@ -1,0 +1,623 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Game - The Traitors</title>
+    <style>
+        :root {
+            --bg-dark: #1a1a2e;
+            --bg-card: #16213e;
+            --accent-red: #e94560;
+            --accent-gold: #f4a261;
+            --accent-green: #2a9d8f;
+            --text-light: #eee;
+            --text-muted: #888;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            background: var(--bg-dark);
+            color: var(--text-light);
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        header {
+            text-align: center;
+            padding: 2rem 0;
+            background: linear-gradient(135deg, #1a1a2e 0%, #0f3460 100%);
+            border-bottom: 3px solid var(--accent-red);
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            color: var(--accent-red);
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+            margin-bottom: 0.5rem;
+        }
+
+        .subtitle {
+            color: var(--accent-gold);
+            font-size: 1.1rem;
+        }
+
+        .back-link {
+            color: var(--accent-gold);
+            text-decoration: none;
+            display: inline-block;
+            margin-top: 1rem;
+        }
+
+        .back-link:hover {
+            text-decoration: underline;
+        }
+
+        section {
+            margin: 2rem 0;
+            padding: 2rem;
+            background: var(--bg-card);
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+        }
+
+        h2 {
+            color: var(--accent-gold);
+            border-bottom: 2px solid var(--accent-red);
+            padding-bottom: 0.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        h3 {
+            color: var(--accent-green);
+            margin: 1.5rem 0 1rem;
+        }
+
+        .winner-banner {
+            text-align: center;
+            padding: 2rem;
+            border-radius: 10px;
+            margin: 2rem 0;
+        }
+
+        .faithful-win {
+            background: linear-gradient(135deg, #1a4d4d 0%, #2a9d8f 100%);
+            border: 3px solid var(--accent-green);
+        }
+
+        .traitor-win {
+            background: linear-gradient(135deg, #4a1a2e 0%, #e94560 100%);
+            border: 3px solid var(--accent-red);
+        }
+
+        .winner-text {
+            font-size: 2.5rem;
+            font-weight: bold;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+        }
+
+        .game-summary {
+            background: rgba(0,0,0,0.2);
+            padding: 1.5rem;
+            border-radius: 8px;
+            margin-bottom: 1.5rem;
+            line-height: 1.8;
+        }
+
+        .game-summary p {
+            margin: 0.75rem 0;
+        }
+
+        .player-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+
+        .player-card {
+            background: rgba(255,255,255,0.05);
+            padding: 1rem;
+            border-radius: 8px;
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .player-name {
+            font-weight: bold;
+            font-size: 1.1rem;
+        }
+
+        .player-role {
+            font-size: 0.9rem;
+            margin-top: 0.25rem;
+        }
+
+        .player-status {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            font-style: italic;
+        }
+
+        .traitor-text {
+            color: var(--accent-red);
+            font-weight: bold;
+        }
+
+        .faithful-text {
+            color: var(--accent-green);
+            font-weight: bold;
+        }
+
+        .round-section {
+            margin: 1.5rem 0;
+            padding: 1.5rem;
+            background: rgba(0,0,0,0.2);
+            border-radius: 8px;
+        }
+
+        .round-header {
+            color: var(--accent-gold);
+            font-size: 1.3rem;
+            margin-bottom: 1rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .phase-header {
+            color: var(--accent-gold);
+            font-weight: bold;
+            margin: 1.5rem 0 0.5rem;
+            padding-bottom: 0.25rem;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .message {
+            margin: 0.75rem 0;
+            padding: 0.75rem;
+            background: rgba(255,255,255,0.03);
+            border-radius: 4px;
+        }
+
+        .speaker {
+            font-weight: bold;
+            color: var(--accent-gold);
+        }
+
+        .content {
+            color: var(--text-light);
+            margin-top: 0.25rem;
+        }
+
+        .thought {
+            margin: 0.75rem 0;
+            padding: 0.75rem;
+            background: rgba(100, 100, 150, 0.15);
+            border-left: 3px solid #8888cc;
+            border-radius: 4px;
+            font-style: italic;
+        }
+
+        .thought.traitor-thought {
+            background: rgba(233, 69, 96, 0.1);
+            border-left-color: var(--accent-red);
+        }
+
+        .thought.faithful-thought {
+            background: rgba(42, 157, 143, 0.1);
+            border-left-color: var(--accent-green);
+        }
+
+        .thought-label {
+            font-size: 0.75rem;
+            font-weight: bold;
+            text-transform: uppercase;
+            margin-bottom: 0.25rem;
+        }
+
+        .traitor-thought .thought-label {
+            color: var(--accent-red);
+        }
+
+        .faithful-thought .thought-label {
+            color: var(--accent-green);
+        }
+
+        .vote-breakdown {
+            margin: 0.75rem 0;
+            padding: 0.75rem;
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 4px;
+            font-size: 0.9rem;
+        }
+
+        .vote-target {
+            color: var(--accent-gold);
+            font-weight: bold;
+        }
+
+        .voting-outcome {
+            margin: 1.5rem 0;
+            padding: 1rem;
+            background: rgba(244, 162, 97, 0.1);
+            border-radius: 8px;
+            border: 1px solid rgba(244, 162, 97, 0.3);
+        }
+
+        .night-phase-section {
+            background: rgba(20, 10, 30, 0.6);
+            border: 2px solid rgba(233, 69, 96, 0.4);
+            border-radius: 8px;
+            padding: 1rem;
+            margin: 1.5rem 0;
+        }
+
+        .night-header {
+            color: var(--accent-red) !important;
+            font-size: 1.1rem;
+        }
+
+        .outcome {
+            padding: 1rem;
+            border-radius: 8px;
+            margin-top: 1rem;
+            font-size: 1.1rem;
+        }
+
+        .traitor-outcome {
+            background: rgba(233, 69, 96, 0.2);
+            border-left: 4px solid var(--accent-red);
+        }
+
+        .faithful-outcome {
+            background: rgba(42, 157, 143, 0.2);
+            border-left: 4px solid var(--accent-green);
+        }
+
+        .loading {
+            text-align: center;
+            color: var(--text-muted);
+            padding: 2rem;
+        }
+
+        .error {
+            text-align: center;
+            color: var(--accent-red);
+            padding: 2rem;
+        }
+
+        footer {
+            text-align: center;
+            padding: 2rem;
+            color: var(--text-muted);
+            font-size: 0.9rem;
+        }
+
+        .nav-buttons {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 1rem;
+        }
+
+        .nav-btn {
+            color: var(--accent-gold);
+            text-decoration: none;
+            padding: 0.5rem 1rem;
+            border: 1px solid var(--accent-gold);
+            border-radius: 4px;
+        }
+
+        .nav-btn:hover {
+            background: rgba(244, 162, 97, 0.1);
+        }
+
+        .nav-btn.disabled {
+            opacity: 0.5;
+            pointer-events: none;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1 id="game-title">Loading...</h1>
+        <p class="subtitle" id="game-subtitle"></p>
+        <a href="index.html" class="back-link" id="back-link">&larr; Back to run</a>
+        <div class="nav-buttons">
+            <a href="#" class="nav-btn disabled" id="prev-game">&larr; Previous Game</a>
+            <a href="#" class="nav-btn disabled" id="next-game">Next Game &rarr;</a>
+        </div>
+    </header>
+
+    <div class="container">
+        <div id="winner-banner"></div>
+
+        <section>
+            <h2>Game Summary</h2>
+            <div class="game-summary" id="game-summary">
+                <div class="loading">Loading...</div>
+            </div>
+        </section>
+
+        <section>
+            <h2>Players</h2>
+            <div class="player-grid" id="player-grid">
+                <div class="loading">Loading...</div>
+            </div>
+        </section>
+
+        <section>
+            <h2>Game Transcript</h2>
+            <div id="transcript">
+                <div class="loading">Loading...</div>
+            </div>
+        </section>
+    </div>
+
+    <footer>
+        <p>The Traitors LLM Simulator - Powered by Claude AI</p>
+    </footer>
+
+    <script>
+        function getParams() {
+            const params = new URLSearchParams(window.location.search);
+            return {
+                runId: params.get('run'),
+                gameNum: parseInt(params.get('game')) || 1
+            };
+        }
+
+        function escapeHtml(text) {
+            if (!text) return '';
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        function renderWinnerBanner(data) {
+            const winnerClass = data.winner === 'traitors' ? 'traitor-win' : 'faithful-win';
+            const winnerText = data.winner === 'traitors' ? 'THE TRAITORS WIN!' : 'THE FAITHFUL WIN!';
+
+            return `
+                <div class="winner-banner ${winnerClass}">
+                    <div class="winner-text">${winnerText}</div>
+                </div>
+            `;
+        }
+
+        function renderSummary(data) {
+            const traitors = data.traitors || [];
+            const survivors = data.survivors || [];
+            const prize = data.prize_pool || 100000;
+
+            return `
+                <p><strong>Rounds played:</strong> ${data.rounds_played}</p>
+                <p><strong>Traitors:</strong> <span class="traitor-text">${traitors.join(', ')}</span></p>
+                <p><strong>Survivors:</strong> ${survivors.join(', ')}</p>
+                <p><strong>Prize pool:</strong> $${prize.toLocaleString()}</p>
+            `;
+        }
+
+        function renderPlayers(data) {
+            const players = data.players || {};
+            const traitors = data.traitors || [];
+
+            return Object.entries(players).map(([name, player]) => {
+                const isTraitor = traitors.includes(name);
+                const roleClass = isTraitor ? 'traitor-text' : 'faithful-text';
+                const role = player.role || (isTraitor ? 'traitor' : 'faithful');
+
+                let status = player.status || 'unknown';
+                if (status === 'alive') status = 'Survived';
+                else if (status === 'banished') status = `Banished (Round ${player.eliminated_round})`;
+                else if (status === 'murdered') status = `Murdered (Round ${player.eliminated_round})`;
+
+                return `
+                    <div class="player-card">
+                        <div class="player-name">${escapeHtml(name)}</div>
+                        <div class="player-role ${roleClass}">${role.toUpperCase()}</div>
+                        <div class="player-status">${status}</div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function renderMessage(msg) {
+            return `
+                <div class="message">
+                    <span class="speaker">${escapeHtml(msg.speaker || msg.name)}:</span>
+                    <div class="content">${escapeHtml(msg.content || msg.message)}</div>
+                </div>
+            `;
+        }
+
+        function renderThought(thought, traitors) {
+            const isTraitor = traitors.includes(thought.player || thought.name);
+            const thoughtClass = isTraitor ? 'traitor-thought' : 'faithful-thought';
+            const label = isTraitor ? 'Traitor Thoughts' : 'Private Thoughts';
+
+            return `
+                <div class="thought ${thoughtClass}">
+                    <div class="thought-label">${escapeHtml(thought.player || thought.name)} - ${label}</div>
+                    <div class="content">${escapeHtml(thought.content || thought.thought)}</div>
+                </div>
+            `;
+        }
+
+        function renderVotes(votes) {
+            if (!votes || votes.length === 0) return '';
+
+            // Group votes by target
+            const voteCounts = {};
+            votes.forEach(vote => {
+                const target = vote.target || vote.vote;
+                if (!voteCounts[target]) voteCounts[target] = [];
+                voteCounts[target].push(vote.voter || vote.name);
+            });
+
+            const voteHtml = Object.entries(voteCounts)
+                .sort((a, b) => b[1].length - a[1].length)
+                .map(([target, voters]) => `
+                    <div class="vote-breakdown">
+                        <span class="vote-target">${escapeHtml(target)}</span>: ${voters.length} vote(s) from ${voters.map(escapeHtml).join(', ')}
+                    </div>
+                `).join('');
+
+            return `
+                <div class="voting-outcome">
+                    <h4>Voting Results</h4>
+                    ${voteHtml}
+                </div>
+            `;
+        }
+
+        function renderRound(round, traitors) {
+            const messages = round.messages || [];
+            const thoughts = round.private_thoughts || [];
+            const votes = round.votes || [];
+
+            let html = `
+                <div class="round-section">
+                    <div class="round-header">Round ${round.round_num}</div>
+            `;
+
+            // Discussion phase
+            if (messages.length > 0) {
+                html += '<div class="phase-header">Discussion Phase</div>';
+                html += messages.map(renderMessage).join('');
+            }
+
+            // Private thoughts
+            if (thoughts.length > 0) {
+                html += '<div class="phase-header">Private Thoughts</div>';
+                html += thoughts.map(t => renderThought(t, traitors)).join('');
+            }
+
+            // Voting
+            if (votes.length > 0) {
+                html += '<div class="phase-header">Voting Phase</div>';
+                html += renderVotes(votes);
+            }
+
+            // Banishment
+            if (round.banished) {
+                const roleClass = round.banished.role === 'traitor' ? 'traitor-outcome' : 'faithful-outcome';
+                html += `
+                    <div class="outcome ${roleClass}">
+                        <strong>${escapeHtml(round.banished.name)}</strong> was banished.
+                        They were a <strong>${round.banished.role.toUpperCase()}</strong>.
+                    </div>
+                `;
+            }
+
+            // Night phase / Murder
+            if (round.murdered) {
+                html += `
+                    <div class="night-phase-section">
+                        <div class="night-header">Night Phase - The Traitors Meet</div>
+                        <div class="outcome faithful-outcome">
+                            <strong>${escapeHtml(round.murdered.name)}</strong> was murdered by the traitors.
+                        </div>
+                    </div>
+                `;
+            }
+
+            html += '</div>';
+            return html;
+        }
+
+        function renderTranscript(data) {
+            const rounds = data.rounds || [];
+            const traitors = data.traitors || [];
+
+            if (rounds.length === 0) {
+                return '<p style="color: var(--text-muted); font-style: italic;">Detailed transcript not available for this game.</p>';
+            }
+
+            return rounds.map(round => renderRound(round, traitors)).join('');
+        }
+
+        async function loadGame() {
+            const { runId, gameNum } = getParams();
+
+            if (!runId) {
+                document.getElementById('game-title').textContent = 'Error';
+                document.getElementById('game-summary').innerHTML = '<div class="error">No run ID specified</div>';
+                return;
+            }
+
+            document.getElementById('back-link').href = `run.html?run=${runId}`;
+
+            try {
+                const response = await fetch(`runs/${runId}/game_${gameNum}.json`);
+                if (!response.ok) throw new Error('Game not found');
+
+                const data = await response.json();
+
+                // Update header
+                document.getElementById('game-title').textContent = `Game ${gameNum}`;
+                document.getElementById('game-subtitle').textContent = `${data.rounds_played} rounds - ${data.winner === 'traitors' ? 'Traitor' : 'Faithful'} Victory`;
+                document.title = `Game ${gameNum} - The Traitors`;
+
+                // Winner banner
+                document.getElementById('winner-banner').innerHTML = renderWinnerBanner(data);
+
+                // Summary
+                document.getElementById('game-summary').innerHTML = renderSummary(data);
+
+                // Players
+                document.getElementById('player-grid').innerHTML = renderPlayers(data);
+
+                // Transcript
+                document.getElementById('transcript').innerHTML = renderTranscript(data);
+
+                // Navigation
+                setupNavigation(runId, gameNum);
+
+            } catch (error) {
+                console.error('Error loading game:', error);
+                document.getElementById('game-title').textContent = 'Error';
+                document.getElementById('game-summary').innerHTML = `<div class="error">Failed to load game data: ${error.message}</div>`;
+                document.getElementById('player-grid').innerHTML = '';
+                document.getElementById('transcript').innerHTML = '';
+            }
+        }
+
+        async function setupNavigation(runId, currentGame) {
+            try {
+                const response = await fetch(`runs/${runId}/run.json`);
+                if (!response.ok) return;
+
+                const runData = await response.json();
+                const games = runData.games || [];
+
+                const prevBtn = document.getElementById('prev-game');
+                const nextBtn = document.getElementById('next-game');
+
+                if (currentGame > 1) {
+                    prevBtn.href = `game.html?run=${runId}&game=${currentGame - 1}`;
+                    prevBtn.classList.remove('disabled');
+                }
+
+                if (currentGame < games.length) {
+                    nextBtn.href = `game.html?run=${runId}&game=${currentGame + 1}`;
+                    nextBtn.classList.remove('disabled');
+                }
+            } catch (error) {
+                console.error('Error setting up navigation:', error);
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', loadGame);
+    </script>
+</body>
+</html>
