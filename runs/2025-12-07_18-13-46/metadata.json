@@ -1,0 +1,40 @@
+{
+  "run_id": "2025-12-07_18-13-46",
+  "timestamp": "2025-12-07T19:44:03.177754",
+  "config_name": "v1.6_strategist",
+  "config_description": "Testing v1.6.0 pure mechanics prompts with Strategist player who has embedded strategic knowledge. Tests whether player-level strategy knowledge helps when system prompts have none.",
+  "num_games": 10,
+  "num_contestants": 12,
+  "num_traitors": 3,
+  "traitor_wins": 9,
+  "faithful_wins": 1,
+  "contestants": [
+    "Marcus",
+    "Sofia",
+    "Derek",
+    "Elena",
+    "Jaylen",
+    "Priya",
+    "Terrence",
+    "Aaliyah",
+    "Victor",
+    "Camille",
+    "Rashid",
+    "Strategist"
+  ],
+  "prompt_versions": {
+    "Marcus": "original",
+    "Sofia": "original",
+    "Derek": "original",
+    "Elena": "original",
+    "Jaylen": "original",
+    "Priya": "original",
+    "Terrence": "original",
+    "Aaliyah": "original",
+    "Victor": "original",
+    "Camille": "original",
+    "Rashid": "original",
+    "Strategist": "1.0"
+  },
+  "avg_rounds": 4.1
+}
