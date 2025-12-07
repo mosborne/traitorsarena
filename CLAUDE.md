@@ -29,10 +29,12 @@ game.run()
 | `traitors/types.py` | Data models (Player, GameState, etc.) |
 | `traitors/prompts.py` | System prompt templates for game rules |
 | `main.py` | Entry point with 19 example contestants |
-| `run_games.py` | Batch runner for multiple games with HTML output |
+| `run_games.py` | Batch runner for multiple games with JSON/HTML output |
+| `data_store.py` | JSON serialization and storage functions |
 | `configs/` | Game configuration files |
 | `prompts/` | Custom player personality prompts |
-| `runs/` | HTML output from game runs |
+| `runs/` | Game run data (JSON + HTML files) |
+| `data/runs.json` | Global index of all runs |
 
 ## Game Format (UK Celebrity Traitors)
 
@@ -68,9 +70,19 @@ game = TraitorsGame(
 results = game.run()
 ```
 
-## HTML Output
+## Data & Output
 
-After running `run_games.py`, view results at:
-- `index.html` - All game runs
-- `runs/<timestamp>/index.html` - Specific run with individual game links
+Game results are stored as JSON and rendered dynamically:
+
+**JSON Data:**
+- `data/runs.json` - Global index of all runs
+- `runs/<id>/run.json` - Run summary with contestant stats
+- `runs/<id>/game_*.json` - Individual game transcripts
+
+**HTML Viewers:**
+- `index.html` - All game runs (loads from `data/runs.json`)
+- `run.html?run=<id>` - Run summary (loads from `run.json`)
+- `game.html?run=<id>&game=<n>` - Game transcript (loads from `game_*.json`)
 - `players.html` - Player personality guide
+
+**Note:** View via a web server (e.g., `python -m http.server`) for dynamic loading.

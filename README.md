@@ -68,9 +68,12 @@ Run multiple games with a config file:
 
 ```bash
 python run_games.py --config configs/baseline.json
+
+# Run games in parallel for faster execution
+python run_games.py --config configs/baseline.json --parallel 4
 ```
 
-This generates HTML reports in `runs/<timestamp>/` that you can view in a browser.
+Game results are saved as JSON in `runs/<timestamp>/` and viewable at `index.html`.
 
 ### Test Mode
 
@@ -138,12 +141,24 @@ traitors/
 ├── game.py         # Main game engine
 └── prompts.py      # System prompt templates
 main.py             # Entry point with 19 example contestants
-run_games.py        # Batch runner with HTML output
+run_games.py        # Batch runner with JSON/HTML output
+data_store.py       # JSON data storage functions
 configs/            # Game configuration files
 prompts/            # Custom player personality prompts
-runs/               # HTML output from game runs
-index.html          # Web interface for viewing game results
+runs/               # Game run data (JSON + HTML)
+data/runs.json      # Global index of all runs
+index.html          # Dynamic web interface (loads from JSON)
+run.html            # Run summary viewer
+game.html           # Game transcript viewer
 ```
+
+## Data Storage
+
+Game results are stored as JSON for easy querying and analysis:
+
+- `data/runs.json` - Global index of all runs
+- `runs/<id>/run.json` - Run summary with contestant stats
+- `runs/<id>/game_*.json` - Individual game data (rounds, votes, messages)
 
 ## License
 
