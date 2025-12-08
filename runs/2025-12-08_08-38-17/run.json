@@ -1,0 +1,239 @@
+{
+  "run_id": "2025-12-08_08-38-17",
+  "timestamp": "2025-12-08T12:28:34.169996",
+  "config_name": "baseline",
+  "config_description": "UK Celebrity Traitors format - 19 contestants, 3 traitors",
+  "num_traitors": 3,
+  "finale_round": 8,
+  "contestants": [
+    "Marcus",
+    "Sofia",
+    "Derek",
+    "Elena",
+    "Jaylen",
+    "Priya",
+    "Terrence",
+    "Aaliyah",
+    "Victor",
+    "Camille",
+    "Rashid",
+    "Gloria",
+    "Olivia",
+    "Nathan",
+    "Simone",
+    "Wesley",
+    "Dahlia",
+    "Carlos",
+    "Freya"
+  ],
+  "games": [
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9,
+    10
+  ],
+  "stats": {
+    "total_games": 10,
+    "traitor_wins": 5,
+    "faithful_wins": 5,
+    "avg_rounds": 8.1
+  },
+  "contestant_stats": {
+    "Marcus": {
+      "games_played": 10,
+      "times_traitor": 1,
+      "times_faithful": 9,
+      "wins": 0,
+      "survived": 0,
+      "banished": 1,
+      "murdered": 9,
+      "total_prize": 0
+    },
+    "Sofia": {
+      "games_played": 10,
+      "times_traitor": 2,
+      "times_faithful": 8,
+      "wins": 2,
+      "survived": 2,
+      "banished": 1,
+      "murdered": 7,
+      "total_prize": 133333
+    },
+    "Derek": {
+      "games_played": 10,
+      "times_traitor": 2,
+      "times_faithful": 8,
+      "wins": 2,
+      "survived": 2,
+      "banished": 6,
+      "murdered": 2,
+      "total_prize": 62500
+    },
+    "Elena": {
+      "games_played": 10,
+      "times_traitor": 1,
+      "times_faithful": 9,
+      "wins": 2,
+      "survived": 3,
+      "banished": 2,
+      "murdered": 5,
+      "total_prize": 66666
+    },
+    "Jaylen": {
+      "games_played": 10,
+      "times_traitor": 1,
+      "times_faithful": 9,
+      "wins": 0,
+      "survived": 0,
+      "banished": 6,
+      "murdered": 4,
+      "total_prize": 0
+    },
+    "Priya": {
+      "games_played": 10,
+      "times_traitor": 0,
+      "times_faithful": 10,
+      "wins": 0,
+      "survived": 0,
+      "banished": 3,
+      "murdered": 7,
+      "total_prize": 0
+    },
+    "Terrence": {
+      "games_played": 10,
+      "times_traitor": 1,
+      "times_faithful": 9,
+      "wins": 2,
+      "survived": 2,
+      "banished": 2,
+      "murdered": 6,
+      "total_prize": 66666
+    },
+    "Aaliyah": {
+      "games_played": 10,
+      "times_traitor": 2,
+      "times_faithful": 8,
+      "wins": 2,
+      "survived": 3,
+      "banished": 0,
+      "murdered": 7,
+      "total_prize": 100000
+    },
+    "Victor": {
+      "games_played": 10,
+      "times_traitor": 1,
+      "times_faithful": 9,
+      "wins": 0,
+      "survived": 0,
+      "banished": 10,
+      "murdered": 0,
+      "total_prize": 0
+    },
+    "Camille": {
+      "games_played": 10,
+      "times_traitor": 3,
+      "times_faithful": 7,
+      "wins": 0,
+      "survived": 0,
+      "banished": 9,
+      "murdered": 1,
+      "total_prize": 0
+    },
+    "Rashid": {
+      "games_played": 10,
+      "times_traitor": 0,
+      "times_faithful": 10,
+      "wins": 1,
+      "survived": 1,
+      "banished": 4,
+      "murdered": 5,
+      "total_prize": 12500
+    },
+    "Gloria": {
+      "games_played": 10,
+      "times_traitor": 2,
+      "times_faithful": 8,
+      "wins": 6,
+      "survived": 8,
+      "banished": 0,
+      "murdered": 2,
+      "total_prize": 262499
+    },
+    "Olivia": {
+      "games_played": 10,
+      "times_traitor": 3,
+      "times_faithful": 7,
+      "wins": 3,
+      "survived": 4,
+      "banished": 3,
+      "murdered": 3,
+      "total_prize": 62499
+    },
+    "Nathan": {
+      "games_played": 10,
+      "times_traitor": 1,
+      "times_faithful": 9,
+      "wins": 0,
+      "survived": 0,
+      "banished": 8,
+      "murdered": 2,
+      "total_prize": 0
+    },
+    "Simone": {
+      "games_played": 10,
+      "times_traitor": 3,
+      "times_faithful": 7,
+      "wins": 2,
+      "survived": 3,
+      "banished": 6,
+      "murdered": 1,
+      "total_prize": 62500
+    },
+    "Wesley": {
+      "games_played": 10,
+      "times_traitor": 0,
+      "times_faithful": 10,
+      "wins": 1,
+      "survived": 2,
+      "banished": 1,
+      "murdered": 7,
+      "total_prize": 12500
+    },
+    "Dahlia": {
+      "games_played": 10,
+      "times_traitor": 1,
+      "times_faithful": 9,
+      "wins": 3,
+      "survived": 3,
+      "banished": 4,
+      "murdered": 3,
+      "total_prize": 79166
+    },
+    "Carlos": {
+      "games_played": 10,
+      "times_traitor": 2,
+      "times_faithful": 8,
+      "wins": 3,
+      "survived": 5,
+      "banished": 5,
+      "murdered": 0,
+      "total_prize": 79166
+    },
+    "Freya": {
+      "games_played": 10,
+      "times_traitor": 4,
+      "times_faithful": 6,
+      "wins": 0,
+      "survived": 0,
+      "banished": 10,
+      "murdered": 0,
+      "total_prize": 0
+    }
+  }
+}
