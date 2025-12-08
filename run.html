@@ -112,32 +112,43 @@
             color: var(--accent-green);
         }
 
-        .contestant-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-            gap: 1rem;
+        .contestant-table {
+            width: 100%;
+            border-collapse: collapse;
         }
 
-        .contestant-card {
-            background: rgba(255,255,255,0.05);
-            padding: 1rem;
-            border-radius: 8px;
-            border: 1px solid rgba(255,255,255,0.1);
+        .contestant-table th,
+        .contestant-table td {
+            padding: 0.75rem;
+            text-align: left;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
         }
 
-        .contestant-name {
-            font-size: 1.2rem;
-            font-weight: bold;
+        .contestant-table th {
+            cursor: pointer;
+            user-select: none;
             color: var(--accent-gold);
-            margin-bottom: 0.5rem;
         }
 
-        .contestant-stats {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 0.5rem;
-            font-size: 0.85rem;
-            color: var(--text-muted);
+        .contestant-table th:hover {
+            background: rgba(255,255,255,0.05);
+        }
+
+        .contestant-table th.sorted-asc::after { content: ' ▲'; }
+        .contestant-table th.sorted-desc::after { content: ' ▼'; }
+
+        .contestant-table tbody tr:hover {
+            background: rgba(255,255,255,0.05);
+        }
+
+        .contestant-link {
+            color: var(--accent-gold);
+            text-decoration: none;
+            font-weight: bold;
+        }
+
+        .contestant-link:hover {
+            text-decoration: underline;
         }
 
         .games-grid {
@@ -210,7 +221,7 @@
 
         <section>
             <h2>Contestant Performance</h2>
-            <div class="contestant-grid" id="contestant-grid">
+            <div id="contestant-container">
                 <div class="loading">Loading contestants...</div>
             </div>
         </section>
@@ -278,43 +289,83 @@
             `;
         }
 
-        function renderContestant(name, stats) {
-            const winRate = stats.games_played > 0
-                ? Math.round((stats.wins / stats.games_played) * 100)
-                : 0;
+        let currentSort = { column: 'wins', ascending: false };
+        let contestantData = null;
 
-            return `
-                <div class="contestant-card">
-                    <div class="contestant-name">${name}</div>
-                    <div class="contestant-stats">
-                        <span>Games: ${stats.games_played}</span>
-                        <span>Wins: ${stats.wins} (${winRate}%)</span>
-                        <span class="traitor-text">Traitor: ${stats.times_traitor}x</span>
-                        <span class="faithful-text">Faithful: ${stats.times_faithful}x</span>
-                        <span>Survived: ${stats.survived}</span>
-                        <span>Banished: ${stats.banished}</span>
-                        <span>Murdered: ${stats.murdered}</span>
-                        <span>Prize: $${(stats.total_prize || 0).toLocaleString()}</span>
-                    </div>
-                </div>
-            `;
-        }
+        function renderContestantsTable(data) {
+            contestantData = data;
+            const stats = data.contestant_stats || {};
 
-        function renderContestants(data) {
-            const contestantStats = data.contestant_stats || {};
-
-            if (Object.keys(contestantStats).length === 0) {
-                return '<p style="color: var(--text-muted); font-style: italic;">Detailed contestant statistics not available for this run.</p>';
+            if (Object.keys(stats).length === 0) {
+                return '<p style="color: var(--text-muted);">No stats available.</p>';
             }
 
-            // Sort by wins, then by games played
-            const sorted = Object.entries(contestantStats)
-                .sort((a, b) => {
-                    if (b[1].wins !== a[1].wins) return b[1].wins - a[1].wins;
-                    return b[1].games_played - a[1].games_played;
-                });
+            const sortedEntries = Object.entries(stats).sort((a, b) => {
+                let aVal, bVal;
+                if (currentSort.column === 'name') {
+                    aVal = a[0];
+                    bVal = b[0];
+                } else {
+                    aVal = a[1][currentSort.column] ?? 0;
+                    bVal = b[1][currentSort.column] ?? 0;
+                }
+                const cmp = typeof aVal === 'string' ? aVal.localeCompare(bVal) : aVal - bVal;
+                return currentSort.ascending ? cmp : -cmp;
+            });
 
-            return sorted.map(([name, stats]) => renderContestant(name, stats)).join('');
+            const headers = [
+                { key: 'name', label: 'Name' },
+                { key: 'wins', label: 'Wins' },
+                { key: 'games_played', label: 'Games' },
+                { key: 'times_traitor', label: 'Traitor' },
+                { key: 'times_faithful', label: 'Faithful' },
+                { key: 'survived', label: 'Survived' },
+                { key: 'banished', label: 'Banished' },
+                { key: 'murdered', label: 'Murdered' },
+                { key: 'total_prize', label: 'Prize' }
+            ];
+
+            const headerHtml = headers.map(h => {
+                const sortClass = currentSort.column === h.key
+                    ? (currentSort.ascending ? 'sorted-asc' : 'sorted-desc') : '';
+                return `<th class="${sortClass}" data-sort="${h.key}">${h.label}</th>`;
+            }).join('');
+
+            const rowsHtml = sortedEntries.map(([name, s]) => {
+                const winRate = s.games_played > 0 ? Math.round((s.wins / s.games_played) * 100) : 0;
+                return `<tr>
+                    <td><a class="contestant-link" href="players.html#${encodeURIComponent(name)}">${name}</a></td>
+                    <td>${s.wins} (${winRate}%)</td>
+                    <td>${s.games_played}</td>
+                    <td class="traitor-text">${s.times_traitor}</td>
+                    <td class="faithful-text">${s.times_faithful}</td>
+                    <td>${s.survived}</td>
+                    <td>${s.banished}</td>
+                    <td>${s.murdered}</td>
+                    <td>$${(s.total_prize || 0).toLocaleString()}</td>
+                </tr>`;
+            }).join('');
+
+            return `<table class="contestant-table">
+                <thead><tr>${headerHtml}</tr></thead>
+                <tbody>${rowsHtml}</tbody>
+            </table>`;
+        }
+
+        function setupTableSorting() {
+            document.querySelectorAll('.contestant-table th').forEach(th => {
+                th.addEventListener('click', () => {
+                    const col = th.dataset.sort;
+                    if (currentSort.column === col) {
+                        currentSort.ascending = !currentSort.ascending;
+                    } else {
+                        currentSort = { column: col, ascending: col === 'name' };
+                    }
+                    document.getElementById('contestant-container').innerHTML =
+                        renderContestantsTable(contestantData);
+                    setupTableSorting();
+                });
+            });
         }
 
         function renderGames(data, runId) {
@@ -365,7 +416,8 @@
                 document.getElementById('stats-grid').innerHTML = renderStats(data);
 
                 // Update contestants
-                document.getElementById('contestant-grid').innerHTML = renderContestants(data);
+                document.getElementById('contestant-container').innerHTML = renderContestantsTable(data);
+                setupTableSorting();
 
                 // Update games
                 document.getElementById('games-grid').innerHTML = renderGames(data, runId);
@@ -374,7 +426,7 @@
                 console.error('Error loading run:', error);
                 document.getElementById('run-title').textContent = 'Error';
                 document.getElementById('stats-grid').innerHTML = `<div class="error">Failed to load run data: ${error.message}</div>`;
-                document.getElementById('contestant-grid').innerHTML = '';
+                document.getElementById('contestant-container').innerHTML = '';
                 document.getElementById('games-grid').innerHTML = '';
             }
         }
