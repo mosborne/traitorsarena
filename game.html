@@ -492,6 +492,31 @@
             `;
         }
 
+        function renderPouchVotes(votes) {
+            if (!votes || votes.length === 0) return '';
+
+            const endVotes = votes.filter(v => v.choice === 'END_GAME');
+            const banishVotes = votes.filter(v => v.choice === 'BANISH_AGAIN');
+
+            const voteList = votes.map(v => {
+                const choiceClass = v.choice === 'END_GAME' ? 'faithful-text' : 'traitor-text';
+                return `<span class="${choiceClass}">${escapeHtml(v.voter)}: ${v.choice}</span>`;
+            }).join(' | ');
+
+            return `
+                <div class="voting-outcome">
+                    <h4>Pouch Vote Results</h4>
+                    <div class="vote-breakdown">
+                        <span class="faithful-text">END_GAME: ${endVotes.length}</span> |
+                        <span class="traitor-text">BANISH_AGAIN: ${banishVotes.length}</span>
+                    </div>
+                    <div class="vote-breakdown" style="font-size: 0.85rem;">
+                        ${voteList}
+                    </div>
+                </div>
+            `;
+        }
+
         function renderRound(round, traitors) {
             const messages = round.messages || [];
             const thoughts = round.private_thoughts || [];
@@ -533,6 +558,12 @@
                         They were a <strong>${round.banished.role.toUpperCase()}</strong>.
                     </div>
                 `;
+            }
+
+            // Finale pouch votes (round 8+)
+            if (round.pouch_votes && round.pouch_votes.length > 0) {
+                html += '<div class="phase-header">Finale Pouch Vote</div>';
+                html += renderPouchVotes(round.pouch_votes);
             }
 
             // Night phase - show traitor discussions AND murder

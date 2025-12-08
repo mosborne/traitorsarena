@@ -63,6 +63,14 @@ class Vote:
 
 
 @dataclass
+class PouchVote:
+    """A finale pouch vote on whether to end or continue."""
+    voter: str
+    choice: str  # "END_GAME" or "BANISH_AGAIN"
+    round_num: int
+
+
+@dataclass
 class PrivateThought:
     """A player's private thoughts before voting."""
     player: str
@@ -89,6 +97,7 @@ class GameState:
     players: dict[str, Player] = field(default_factory=dict)
     messages: list[Message] = field(default_factory=list)
     votes: list[Vote] = field(default_factory=list)
+    pouch_votes: list[PouchVote] = field(default_factory=list)
     private_thoughts: list[PrivateThought] = field(default_factory=list)
     llm_interactions: list[LLMInteraction] = field(default_factory=list)
     current_round: int = 1

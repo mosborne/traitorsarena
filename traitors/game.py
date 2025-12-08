@@ -6,7 +6,7 @@ from typing import Callable, Optional
 
 import anthropic
 
-from .types import Player, GameState, GamePhase, Role, PlayerStatus, Message, Vote, PrivateThought
+from .types import Player, GameState, GamePhase, Role, PlayerStatus, Message, Vote, PouchVote, PrivateThought
 from .agent import Agent, TestAgent
 
 
@@ -149,6 +149,12 @@ class TraitorsGame:
             choice = agent.generate_finale_pouch_choice(self.state)
             choices[player.name] = choice
             self.log(f"  {player.name} throws: {choice}")
+            # Record the pouch vote
+            self.state.pouch_votes.append(PouchVote(
+                voter=player.name,
+                choice=choice,
+                round_num=self.state.current_round
+            ))
 
         banish_count = sum(1 for c in choices.values() if c == "BANISH_AGAIN")
         end_count = len(choices) - banish_count

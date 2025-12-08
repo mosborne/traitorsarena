@@ -48,6 +48,7 @@ def save_game_json(run_dir: str, game_num: int, results: dict, game_log: list[st
     # Get messages, votes, thoughts organized by round
     messages = results.get("messages", [])
     votes = results.get("votes", [])
+    pouch_votes = results.get("pouch_votes", [])
     private_thoughts = results.get("private_thoughts", [])
     players = results.get("players", {})
 
@@ -56,6 +57,7 @@ def save_game_json(run_dir: str, game_num: int, results: dict, game_log: list[st
     for round_num in range(1, max_round + 1):
         round_messages = [serialize_value(m) for m in messages if getattr(m, 'round_num', 0) == round_num]
         round_votes = [serialize_value(v) for v in votes if getattr(v, 'round_num', 0) == round_num]
+        round_pouch_votes = [serialize_value(v) for v in pouch_votes if getattr(v, 'round_num', 0) == round_num]
         round_thoughts = [serialize_value(t) for t in private_thoughts if getattr(t, 'round_num', 0) == round_num]
 
         # Find who was banished/murdered this round
@@ -75,6 +77,7 @@ def save_game_json(run_dir: str, game_num: int, results: dict, game_log: list[st
             "round_num": round_num,
             "messages": round_messages,
             "votes": round_votes,
+            "pouch_votes": round_pouch_votes,
             "private_thoughts": round_thoughts,
             "banished": banished,
             "murdered": murdered,
@@ -102,6 +105,18 @@ def save_game_json(run_dir: str, game_num: int, results: dict, game_log: list[st
         "players": players_data,
         "rounds": rounds_data,
         "game_log": game_log,
+        "llm_interactions": [
+            {
+                "player": i.player,
+                "action_type": i.action_type,
+                "system_prompt": i.system_prompt,
+                "user_message": i.user_message,
+                "response": i.response,
+                "model": i.model,
+                "timestamp": i.timestamp,
+            }
+            for i in results.get("llm_interactions", [])
+        ],
     }
 
     # Save to file
