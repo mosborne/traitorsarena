@@ -267,6 +267,18 @@
             font-size: 1.1rem;
         }
 
+        .traitor-message {
+            background: rgba(233, 69, 96, 0.1);
+            border-left: 3px solid var(--accent-red);
+            margin: 0.5rem 0;
+            padding: 0.75rem;
+            border-radius: 4px;
+        }
+
+        .traitor-message .speaker {
+            color: var(--accent-red);
+        }
+
         .outcome {
             padding: 1rem;
             border-radius: 8px;
@@ -485,15 +497,19 @@
             const thoughts = round.private_thoughts || [];
             const votes = round.votes || [];
 
+            // Separate public and private (traitor) messages
+            const publicMessages = messages.filter(m => !m.is_private);
+            const traitorDiscussions = messages.filter(m => m.is_private);
+
             let html = `
                 <div class="round-section">
                     <div class="round-header">Round ${round.round_num}</div>
             `;
 
-            // Discussion phase
-            if (messages.length > 0) {
+            // Discussion phase - only public messages
+            if (publicMessages.length > 0) {
                 html += '<div class="phase-header">Discussion Phase</div>';
-                html += messages.map(renderMessage).join('');
+                html += publicMessages.map(renderMessage).join('');
             }
 
             // Private thoughts
@@ -519,16 +535,33 @@
                 `;
             }
 
-            // Night phase / Murder
-            if (round.murdered) {
+            // Night phase - show traitor discussions AND murder
+            if (traitorDiscussions.length > 0 || round.murdered) {
                 html += `
                     <div class="night-phase-section">
                         <div class="night-header">Night Phase - The Traitors Meet</div>
+                `;
+
+                // Render traitor discussions
+                if (traitorDiscussions.length > 0) {
+                    html += traitorDiscussions.map(msg => `
+                        <div class="message traitor-message">
+                            <span class="speaker traitor-text">${escapeHtml(msg.speaker)}:</span>
+                            <div class="content">${escapeHtml(msg.content)}</div>
+                        </div>
+                    `).join('');
+                }
+
+                // Render murder outcome
+                if (round.murdered) {
+                    html += `
                         <div class="outcome faithful-outcome">
                             <strong>${escapeHtml(round.murdered.name)}</strong> was murdered by the traitors.
                         </div>
-                    </div>
-                `;
+                    `;
+                }
+
+                html += '</div>';
             }
 
             html += '</div>';
