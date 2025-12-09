@@ -56,97 +56,116 @@
     "Marcus": {
       "role": "faithful",
       "status": "murdered",
-      "eliminated_round": 1
+      "eliminated_round": 1,
+      "model": "claude-3-5-haiku-20241022"
     },
     "Sofia": {
       "role": "faithful",
       "status": "murdered",
-      "eliminated_round": 4
+      "eliminated_round": 4,
+      "model": "claude-3-5-haiku-20241022"
     },
     "Derek": {
       "role": "faithful",
       "status": "banished",
-      "eliminated_round": 2
+      "eliminated_round": 2,
+      "model": "claude-3-5-haiku-20241022"
     },
     "Elena": {
       "role": "faithful",
       "status": "murdered",
-      "eliminated_round": 7
+      "eliminated_round": 7,
+      "model": "claude-3-5-haiku-20241022"
     },
     "Jaylen": {
       "role": "faithful",
       "status": "banished",
-      "eliminated_round": 7
+      "eliminated_round": 7,
+      "model": "claude-3-5-haiku-20241022"
     },
     "Priya": {
       "role": "faithful",
       "status": "murdered",
-      "eliminated_round": 3
+      "eliminated_round": 3,
+      "model": "claude-3-5-haiku-20241022"
     },
     "Terrence": {
       "role": "faithful",
       "status": "murdered",
-      "eliminated_round": 5
+      "eliminated_round": 5,
+      "model": "claude-3-5-haiku-20241022"
     },
     "Aaliyah": {
       "role": "faithful",
       "status": "murdered",
-      "eliminated_round": 6
+      "eliminated_round": 6,
+      "model": "claude-3-5-haiku-20241022"
     },
     "Victor": {
       "role": "faithful",
       "status": "banished",
-      "eliminated_round": 4
+      "eliminated_round": 4,
+      "model": "claude-3-5-haiku-20241022"
     },
     "Camille": {
       "role": "traitor",
       "status": "banished",
-      "eliminated_round": 3
+      "eliminated_round": 3,
+      "model": "claude-3-5-haiku-20241022"
     },
     "Rashid": {
       "role": "faithful",
       "status": "murdered",
-      "eliminated_round": 2
+      "eliminated_round": 2,
+      "model": "claude-3-5-haiku-20241022"
     },
     "Gloria": {
       "role": "faithful",
       "status": "alive",
-      "eliminated_round": null
+      "eliminated_round": null,
+      "model": "claude-3-5-haiku-20241022"
     },
     "Olivia": {
       "role": "faithful",
       "status": "murdered",
-      "eliminated_round": 8
+      "eliminated_round": 8,
+      "model": "claude-3-5-haiku-20241022"
     },
     "Nathan": {
       "role": "faithful",
       "status": "banished",
-      "eliminated_round": 1
+      "eliminated_round": 1,
+      "model": "claude-3-5-haiku-20241022"
     },
     "Simone": {
       "role": "traitor",
       "status": "banished",
-      "eliminated_round": 5
+      "eliminated_round": 5,
+      "model": "claude-3-5-haiku-20241022"
     },
     "Wesley": {
       "role": "faithful",
       "status": "banished",
-      "eliminated_round": 6
+      "eliminated_round": 6,
+      "model": "claude-3-5-haiku-20241022"
     },
     "Dahlia": {
       "role": "faithful",
       "status": "alive",
-      "eliminated_round": null
+      "eliminated_round": null,
+      "model": "claude-3-5-haiku-20241022"
     },
     "Carlos": {
       "role": "traitor",
       "status": "banished",
-      "eliminated_round": 9
+      "eliminated_round": 9,
+      "model": "claude-3-5-haiku-20241022"
     },
     "Freya": {
       "role": "faithful",
       "status": "banished",
-      "eliminated_round": 8
+      "eliminated_round": 8,
+      "model": "claude-3-5-haiku-20241022"
     }
   },
   "rounds": [

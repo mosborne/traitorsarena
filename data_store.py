@@ -90,6 +90,7 @@ def save_game_json(run_dir: str, game_num: int, results: dict, game_log: list[st
             "role": player.role.value if hasattr(player.role, 'value') else str(player.role),
             "status": player.status.value if hasattr(player.status, 'value') else str(player.status),
             "eliminated_round": getattr(player, 'eliminated_round', None),
+            "model": getattr(player, 'model', None),
         }
 
     game_data = {
@@ -127,6 +128,11 @@ def save_game_json(run_dir: str, game_num: int, results: dict, game_log: list[st
     return json_path
 
 
+def _get_player_key(name: str, model: str | None) -> str:
+    """Create composite key for player+model stats."""
+    return f"{name}|{model}" if model else name
+
+
 def save_run_json(run_dir: str, run_id: str, config: dict, games_data: list, contestants: list) -> str:
     """
     Save run summary to JSON.
@@ -136,16 +142,20 @@ def save_run_json(run_dir: str, run_id: str, config: dict, games_data: list, con
         run_id: Run identifier (timestamp)
         config: Config dict used for this run
         games_data: List of game results
-        contestants: List of contestant dicts
+        contestants: List of contestant dicts (with optional 'model' key)
 
     Returns:
         Path to the saved JSON file
     """
-    # Calculate contestant stats
+    # Calculate contestant stats with composite keys (name|model)
     contestant_stats = {}
     for c in contestants:
         name = c["name"]
-        contestant_stats[name] = {
+        model = c.get("model")
+        key = _get_player_key(name, model)
+        contestant_stats[key] = {
+            "name": name,
+            "model": model,
             "games_played": 0,
             "times_traitor": 0,
             "times_faithful": 0,
@@ -175,8 +185,8 @@ def save_run_json(run_dir: str, run_id: str, config: dict, games_data: list, con
         players = game.get("players", {})
         prize_dist = game.get("prize_distribution", {})
 
-        for name in contestant_stats:
-            stats = contestant_stats[name]
+        for key, stats in contestant_stats.items():
+            name = stats["name"]
             stats["games_played"] += 1
 
             is_traitor = name in traitors

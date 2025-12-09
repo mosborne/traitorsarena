@@ -2,12 +2,12 @@
 
 import random
 from collections import Counter
-from typing import Callable, Optional
+from typing import Callable, Optional, Type
 
 import anthropic
 
 from .types import Player, GameState, GamePhase, Role, PlayerStatus, Message, Vote, PouchVote, PrivateThought
-from .agent import Agent, TestAgent
+from .agent import Agent, TestAgent, OllamaAgent
 
 
 class TraitorsGame:
@@ -30,6 +30,8 @@ class TraitorsGame:
         client: Optional[anthropic.Anthropic] = None,
         log_callback: Optional[Callable[[str], None]] = None,
         test_mode: bool = False,
+        agent_class: Optional[Type[Agent]] = None,
+        model: Optional[str] = None,
     ):
         """
         Initialize a new game.
@@ -41,30 +43,53 @@ class TraitorsGame:
             client: Anthropic client (creates new one if not provided)
             log_callback: Optional callback for logging game events
             test_mode: If True, use TestAgent (random decisions, no LLM calls) for fast testing
+            agent_class: Optional agent class to use (e.g., OllamaAgent). Overrides test_mode.
+            model: Optional model name for OllamaAgent (e.g., "llama3.2")
         """
         self.test_mode = test_mode
-        self.client = None if test_mode else (client or anthropic.Anthropic())
         self.log = log_callback or print
         self.num_traitors = num_traitors
+        self.model = model
+
+        # Determine which agent class to use
+        if agent_class is not None:
+            AgentClass = agent_class
+            # OllamaAgent doesn't use Anthropic client
+            self.client = None if AgentClass == OllamaAgent else (client or anthropic.Anthropic())
+        elif test_mode:
+            AgentClass = TestAgent
+            self.client = None
+        else:
+            AgentClass = Agent
+            self.client = client or anthropic.Anthropic()
 
         # Create game state
         self.state = GameState()
         self.state.num_traitors = num_traitors
         self.state.finale_round = finale_round
 
-        # Create players
+        # Create players with per-player model support
         for contestant in contestants:
+            # Per-player model takes precedence over game-wide model
+            player_model = contestant.get("model", model)
             player = Player(
                 name=contestant["name"],
                 personality_prompt=contestant["personality_prompt"],
+                model=player_model,
             )
             self.state.players[player.name] = player
 
-        # Create agents (TestAgent for test mode, Agent for real games)
+        # Create agents based on the selected class
         self.agents: dict[str, Agent] = {}
-        AgentClass = TestAgent if test_mode else Agent
         for player in self.state.players.values():
-            self.agents[player.name] = AgentClass(player, self.client)
+            if AgentClass == OllamaAgent:
+                # OllamaAgent takes model parameter
+                self.agents[player.name] = AgentClass(player, model=player.model or "llama3.2")
+            elif AgentClass == TestAgent:
+                self.agents[player.name] = AgentClass(player)
+            else:
+                # Standard Agent with Anthropic client and per-player model
+                self.agents[player.name] = AgentClass(player, self.client, model=player.model)
 
     def _assign_roles(self) -> None:
         """Randomly assign traitor roles."""

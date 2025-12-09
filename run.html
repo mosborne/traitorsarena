@@ -292,6 +292,18 @@
         let currentSort = { column: 'wins', ascending: false };
         let contestantData = null;
 
+        function formatModelName(model) {
+            if (!model) return '-';
+            const map = {
+                'claude-3-5-haiku-20241022': 'Haiku',
+                'claude-3-5-sonnet-20241022': 'Sonnet',
+                'claude-opus-4-20250514': 'Opus',
+                'llama3.2': 'Llama 3.2',
+                'llama3.2:latest': 'Llama 3.2',
+            };
+            return map[model] || model;
+        }
+
         function renderContestantsTable(data) {
             contestantData = data;
             const stats = data.contestant_stats || {};
@@ -303,8 +315,11 @@
             const sortedEntries = Object.entries(stats).sort((a, b) => {
                 let aVal, bVal;
                 if (currentSort.column === 'name') {
-                    aVal = a[0];
-                    bVal = b[0];
+                    aVal = a[1].name || a[0];
+                    bVal = b[1].name || b[0];
+                } else if (currentSort.column === 'model') {
+                    aVal = a[1].model || '';
+                    bVal = b[1].model || '';
                 } else {
                     aVal = a[1][currentSort.column] ?? 0;
                     bVal = b[1][currentSort.column] ?? 0;
@@ -315,6 +330,7 @@
 
             const headers = [
                 { key: 'name', label: 'Name' },
+                { key: 'model', label: 'Model' },
                 { key: 'wins', label: 'Wins' },
                 { key: 'games_played', label: 'Games' },
                 { key: 'times_traitor', label: 'Traitor' },
@@ -331,10 +347,13 @@
                 return `<th class="${sortClass}" data-sort="${h.key}">${h.label}</th>`;
             }).join('');
 
-            const rowsHtml = sortedEntries.map(([name, s]) => {
+            const rowsHtml = sortedEntries.map(([key, s]) => {
+                // Use name from stats (composite key format: "name|model")
+                const displayName = s.name || key.split('|')[0];
                 const winRate = s.games_played > 0 ? Math.round((s.wins / s.games_played) * 100) : 0;
                 return `<tr>
-                    <td><a class="contestant-link" href="players.html#${encodeURIComponent(name)}">${name}</a></td>
+                    <td><a class="contestant-link" href="players.html#${encodeURIComponent(displayName)}">${displayName}</a></td>
+                    <td>${formatModelName(s.model)}</td>
                     <td>${s.wins} (${winRate}%)</td>
                     <td>${s.games_played}</td>
                     <td class="traitor-text">${s.times_traitor}</td>

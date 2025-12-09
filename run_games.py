@@ -21,10 +21,25 @@ from pathlib import Path
 import anthropic
 
 from main import EXAMPLE_CONTESTANTS
-from traitors import TraitorsGame
+from traitors import TraitorsGame, OllamaAgent, TestAgent, Agent
 from traitors.types import PlayerStatus
 from generate_html import generate_game_html
 from data_store import save_game_json, save_run_json, update_runs_index
+
+
+# Map provider names to agent classes
+PROVIDER_MAP = {
+    "anthropic": Agent,
+    "ollama": OllamaAgent,
+    "test": TestAgent,
+}
+
+# Default models per provider
+DEFAULT_MODELS = {
+    "anthropic": "claude-3-5-haiku-20241022",
+    "ollama": "llama3.2",
+    "test": None,
+}
 
 
 # Build lookup for original contestants
@@ -43,19 +58,28 @@ def load_contestants_from_config(config: dict) -> list[dict]:
 
     Each contestant entry can be:
     - {"source": "original", "name": "Marcus"} - use original contestant
+    - {"source": "original", "name": "Marcus", "model": "llama3.2"} - with specific model
     - {"source": "prompt", "file": "improved_v1.json"} - use prompt file
+
+    The default_model from config is used if no per-contestant model is specified.
     """
     prompts_dir = Path(__file__).parent / "prompts"
     contestants = []
+    default_model = config.get("default_model")
 
     for entry in config.get("contestants", []):
         source = entry.get("source", "original")
+        # Per-contestant model takes precedence, then default_model from config
+        contestant_model = entry.get("model", default_model)
 
         if source == "original":
             name = entry["name"]
             if name not in ORIGINAL_CONTESTANTS:
                 raise ValueError(f"Unknown original contestant: {name}")
-            contestants.append(ORIGINAL_CONTESTANTS[name].copy())
+            contestant = ORIGINAL_CONTESTANTS[name].copy()
+            if contestant_model:
+                contestant["model"] = contestant_model
+            contestants.append(contestant)
 
         elif source == "prompt":
             prompt_file = entry["file"]
@@ -66,19 +90,23 @@ def load_contestants_from_config(config: dict) -> list[dict]:
             with open(path) as f:
                 data = json.load(f)
 
-            contestants.append({
+            contestant = {
                 "name": data["name"],
                 "personality_prompt": data["personality_prompt"],
                 "_prompt_file": prompt_file,
                 "_version": data.get("version", "1.0"),
-            })
+            }
+            if contestant_model:
+                contestant["model"] = contestant_model
+            contestants.append(contestant)
         else:
             raise ValueError(f"Unknown source type: {source}")
 
     return contestants
 
 
-def run_single_game(client, contestants, num_traitors, game_log, finale_round=8, verbose=True):
+def run_single_game(client, contestants, num_traitors, game_log, finale_round=8, verbose=True,
+                    agent_class=None, model=None):
     """Run a single game and return results."""
     def log_handler(msg):
         game_log.append(msg)
@@ -91,6 +119,8 @@ def run_single_game(client, contestants, num_traitors, game_log, finale_round=8,
         finale_round=finale_round,
         client=client,
         log_callback=log_handler,
+        agent_class=agent_class,
+        model=model,
     )
     results = game.run()
 
@@ -107,14 +137,19 @@ def run_single_game(client, contestants, num_traitors, game_log, finale_round=8,
 
 def run_game_worker(args):
     """Worker function for parallel game execution."""
-    game_num, contestants, num_traitors, finale_round, api_key = args
+    game_num, contestants, num_traitors, finale_round, api_key, agent_class, model = args
 
-    # Each worker creates its own client for thread safety
-    client = anthropic.Anthropic(api_key=api_key)
+    # Create client only for Anthropic provider
+    if agent_class == Agent:
+        client = anthropic.Anthropic(api_key=api_key)
+    else:
+        client = None
+
     game_log = []
 
     # Run game silently (verbose=False) when in parallel mode
-    results = run_single_game(client, contestants, num_traitors, game_log, finale_round, verbose=False)
+    results = run_single_game(client, contestants, num_traitors, game_log, finale_round,
+                              verbose=False, agent_class=agent_class, model=model)
 
     return {
         "game_num": game_num,
@@ -663,22 +698,39 @@ def main():
                         help="Override number of games from config")
     parser.add_argument("--parallel", "-p", type=int, default=1, metavar="N",
                         help="Run N games in parallel (default: 1, sequential)")
+    parser.add_argument("--provider", type=str,
+                        choices=["anthropic", "ollama", "test"],
+                        help="LLM provider to use (default: from config or anthropic)")
+    parser.add_argument("--model", "-m", type=str,
+                        help="Model name (default depends on provider: claude-3-5-haiku for anthropic, llama3.2 for ollama)")
     args = parser.parse_args()
 
-    # Check for API key
-    api_key = os.environ.get("ANTHROPIC_API_KEY")
-    if not api_key:
-        print("Error: ANTHROPIC_API_KEY environment variable is required.")
-        return 1
-
-    client = anthropic.Anthropic(api_key=api_key)
-
-    # Load configuration
+    # Load configuration first (needed for provider detection)
     if not os.path.exists(args.config):
         print(f"Error: Config file not found: {args.config}")
         return 1
 
     config = load_config(args.config)
+
+    # Determine provider: CLI > config > default
+    provider = args.provider or config.get("provider", "anthropic")
+
+    # Get agent class and model based on provider
+    agent_class = PROVIDER_MAP[provider]
+    model = args.model or config.get("default_model") or DEFAULT_MODELS[provider]
+
+    # Check for API key only if using Anthropic
+    api_key = os.environ.get("ANTHROPIC_API_KEY")
+    if provider == "anthropic" and not api_key:
+        print("Error: ANTHROPIC_API_KEY environment variable is required for Anthropic provider.")
+        print("Use --provider ollama for free local inference, or --provider test for testing.")
+        return 1
+
+    # Create client only for Anthropic provider
+    if provider == "anthropic":
+        client = anthropic.Anthropic(api_key=api_key)
+    else:
+        client = None
     config_name = config.get("name", os.path.basename(args.config))
 
     # Load contestants from config
@@ -706,6 +758,7 @@ def main():
     print(f"Config: {config_name}")
     if config.get("description"):
         print(f"Description: {config['description']}")
+    print(f"Provider: {provider} (model: {model or 'default'})")
     print(f"Running {num_games} game(s) with {num_traitors} traitors (finale after round {finale_round})...")
     if args.parallel > 1:
         print(f"Parallel execution: {args.parallel} games at a time")
@@ -721,7 +774,7 @@ def main():
 
         # Prepare work items
         work_items = [
-            (i, contestants, num_traitors, finale_round, api_key)
+            (i, contestants, num_traitors, finale_round, api_key, agent_class, model)
             for i in range(1, num_games + 1)
         ]
 
@@ -767,7 +820,8 @@ def main():
             print(f"{'='*60}\n")
 
             game_log = []
-            results = run_single_game(client, contestants, num_traitors, game_log, finale_round)
+            results = run_single_game(client, contestants, num_traitors, game_log, finale_round,
+                                     agent_class=agent_class, model=model)
             games_data.append(results)
 
             # Save JSON

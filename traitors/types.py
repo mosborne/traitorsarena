@@ -35,6 +35,7 @@ class Player:
     role: Role = Role.FAITHFUL
     status: PlayerStatus = PlayerStatus.ALIVE
     eliminated_round: Optional[int] = None  # Round when eliminated (for endgame role reveal logic)
+    model: Optional[str] = None  # LLM model used for this player
 
     @property
     def is_alive(self) -> bool:

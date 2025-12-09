@@ -149,6 +149,12 @@
             font-style: italic;
         }
 
+        .player-model {
+            font-size: 0.8rem;
+            color: var(--accent-gold);
+            margin-top: 0.25rem;
+        }
+
         .traitor-text {
             color: var(--accent-red);
             font-weight: bold;
@@ -395,6 +401,18 @@
             return div.innerHTML;
         }
 
+        function formatModelName(model) {
+            if (!model) return '';
+            const map = {
+                'claude-3-5-haiku-20241022': 'Haiku',
+                'claude-3-5-sonnet-20241022': 'Sonnet',
+                'claude-opus-4-20250514': 'Opus',
+                'llama3.2': 'Llama 3.2',
+                'llama3.2:latest': 'Llama 3.2',
+            };
+            return map[model] || model;
+        }
+
         function renderWinnerBanner(data) {
             const winnerClass = data.winner === 'traitors' ? 'traitor-win' : 'faithful-win';
             const winnerText = data.winner === 'traitors' ? 'THE TRAITORS WIN!' : 'THE FAITHFUL WIN!';
@@ -433,11 +451,14 @@
                 else if (status === 'banished') status = `Banished (Round ${player.eliminated_round})`;
                 else if (status === 'murdered') status = `Murdered (Round ${player.eliminated_round})`;
 
+                const modelDisplay = player.model ? formatModelName(player.model) : '';
+
                 return `
                     <div class="player-card">
                         <div class="player-name">${escapeHtml(name)}</div>
                         <div class="player-role ${roleClass}">${role.toUpperCase()}</div>
                         <div class="player-status">${status}</div>
+                        ${modelDisplay ? `<div class="player-model">${modelDisplay}</div>` : ''}
                     </div>
                 `;
             }).join('');

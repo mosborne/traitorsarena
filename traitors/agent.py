@@ -12,9 +12,12 @@ from . import prompts
 class Agent:
     """An LLM-powered contestant in The Traitors game."""
 
-    def __init__(self, player: Player, client: Optional[anthropic.Anthropic] = None):
+    DEFAULT_MODEL = "claude-3-5-haiku-20241022"
+
+    def __init__(self, player: Player, client: Optional[anthropic.Anthropic] = None, model: Optional[str] = None):
         self.player = player
         self.client = client or anthropic.Anthropic()
+        self.model = model or self.DEFAULT_MODEL
 
     def _get_round_events(self, game_state: GameState) -> dict[int, list[str]]:
         """Get elimination events organized by round."""
@@ -173,7 +176,7 @@ class Agent:
         system_prompt: str,
         user_message: str,
         response: str,
-        model: str = "claude-3-5-haiku-20241022"
+        model: Optional[str] = None
     ) -> None:
         """Log an LLM interaction for debugging/transparency."""
         interaction = LLMInteraction(
@@ -183,7 +186,7 @@ class Agent:
             system_prompt=system_prompt,
             user_message=user_message,
             response=response,
-            model=model,
+            model=model or self.model,
             timestamp=datetime.now().isoformat()
         )
         game_state.llm_interactions.append(interaction)
@@ -205,7 +208,7 @@ class Agent:
         )
 
         response = self.client.messages.create(
-            model="claude-3-5-haiku-20241022",
+            model=self.model,
             max_tokens=200,
             system=system,
             messages=[{"role": "user", "content": user_message}]
@@ -230,7 +233,7 @@ class Agent:
         )
 
         response = self.client.messages.create(
-            model="claude-3-5-haiku-20241022",
+            model=self.model,
             max_tokens=250,
             system=system,
             messages=[{"role": "user", "content": user_message}]
@@ -253,7 +256,7 @@ class Agent:
         )
 
         response = self.client.messages.create(
-            model="claude-3-5-haiku-20241022",
+            model=self.model,
             max_tokens=50,
             system=system,
             messages=[{"role": "user", "content": user_message}]
@@ -286,7 +289,7 @@ class Agent:
         )
 
         response = self.client.messages.create(
-            model="claude-3-5-haiku-20241022",
+            model=self.model,
             max_tokens=50,
             system=system,
             messages=[{"role": "user", "content": user_message}]
@@ -327,7 +330,7 @@ class Agent:
         )
 
         response = self.client.messages.create(
-            model="claude-3-5-haiku-20241022",
+            model=self.model,
             max_tokens=200,
             system=system,
             messages=[{"role": "user", "content": user_message}]
@@ -371,7 +374,7 @@ class Agent:
         )
 
         response = self.client.messages.create(
-            model="claude-3-5-haiku-20241022",
+            model=self.model,
             max_tokens=20,
             system=system,
             messages=[{"role": "user", "content": user_message}]
@@ -425,7 +428,7 @@ If EVERYONE chooses END_GAME, the game ends and roles are revealed.
 Respond with exactly one word: END_GAME or BANISH_AGAIN"""
 
         response = self.client.messages.create(
-            model="claude-3-5-haiku-20241022",
+            model=self.model,
             max_tokens=20,
             system=system,
             messages=[{"role": "user", "content": user_message}]
@@ -436,6 +439,227 @@ Respond with exactly one word: END_GAME or BANISH_AGAIN"""
 
         # Parse the response
         if "BANISH" in choice_text:
+            return "BANISH_AGAIN"
+        return "END_GAME"
+
+
+class OllamaAgent(Agent):
+    """Agent using local Ollama for LLM inference.
+
+    Uses Ollama's OpenAI-compatible API for free local inference.
+
+    Setup:
+        1. Install Ollama: brew install ollama
+        2. Pull a model: ollama pull llama3.2
+        3. Start server: ollama serve
+    """
+
+    def __init__(self, player: Player, model: str = "llama3.2", base_url: str = "http://localhost:11434/v1"):
+        self.player = player
+        self.model = model
+        self.base_url = base_url
+        # Import here to avoid requiring openai for anthropic-only users
+        from openai import OpenAI
+        self.client = OpenAI(base_url=base_url, api_key="ollama")
+
+    def _call_llm(self, system: str, user_message: str, max_tokens: int) -> str:
+        """Call the local Ollama LLM."""
+        response = self.client.chat.completions.create(
+            model=self.model,
+            max_tokens=max_tokens,
+            messages=[
+                {"role": "system", "content": system},
+                {"role": "user", "content": user_message}
+            ]
+        )
+        return response.choices[0].message.content.strip()
+
+    def generate_discussion(self, game_state: GameState, instruction: str = "") -> str:
+        """Generate a discussion statement from this agent."""
+        system = self._build_system_prompt(game_state)
+        history = self._format_conversation_history(game_state)
+        round_context = self._get_round_context(game_state)
+
+        alive_names = [p.name for p in game_state.alive_players]
+
+        user_message = prompts.DISCUSSION_PROMPT.format(
+            round_context=round_context,
+            history=history,
+            current_round=game_state.current_round,
+            alive_names=', '.join(alive_names),
+            instruction=instruction
+        )
+
+        result = self._call_llm(system, user_message, 200)
+        self._log_interaction(game_state, "discussion", system, user_message, result, model=self.model)
+        return result
+
+    def generate_private_thoughts(self, game_state: GameState) -> str:
+        """Generate private thoughts before voting."""
+        system = self._build_system_prompt(game_state)
+        history = self._format_conversation_history(game_state)
+        round_context = self._get_round_context(game_state)
+
+        voteable = [p.name for p in game_state.alive_players if p.name != self.player.name]
+
+        user_message = prompts.PRIVATE_THOUGHTS_PROMPT.format(
+            round_context=round_context,
+            history=history,
+            voteable=', '.join(voteable)
+        )
+
+        result = self._call_llm(system, user_message, 250)
+        self._log_interaction(game_state, "private_thoughts", system, user_message, result, model=self.model)
+        return result
+
+    def generate_vote(self, game_state: GameState) -> str:
+        """Generate a vote for who to banish."""
+        system = self._build_system_prompt(game_state)
+        history = self._format_conversation_history(game_state)
+
+        voteable = [p.name for p in game_state.alive_players if p.name != self.player.name]
+
+        user_message = prompts.VOTE_PROMPT.format(
+            history=history,
+            voteable=', '.join(voteable)
+        )
+
+        vote = self._call_llm(system, user_message, 50)
+        self._log_interaction(game_state, "vote", system, user_message, vote, model=self.model)
+
+        # Validate the vote is a valid player name
+        for name in voteable:
+            if name.lower() in vote.lower():
+                return name
+
+        return voteable[0] if voteable else ""
+
+    def generate_murder_vote(self, game_state: GameState) -> str:
+        """Generate a vote for who to murder (traitors only)."""
+        if not self.player.is_traitor:
+            raise ValueError("Only traitors can vote to murder")
+
+        system = self._build_system_prompt(game_state)
+        history = self._format_conversation_history(game_state)
+
+        targets = [p.name for p in game_state.alive_faithful]
+
+        user_message = prompts.MURDER_VOTE_PROMPT.format(
+            history=history,
+            targets=', '.join(targets)
+        )
+
+        vote = self._call_llm(system, user_message, 50)
+        self._log_interaction(game_state, "murder_vote", system, user_message, vote, model=self.model)
+
+        for name in targets:
+            if name.lower() in vote.lower():
+                return name
+
+        return targets[0] if targets else ""
+
+    def generate_traitor_discussion(self, game_state: GameState) -> str:
+        """Generate private traitor discussion (night phase)."""
+        if not self.player.is_traitor:
+            raise ValueError("Only traitors can participate in traitor discussion")
+
+        system = self._build_system_prompt(game_state)
+        history = self._format_conversation_history(game_state)
+        round_context = self._get_round_context(game_state)
+
+        other_traitors = [
+            p.name for p in game_state.alive_traitors
+            if p.name != self.player.name
+        ]
+        targets = [p.name for p in game_state.alive_faithful]
+
+        other_traitor_text = f"Your fellow traitor(s): {', '.join(other_traitors)}" if other_traitors else "You are the only traitor left."
+
+        user_message = prompts.TRAITOR_DISCUSSION_PROMPT.format(
+            round_context=round_context,
+            history=history,
+            other_traitor_text=other_traitor_text,
+            targets=', '.join(targets)
+        )
+
+        result = self._call_llm(system, user_message, 200)
+        self._log_interaction(game_state, "traitor_discussion", system, user_message, result, model=self.model)
+        return result
+
+    def generate_end_game_vote(self, game_state: GameState) -> bool:
+        """Generate a vote on whether to end the game or continue."""
+        system = self._build_system_prompt(game_state)
+        history = self._format_conversation_history(game_state)
+        round_context = self._get_round_context(game_state)
+
+        alive_count = len(game_state.alive_players)
+
+        revealed_traitors = [p for p in game_state.players.values()
+                           if p.status == PlayerStatus.BANISHED and p.is_traitor
+                           and p.eliminated_round and p.eliminated_round <= game_state.finale_round]
+        revealed_faithful = [p for p in game_state.players.values()
+                            if p.status == PlayerStatus.BANISHED and not p.is_traitor
+                            and p.eliminated_round and p.eliminated_round <= game_state.finale_round]
+
+        prize_pool = game_state.prize_pool
+        alive_faithful_count = len(game_state.alive_faithful)
+        faithful_share = prize_pool // max(alive_faithful_count, 1) if alive_faithful_count > 0 else 0
+
+        user_message = prompts.END_GAME_VOTE_PROMPT.format(
+            round_context=round_context,
+            history=history,
+            prize_pool=prize_pool,
+            alive_count=alive_count,
+            revealed_traitors=len(revealed_traitors),
+            revealed_faithful=len(revealed_faithful),
+            faithful_share=faithful_share
+        )
+
+        vote_text = self._call_llm(system, user_message, 20)
+        self._log_interaction(game_state, "end_game_vote", system, user_message, vote_text, model=self.model)
+        return "END" in vote_text.upper()
+
+    def generate_finale_pouch_choice(self, game_state: GameState) -> str:
+        """Generate a pouch choice for the UK-style finale fire pit vote."""
+        system = self._build_system_prompt(game_state)
+        history = self._format_conversation_history(game_state)
+        round_context = self._get_round_context(game_state)
+
+        alive_count = len(game_state.alive_players)
+        prize_pool = game_state.prize_pool
+
+        revealed_traitors = [p for p in game_state.players.values()
+                           if p.status == PlayerStatus.BANISHED and p.is_traitor
+                           and p.eliminated_round and p.eliminated_round <= game_state.finale_round]
+
+        if self.player.is_traitor:
+            role_hint = "As a traitor, if you end the game now, you WIN and take all the money!"
+        else:
+            role_hint = f"As faithful, if you end the game with a traitor still hidden, they win everything. {len(revealed_traitors)} traitor(s) have been revealed so far."
+
+        user_message = f"""{round_context}
+
+The conversation so far:
+{history}
+
+=== FIRE PIT VOTE ===
+It's the finale. You must choose one pouch to throw into the fire:
+- END_GAME: End the game now. All roles will be revealed.
+- BANISH_AGAIN: Force another round of voting (no role revealed after banishment).
+
+{role_hint}
+
+There are {alive_count} players remaining. Prize pool: ${prize_pool:,}
+
+If ANYONE chooses BANISH_AGAIN, the group must vote again.
+If EVERYONE chooses END_GAME, the game ends and roles are revealed.
+
+Respond with exactly one word: END_GAME or BANISH_AGAIN"""
+
+        choice_text = self._call_llm(system, user_message, 20)
+        self._log_interaction(game_state, "finale_pouch_choice", system, user_message, choice_text, model=self.model)
+
+        if "BANISH" in choice_text.upper():
             return "BANISH_AGAIN"
         return "END_GAME"
 
