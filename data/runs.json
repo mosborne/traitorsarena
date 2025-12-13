@@ -1,6 +1,39 @@
 {
-  "updated": "2025-12-11T18:27:11.005180",
+  "updated": "2025-12-13T23:05:31.296357",
   "runs": [
+    {
+      "id": "2025-12-13_21-55-17",
+      "timestamp": "2025-12-13T23:05:31.280817",
+      "config_name": "baseline",
+      "config_description": "UK Celebrity Traitors format - 19 contestants, 3 traitors",
+      "total_games": 1,
+      "traitor_wins": 1,
+      "faithful_wins": 0,
+      "avg_rounds": 9.0,
+      "contestants": [
+        "Marcus",
+        "Sofia",
+        "Derek",
+        "Elena",
+        "Jaylen",
+        "Priya",
+        "Terrence",
+        "Aaliyah",
+        "Victor",
+        "Camille",
+        "Rashid",
+        "Gloria",
+        "Olivia",
+        "Nathan",
+        "Simone",
+        "Wesley",
+        "Dahlia",
+        "Carlos",
+        "Freya"
+      ],
+      "num_traitors": 3,
+      "has_json": true
+    },
     {
       "id": "2025-12-09_09-39-32",
       "timestamp": "2025-12-11T18:27:10.972815",
