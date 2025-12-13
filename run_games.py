@@ -13,6 +13,7 @@ import argparse
 import html
 import json
 import os
+import random
 import re
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import datetime
@@ -106,6 +107,18 @@ DEFAULT_MODELS = {
     "ollama": "llama3.2",
     "test": None,
 }
+
+# UK Traitors format: always 19 players per game
+PLAYERS_PER_GAME = 19
+
+
+def select_contestants_for_game(pool: list[dict]) -> list[dict]:
+    """Randomly select 19 players from pool for a single game."""
+    if len(pool) < PLAYERS_PER_GAME:
+        raise ValueError(f"Pool has {len(pool)} players but need at least {PLAYERS_PER_GAME}")
+    if len(pool) == PLAYERS_PER_GAME:
+        return pool.copy()
+    return random.sample(pool, PLAYERS_PER_GAME)
 
 
 # Build lookup for original contestants
@@ -800,8 +813,21 @@ def main():
     config_name = config.get("name", os.path.basename(args.config))
 
     # Load contestants from config
+    # Support both fixed roster (contestants) and random pool (player_pool)
+    use_pool = "player_pool" in config
     try:
-        contestants = load_contestants_from_config(config)
+        if use_pool:
+            # Load all pool members
+            pool_config = {**config, "contestants": config["player_pool"]}
+            player_pool = load_contestants_from_config(pool_config)
+            if len(player_pool) < PLAYERS_PER_GAME:
+                print(f"Error: Pool has {len(player_pool)} players but need at least {PLAYERS_PER_GAME}")
+                return 1
+            # For display, use full pool but games will select from it
+            contestants = player_pool
+        else:
+            contestants = load_contestants_from_config(config)
+            player_pool = None
     except ValueError as e:
         print(f"Error loading contestants: {e}")
         return 1
@@ -828,7 +854,10 @@ def main():
     print(f"Running {num_games} game(s) with {num_traitors} traitors (finale after round {finale_round})...")
     if args.parallel > 1:
         print(f"Parallel execution: {args.parallel} games at a time")
-    print(f"Contestants ({len(contestants)}): {', '.join(c['name'] for c in contestants)}")
+    if use_pool:
+        print(f"Pool mode: {len(player_pool)} players, {PLAYERS_PER_GAME} selected per game")
+    else:
+        print(f"Contestants ({len(contestants)}): {', '.join(c['name'] for c in contestants)}")
     print("=" * 60)
 
     games_data = []
@@ -838,11 +867,16 @@ def main():
         # Parallel execution
         print(f"\nRunning {num_games} games in parallel (max {args.parallel} concurrent)...")
 
-        # Prepare work items
-        work_items = [
-            (i, contestants, num_traitors, finale_round, api_key, agent_class, model)
-            for i in range(1, num_games + 1)
-        ]
+        # Prepare work items (select per-game contestants if using pool)
+        work_items = []
+        for i in range(1, num_games + 1):
+            if use_pool:
+                game_contestants = select_contestants_for_game(player_pool)
+            else:
+                game_contestants = contestants
+            work_items.append(
+                (i, game_contestants, num_traitors, finale_round, api_key, agent_class, model)
+            )
 
         completed = 0
         with ThreadPoolExecutor(max_workers=args.parallel) as executor:
@@ -885,8 +919,15 @@ def main():
             print(f"GAME {i} of {num_games}")
             print(f"{'='*60}\n")
 
+            # Select contestants for this game (random if using pool)
+            if use_pool:
+                game_contestants = select_contestants_for_game(player_pool)
+                print(f"Selected: {', '.join(c['name'] for c in game_contestants)}\n")
+            else:
+                game_contestants = contestants
+
             game_log = []
-            results = run_single_game(client, contestants, num_traitors, game_log, finale_round,
+            results = run_single_game(client, game_contestants, num_traitors, game_log, finale_round,
                                      agent_class=agent_class, model=model)
             games_data.append(results)
 
@@ -894,7 +935,7 @@ def main():
             json_path = save_game_json(run_dir, i, results, game_log)
 
             # Generate individual game HTML (for backwards compatibility)
-            game_html = generate_game_html(results, game_log, contestants,
+            game_html = generate_game_html(results, game_log, game_contestants,
                                            back_link=f"index.html",
                                            title=f"Game {i}")
 
@@ -909,8 +950,13 @@ def main():
     print(f"\n{'='*60}")
     print("Generating run summary...")
 
+    # For pool mode, pass full pool so all members get stats tracked
+    # (save_run_json will only increment games_played for those who participated)
+    all_contestants = player_pool if use_pool else contestants
+
     # Save run JSON (new format)
-    run_json_path = save_run_json(run_dir, run_id, config, games_data, contestants)
+    run_json_path = save_run_json(run_dir, run_id, config, games_data, all_contestants,
+                                   pool_size=len(player_pool) if use_pool else None)
     print(f"Saved: {run_json_path}")
 
     # Generate analysis (always uses Opus with extended thinking)
@@ -924,7 +970,7 @@ def main():
     print("Analysis complete.")
 
     # Generate run summary HTML (for backwards compatibility)
-    summary_html = generate_run_summary_html(run_id, games_data, contestants)
+    summary_html = generate_run_summary_html(run_id, games_data, all_contestants)
     summary_path = os.path.join(run_dir, "index.html")
     with open(summary_path, "w") as f:
         f.write(summary_html)
@@ -936,25 +982,27 @@ def main():
         "config_name": config_name,
         "config_description": config.get("description", ""),
         "num_games": num_games,
-        "num_contestants": len(contestants),
+        "num_contestants": len(all_contestants),
         "num_traitors": num_traitors,
         "traitor_wins": sum(1 for g in games_data if g["winner"] == "traitors"),
         "faithful_wins": sum(1 for g in games_data if g["winner"] == "faithful"),
-        "contestants": [c["name"] for c in contestants],
+        "contestants": [c["name"] for c in all_contestants],
         "prompt_versions": {
             c["name"]: c.get("_version", "original")
-            for c in contestants
+            for c in all_contestants
         },
         "avg_rounds": sum(g["rounds_played"] for g in games_data) / len(games_data) if games_data else 0,
     }
+    if use_pool:
+        metadata["pool_size"] = len(player_pool)
     with open(os.path.join(run_dir, "metadata.json"), "w") as f:
         json.dump(metadata, f, indent=2)
 
     # Update prompt stats for contestants with prompt files
-    has_custom_prompts = any(c.get("_prompt_file") for c in contestants)
+    has_custom_prompts = any(c.get("_prompt_file") for c in all_contestants)
     if has_custom_prompts:
         print("Updating prompt stats...")
-        update_prompt_stats(contestants, games_data)
+        update_prompt_stats(all_contestants, games_data)
 
     # Update global runs index (new JSON format)
     update_runs_index("runs", "data")

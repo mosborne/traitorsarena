@@ -282,6 +282,21 @@
                 ? Math.round((stats.traitor_wins / stats.total_games) * 100)
                 : 0;
 
+            // Pool mode info
+            const poolSize = data.pool_size;
+            const numContestants = data.contestants ? data.contestants.length : 19;
+            const poolCard = poolSize ? `
+                <div class="stat-card">
+                    <div class="stat-value">${poolSize}</div>
+                    <div class="stat-label">Player Pool (19 per game)</div>
+                </div>
+            ` : `
+                <div class="stat-card">
+                    <div class="stat-value">${numContestants}</div>
+                    <div class="stat-label">Contestants</div>
+                </div>
+            `;
+
             return `
                 <div class="stat-card">
                     <div class="stat-value">${stats.total_games || 0}</div>
@@ -303,6 +318,7 @@
                     <div class="stat-value">${(stats.avg_rounds || 0).toFixed(1)}</div>
                     <div class="stat-label">Avg Rounds</div>
                 </div>
+                ${poolCard}
                 <div class="stat-card">
                     <div class="stat-value">${data.num_traitors || 3}</div>
                     <div class="stat-label">Traitors per Game</div>

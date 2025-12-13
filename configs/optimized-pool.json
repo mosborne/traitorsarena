@@ -1,0 +1,31 @@
+{
+  "name": "optimized-pool",
+  "description": "22 player pool (19 randomly selected per game) - testing new optimized players against baseline",
+  "num_games": 10,
+  "num_traitors": 3,
+  "finale_round": 8,
+  "player_pool": [
+    {"source": "prompt", "file": "quinn.json"},
+    {"source": "prompt", "file": "harper.json"},
+    {"source": "prompt", "file": "river.json"},
+    {"source": "prompt", "file": "carlos.json"},
+    {"source": "prompt", "file": "wesley.json"},
+    {"source": "prompt", "file": "dahlia.json"},
+    {"source": "prompt", "file": "freya.json"},
+    {"source": "prompt", "file": "nathan.json"},
+    {"source": "prompt", "file": "olivia.json"},
+    {"source": "prompt", "file": "simone.json"},
+    {"source": "original", "name": "Marcus"},
+    {"source": "original", "name": "Sofia"},
+    {"source": "original", "name": "Jaylen"},
+    {"source": "original", "name": "Derek"},
+    {"source": "original", "name": "Elena"},
+    {"source": "original", "name": "Priya"},
+    {"source": "original", "name": "Gloria"},
+    {"source": "original", "name": "Terrence"},
+    {"source": "original", "name": "Aaliyah"},
+    {"source": "original", "name": "Victor"},
+    {"source": "original", "name": "Camille"},
+    {"source": "original", "name": "Rashid"}
+  ]
+}

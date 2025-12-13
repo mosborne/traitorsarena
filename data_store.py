@@ -133,7 +133,8 @@ def _get_player_key(name: str, model: str | None) -> str:
     return f"{name}|{model}" if model else name
 
 
-def save_run_json(run_dir: str, run_id: str, config: dict, games_data: list, contestants: list) -> str:
+def save_run_json(run_dir: str, run_id: str, config: dict, games_data: list, contestants: list,
+                   pool_size: int | None = None) -> str:
     """
     Save run summary to JSON.
 
@@ -143,6 +144,7 @@ def save_run_json(run_dir: str, run_id: str, config: dict, games_data: list, con
         config: Config dict used for this run
         games_data: List of game results
         contestants: List of contestant dicts (with optional 'model' key)
+        pool_size: If set, indicates pool mode where not all contestants play every game
 
     Returns:
         Path to the saved JSON file
@@ -185,8 +187,16 @@ def save_run_json(run_dir: str, run_id: str, config: dict, games_data: list, con
         players = game.get("players", {})
         prize_dist = game.get("prize_distribution", {})
 
+        # Get set of players who were in this game
+        game_player_names = set(players.keys())
+
         for key, stats in contestant_stats.items():
             name = stats["name"]
+
+            # Only count games where this player participated
+            if name not in game_player_names:
+                continue
+
             stats["games_played"] += 1
 
             is_traitor = name in traitors
@@ -203,7 +213,7 @@ def save_run_json(run_dir: str, run_id: str, config: dict, games_data: list, con
             # Check status
             if name in survivors:
                 stats["survived"] += 1
-            elif name in players:
+            else:
                 player = players[name]
                 status = player.get("status") if isinstance(player, dict) else getattr(player, 'status', None)
                 if status:
@@ -233,6 +243,10 @@ def save_run_json(run_dir: str, run_id: str, config: dict, games_data: list, con
         },
         "contestant_stats": contestant_stats,
     }
+
+    # Add pool info if using pool mode
+    if pool_size:
+        run_data["pool_size"] = pool_size
 
     json_path = os.path.join(run_dir, "run.json")
     with open(json_path, "w") as f:
