@@ -196,6 +196,21 @@
             padding: 2rem;
         }
 
+        #analysis-content {
+            line-height: 1.8;
+        }
+
+        #analysis-content p {
+            margin-bottom: 1rem;
+        }
+
+        .analysis-meta {
+            color: var(--text-muted);
+            font-size: 0.85rem;
+            margin-top: 1rem;
+            font-style: italic;
+        }
+
         footer {
             text-align: center;
             padding: 2rem;
@@ -217,6 +232,12 @@
             <div class="stats-grid" id="stats-grid">
                 <div class="loading">Loading statistics...</div>
             </div>
+        </section>
+
+        <section id="analysis-section" style="display: none;">
+            <h2>Run Analysis</h2>
+            <div id="analysis-content"></div>
+            <p class="analysis-meta" id="analysis-meta"></p>
         </section>
 
         <section>
@@ -387,6 +408,24 @@
             });
         }
 
+        function renderAnalysis(data) {
+            const section = document.getElementById('analysis-section');
+            if (data.analysis && data.analysis.content) {
+                section.style.display = 'block';
+                // Convert newlines to paragraphs
+                const paragraphs = data.analysis.content.split('\n\n')
+                    .filter(p => p.trim())
+                    .map(p => `<p>${p.replace(/\n/g, '<br>')}</p>`)
+                    .join('');
+                document.getElementById('analysis-content').innerHTML = paragraphs;
+
+                const modelName = data.analysis.model === 'claude-opus-4-20250514'
+                    ? 'Claude Opus 4' : data.analysis.model;
+                document.getElementById('analysis-meta').textContent =
+                    `Analysis by ${modelName} • ${formatDate(data.analysis.generated_at)}`;
+            }
+        }
+
         function renderGames(data, runId) {
             const games = data.games || [];
 
@@ -433,6 +472,9 @@
 
                 // Update stats
                 document.getElementById('stats-grid').innerHTML = renderStats(data);
+
+                // Update analysis
+                renderAnalysis(data);
 
                 // Update contestants
                 document.getElementById('contestant-container').innerHTML = renderContestantsTable(data);

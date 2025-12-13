@@ -38,5 +38,10 @@
     "avg_rounds": 4.1
   },
   "contestant_stats": {},
-  "legacy": true
+  "legacy": true,
+  "analysis": {
+    "generated_at": "2025-12-13T20:39:33.465587",
+    "model": "claude-opus-4-20250514",
+    "content": "I'd love to analyze this Traitors game simulation, but I notice the Top 5 and Bottom 5 performer data is missing from your message. Without seeing the specific player statistics, survival rates, and role distributions, I can only partially address your analysis points.\n\n**Game Balance Analysis:** A 90% traitor win rate is extremely imbalanced and heavily favors the traitors. In well-balanced social deduction games, we typically see win rates closer to 40-60% for either faction. This 90% rate suggests the traitors have significant mechanical advantages - perhaps too few faithful, overly powerful murder mechanics, or insufficient tools for the faithful to identify traitors. With games averaging only 4.1 rounds, it appears traitors are eliminating faithful too efficiently before being discovered.\n\n**What I'd Need to Analyze:** To identify why certain players dominated or struggled, I'd need to see their individual statistics including: survival rates across games, how often they were murdered versus banished, their role distribution (how often they played as traitors vs faithful), and their average game length when playing each role. These metrics would reveal whether top performers excelled at avoiding suspicion as traitors, surviving as faithful, or both.\n\nCould you please share the Top 5 and Bottom 5 performer data? With that information, I can provide specific insights about player performance patterns, identify whether certain players consistently avoided early elimination, and determine if success correlated more with traitor assignment frequency or actual strategic play."
+  }
 }

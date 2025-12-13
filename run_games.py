@@ -27,6 +27,72 @@ from generate_html import generate_game_html
 from data_store import save_game_json, save_run_json, update_runs_index
 
 
+def generate_run_analysis(stats: dict, contestant_stats: dict) -> dict:
+    """Generate LLM analysis of run results using Claude Opus with extended thinking."""
+
+    # Sort by wins then survival
+    sorted_stats = sorted(
+        contestant_stats.items(),
+        key=lambda x: (x[1]['wins'], x[1]['survived']),
+        reverse=True
+    )
+
+    def format_player(key, s):
+        win_rate = round(s['wins'] / s['games_played'] * 100) if s['games_played'] > 0 else 0
+        surv_rate = round(s['survived'] / s['games_played'] * 100) if s['games_played'] > 0 else 0
+        murder_rate = round(s['murdered'] / s['games_played'] * 100) if s['games_played'] > 0 else 0
+        return f"- {s['name']}: {s['wins']} wins ({win_rate}%), {surv_rate}% survival, {murder_rate}% murdered"
+
+    top_5 = "\n".join(format_player(k, s) for k, s in sorted_stats[:5])
+    bottom_5 = "\n".join(format_player(k, s) for k, s in sorted_stats[-5:])
+
+    traitor_rate = round(stats['traitor_wins'] / stats['total_games'] * 100)
+
+    prompt = f"""Analyze this Traitors game simulation run:
+
+**Summary:** {stats['total_games']} games, Traitors won {stats['traitor_wins']} ({traitor_rate}%), Faithful won {stats['faithful_wins']}, avg {stats['avg_rounds']:.1f} rounds
+
+**Top 5 Performers:**
+{top_5}
+
+**Bottom 5 Performers:**
+{bottom_5}
+
+Write 3-4 paragraphs analyzing:
+1. Game balance (is {traitor_rate}% traitor win rate high/low/balanced?)
+2. Who dominated and potential reasons (survival patterns, murder avoidance)
+3. Who struggled and why (high murder/banishment rates)
+4. Notable patterns or insights
+
+Be specific with numbers. Keep it engaging but concise."""
+
+    # Always use Opus with extended thinking for high-quality analysis
+    # Use streaming since extended thinking can take >10 minutes
+    client = anthropic.Anthropic()
+    content = ""
+    with client.messages.stream(
+        model="claude-opus-4-20250514",
+        max_tokens=16000,
+        temperature=1,  # Required for extended thinking
+        thinking={
+            "type": "enabled",
+            "budget_tokens": 10000  # Allow deep analysis
+        },
+        messages=[{"role": "user", "content": prompt}]
+    ) as stream:
+        for event in stream:
+            # Collect text content (skip thinking blocks)
+            if hasattr(event, 'type') and event.type == 'content_block_delta':
+                if hasattr(event.delta, 'text'):
+                    content += event.delta.text
+
+    return {
+        "generated_at": datetime.now().isoformat(),
+        "model": "claude-opus-4-20250514",
+        "content": content
+    }
+
+
 # Map provider names to agent classes
 PROVIDER_MAP = {
     "anthropic": Agent,
@@ -846,6 +912,16 @@ def main():
     # Save run JSON (new format)
     run_json_path = save_run_json(run_dir, run_id, config, games_data, contestants)
     print(f"Saved: {run_json_path}")
+
+    # Generate analysis (always uses Opus with extended thinking)
+    print("Generating run analysis with Claude Opus...")
+    with open(run_json_path) as f:
+        run_data = json.load(f)
+    analysis = generate_run_analysis(run_data["stats"], run_data["contestant_stats"])
+    run_data["analysis"] = analysis
+    with open(run_json_path, "w") as f:
+        json.dump(run_data, f, indent=2)
+    print("Analysis complete.")
 
     # Generate run summary HTML (for backwards compatibility)
     summary_html = generate_run_summary_html(run_id, games_data, contestants)
