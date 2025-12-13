@@ -1,6 +1,39 @@
 {
-  "updated": "2025-12-08T23:52:39.445393",
+  "updated": "2025-12-11T18:27:11.005180",
   "runs": [
+    {
+      "id": "2025-12-09_09-39-32",
+      "timestamp": "2025-12-11T18:27:10.972815",
+      "config_name": "ollama-llama3",
+      "config_description": "Local Llama 3.2 (3B) via Ollama",
+      "total_games": 30,
+      "traitor_wins": 18,
+      "faithful_wins": 12,
+      "avg_rounds": 8.366666666666667,
+      "contestants": [
+        "Marcus",
+        "Sofia",
+        "Derek",
+        "Elena",
+        "Jaylen",
+        "Priya",
+        "Terrence",
+        "Aaliyah",
+        "Victor",
+        "Camille",
+        "Rashid",
+        "Gloria",
+        "Olivia",
+        "Nathan",
+        "Simone",
+        "Wesley",
+        "Dahlia",
+        "Carlos",
+        "Freya"
+      ],
+      "num_traitors": 3,
+      "has_json": true
+    },
     {
       "id": "2025-12-08_21-04-50",
       "timestamp": "2025-12-08T23:52:39.425718",

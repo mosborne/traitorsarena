@@ -1,0 +1,87 @@
+{
+  "name": "ollama-llama3",
+  "description": "Local Llama 3.2 (3B) via Ollama",
+  "provider": "ollama",
+  "default_model": "llama3.2",
+  "num_games": 3,
+  "num_traitors": 3,
+  "finale_round": 8,
+  "contestants": [
+    {
+      "source": "original",
+      "name": "Marcus"
+    },
+    {
+      "source": "original",
+      "name": "Sofia"
+    },
+    {
+      "source": "original",
+      "name": "Derek"
+    },
+    {
+      "source": "original",
+      "name": "Elena"
+    },
+    {
+      "source": "original",
+      "name": "Jaylen"
+    },
+    {
+      "source": "original",
+      "name": "Priya"
+    },
+    {
+      "source": "original",
+      "name": "Terrence"
+    },
+    {
+      "source": "original",
+      "name": "Aaliyah"
+    },
+    {
+      "source": "original",
+      "name": "Victor"
+    },
+    {
+      "source": "original",
+      "name": "Camille"
+    },
+    {
+      "source": "original",
+      "name": "Rashid"
+    },
+    {
+      "source": "original",
+      "name": "Gloria"
+    },
+    {
+      "source": "prompt",
+      "file": "olivia.json"
+    },
+    {
+      "source": "prompt",
+      "file": "nathan.json"
+    },
+    {
+      "source": "prompt",
+      "file": "simone.json"
+    },
+    {
+      "source": "prompt",
+      "file": "wesley.json"
+    },
+    {
+      "source": "prompt",
+      "file": "dahlia.json"
+    },
+    {
+      "source": "prompt",
+      "file": "carlos.json"
+    },
+    {
+      "source": "prompt",
+      "file": "freya.json"
+    }
+  ]
+}
