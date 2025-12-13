@@ -15,6 +15,7 @@ import json
 import os
 import random
 import re
+import subprocess
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import datetime
 from pathlib import Path
@@ -769,6 +770,27 @@ def update_prompt_stats(contestants: list, games_data: list):
                 print(f"Warning: Could not update stats for {prompt_file}: {e}")
 
 
+def git_push_progress(run_dir: str, run_id: str, game_num: int, total_games: int, final: bool = False):
+    """Commit and push current progress to GitHub."""
+    try:
+        # Add the run directory and data index
+        subprocess.run(["git", "add", run_dir, "data/runs.json"], check=True, capture_output=True)
+
+        # Commit with progress message
+        if final:
+            msg = f"Run complete with analysis - {run_id} ({total_games} games)"
+        else:
+            msg = f"Game {game_num}/{total_games} - {run_id}"
+        subprocess.run(["git", "commit", "-m", msg], check=True, capture_output=True)
+
+        # Push
+        subprocess.run(["git", "push"], check=True, capture_output=True)
+        return True
+    except subprocess.CalledProcessError as e:
+        print(f"  Warning: Git push failed: {e}")
+        return False
+
+
 def main():
     parser = argparse.ArgumentParser(description="Run multiple Traitors games")
     parser.add_argument("--config", "-c", type=str, required=True,
@@ -782,6 +804,8 @@ def main():
                         help="LLM provider to use (default: from config or anthropic)")
     parser.add_argument("--model", "-m", type=str,
                         help="Model name (default depends on provider: claude-3-5-haiku for anthropic, llama3.2 for ollama)")
+    parser.add_argument("--auto-push", action="store_true",
+                        help="Git commit and push after each game (for GitHub Pages progress)")
     args = parser.parse_args()
 
     # Load configuration first (needed for provider detection)
@@ -854,6 +878,8 @@ def main():
     print(f"Running {num_games} game(s) with {num_traitors} traitors (finale after round {finale_round})...")
     if args.parallel > 1:
         print(f"Parallel execution: {args.parallel} games at a time")
+    if args.auto_push:
+        print(f"Auto-push enabled: pushing to GitHub after each game")
     if use_pool:
         print(f"Pool mode: {len(player_pool)} players, {PLAYERS_PER_GAME} selected per game")
     else:
@@ -862,6 +888,10 @@ def main():
 
     games_data = []
     game_logs = {}
+
+    # For pool mode, track full pool for stats (games_played will vary per player)
+    all_contestants = player_pool if use_pool else contestants
+    pool_size = len(player_pool) if use_pool else None
 
     if args.parallel > 1:
         # Parallel execution
@@ -879,6 +909,7 @@ def main():
             )
 
         completed = 0
+        games_data_tuples = []  # Store as tuples for sorting
         with ThreadPoolExecutor(max_workers=args.parallel) as executor:
             futures = {executor.submit(run_game_worker, item): item[0] for item in work_items}
 
@@ -886,31 +917,37 @@ def main():
                 game_num = futures[future]
                 try:
                     result = future.result()
-                    games_data.append((result["game_num"], result["results"]))
+                    games_data_tuples.append((result["game_num"], result["results"]))
                     game_logs[result["game_num"]] = result["game_log"]
                     completed += 1
                     winner = result["results"]["winner"].upper()
                     print(f"  Game {result['game_num']} complete: {winner} win ({completed}/{num_games})")
+
+                    # Save individual game files immediately
+                    gn = result["game_num"]
+                    save_game_json(run_dir, gn, result["results"], result["game_log"])
+                    game_html = generate_game_html(result["results"], result["game_log"], contestants,
+                                                   back_link=f"index.html", title=f"Game {gn}")
+                    with open(os.path.join(run_dir, f"game_{gn}.html"), "w") as f:
+                        f.write(game_html)
+
+                    # Update run progress (sort games_data for consistent stats)
+                    games_data_tuples.sort(key=lambda x: x[0])
+                    games_data = [g[1] for g in games_data_tuples]
+                    save_run_json(run_dir, run_id, config, games_data, all_contestants, pool_size)
+                    update_runs_index("runs", "data")
+
+                    # Git push if enabled
+                    if args.auto_push:
+                        if git_push_progress(run_dir, run_id, completed, num_games):
+                            print(f"    Pushed to GitHub ({completed}/{num_games})")
+
                 except Exception as e:
                     print(f"  Game {game_num} failed: {e}")
 
-        # Sort by game number
-        games_data.sort(key=lambda x: x[0])
-        games_data = [g[1] for g in games_data]
-
-        # Generate JSON and HTML files for each game
-        print("\nGenerating game files...")
-        for i, results in enumerate(games_data, 1):
-            game_log = game_logs.get(i, [])
-            # Save JSON
-            save_game_json(run_dir, i, results, game_log)
-            # Save HTML (for backwards compatibility)
-            game_html = generate_game_html(results, game_log, contestants,
-                                           back_link=f"index.html",
-                                           title=f"Game {i}")
-            game_path = os.path.join(run_dir, f"game_{i}.html")
-            with open(game_path, "w") as f:
-                f.write(game_html)
+        # Final sort after all games
+        games_data_tuples.sort(key=lambda x: x[0])
+        games_data = [g[1] for g in games_data_tuples]
 
     else:
         # Sequential execution (original behavior)
@@ -946,17 +983,21 @@ def main():
             print(f"\nGame {i} complete: {results['winner'].upper()} win")
             print(f"Saved to: {json_path}")
 
-    # Generate run summary
+            # Update run progress after each game
+            save_run_json(run_dir, run_id, config, games_data, all_contestants, pool_size)
+            update_runs_index("runs", "data")
+
+            # Git push if enabled
+            if args.auto_push:
+                if git_push_progress(run_dir, run_id, i, num_games):
+                    print(f"  Pushed to GitHub ({i}/{num_games})")
+
+    # Generate final run summary
     print(f"\n{'='*60}")
-    print("Generating run summary...")
+    print("Generating final run summary...")
 
-    # For pool mode, pass full pool so all members get stats tracked
-    # (save_run_json will only increment games_played for those who participated)
-    all_contestants = player_pool if use_pool else contestants
-
-    # Save run JSON (new format)
-    run_json_path = save_run_json(run_dir, run_id, config, games_data, all_contestants,
-                                   pool_size=len(player_pool) if use_pool else None)
+    # Save run JSON (will be updated again after analysis)
+    run_json_path = save_run_json(run_dir, run_id, config, games_data, all_contestants, pool_size)
     print(f"Saved: {run_json_path}")
 
     # Generate analysis (always uses Opus with extended thinking)
@@ -1006,6 +1047,11 @@ def main():
 
     # Update global runs index (new JSON format)
     update_runs_index("runs", "data")
+
+    # Final git push with analysis
+    if args.auto_push:
+        if git_push_progress(run_dir, run_id, num_games, num_games, final=True):
+            print("Final push to GitHub complete (with analysis)")
 
     print(f"\nRun complete!")
     print(f"Run summary: {summary_path}")
