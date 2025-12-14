@@ -1,15 +1,15 @@
 {
-  "updated": "2025-12-14T10:28:46.500197",
+  "updated": "2025-12-14T11:17:49.237165",
   "runs": [
     {
       "id": "2025-12-13_21-55-17",
-      "timestamp": "2025-12-14T10:28:46.487844",
+      "timestamp": "2025-12-14T11:17:49.221912",
       "config_name": "baseline",
       "config_description": "UK Celebrity Traitors format - 19 contestants, 3 traitors",
-      "total_games": 14,
+      "total_games": 15,
       "traitor_wins": 6,
-      "faithful_wins": 8,
-      "avg_rounds": 8.071428571428571,
+      "faithful_wins": 9,
+      "avg_rounds": 8.066666666666666,
       "contestants": [
         "Marcus",
         "Sofia",
