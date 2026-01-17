@@ -1,0 +1,805 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LLM Interactions - The Traitors</title>
+    <style>
+        :root {
+            --bg-dark: #1a1a2e;
+            --bg-card: #16213e;
+            --bg-sidebar: #0f1729;
+            --accent-red: #e94560;
+            --accent-gold: #f4a261;
+            --accent-green: #2a9d8f;
+            --accent-blue: #4a90d9;
+            --text-light: #eee;
+            --text-muted: #888;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            background: var(--bg-dark);
+            color: var(--text-light);
+            line-height: 1.6;
+        }
+
+        .page-header {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 1000;
+            padding: 1rem 2rem;
+            background: #0f3460;
+            border-bottom: 3px solid var(--accent-red);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            height: 70px;
+        }
+
+        .page-header h1 {
+            font-size: 1.5rem;
+            color: var(--accent-red);
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+        }
+
+        .header-links {
+            display: flex;
+            gap: 1rem;
+        }
+
+        .header-link {
+            color: var(--accent-gold);
+            text-decoration: none;
+            padding: 0.5rem 1rem;
+            border: 1px solid var(--accent-gold);
+            border-radius: 4px;
+        }
+
+        .header-link:hover {
+            background: rgba(244, 162, 97, 0.1);
+        }
+
+        .layout {
+            display: flex;
+            margin-top: 70px;
+            min-height: calc(100vh - 70px);
+        }
+
+        /* Sidebar Navigation */
+        .sidebar {
+            width: 280px;
+            min-width: 280px;
+            background: var(--bg-sidebar);
+            border-right: 1px solid rgba(255,255,255,0.1);
+            position: fixed;
+            top: 70px;
+            left: 0;
+            bottom: 0;
+            overflow-y: auto;
+            padding: 1rem;
+        }
+
+        .sidebar h3 {
+            color: var(--accent-gold);
+            font-size: 1rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+            margin-bottom: 1rem;
+        }
+
+        .round-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .round-group h4 {
+            color: var(--accent-gold);
+            font-size: 0.9rem;
+            margin-bottom: 0.5rem;
+            padding: 0.25rem 0.5rem;
+            background: rgba(244, 162, 97, 0.1);
+            border-radius: 4px;
+        }
+
+        .nav-item {
+            display: block;
+            color: var(--text-light);
+            text-decoration: none;
+            padding: 0.4rem 0.5rem;
+            font-size: 0.85rem;
+            border-radius: 4px;
+            margin: 2px 0;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .nav-item:hover {
+            background: rgba(255,255,255,0.1);
+        }
+
+        .nav-item.active {
+            background: rgba(74, 144, 217, 0.3);
+            border-left: 3px solid var(--accent-blue);
+        }
+
+        .nav-item .action-type {
+            color: var(--text-muted);
+            font-size: 0.75rem;
+        }
+
+        .action-discussion { border-left: 3px solid var(--accent-green); }
+        .action-vote { border-left: 3px solid var(--accent-gold); }
+        .action-private_thoughts { border-left: 3px solid #8888cc; }
+        .action-murder_vote { border-left: 3px solid var(--accent-red); }
+        .action-traitor_discussion { border-left: 3px solid var(--accent-red); }
+        .action-pouch_vote { border-left: 3px solid var(--accent-blue); }
+
+        /* Player Filter */
+        .player-filter {
+            margin-bottom: 1.5rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .player-filter label {
+            display: block;
+            color: var(--accent-gold);
+            font-size: 0.9rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .player-filter select {
+            width: 100%;
+            padding: 0.5rem;
+            background: var(--bg-card);
+            color: var(--text-light);
+            border: 1px solid rgba(255,255,255,0.2);
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        .player-filter select:hover {
+            border-color: rgba(255,255,255,0.4);
+        }
+
+        .player-filter select:focus {
+            outline: none;
+            border-color: var(--accent-gold);
+        }
+
+        /* Main Content */
+        .main-content {
+            flex: 1;
+            margin-left: 280px;
+            padding: 2rem;
+        }
+
+        .stats-bar {
+            display: flex;
+            gap: 2rem;
+            padding: 1rem;
+            background: var(--bg-card);
+            border-radius: 8px;
+            margin-bottom: 2rem;
+        }
+
+        .stat {
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: var(--accent-gold);
+        }
+
+        .stat-label {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+        }
+
+        /* Interaction Cards */
+        .llm-interaction {
+            background: var(--bg-card);
+            border-radius: 10px;
+            margin-bottom: 2rem;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+            scroll-margin-top: 90px;
+        }
+
+        .interaction-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem 1.5rem;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+            background: rgba(0,0,0,0.2);
+            border-radius: 10px 10px 0 0;
+        }
+
+        .interaction-title {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .interaction-title h3 {
+            color: var(--accent-gold);
+            font-size: 1.1rem;
+            margin: 0;
+        }
+
+        .action-badge {
+            font-size: 0.75rem;
+            padding: 0.25rem 0.5rem;
+            border-radius: 4px;
+            text-transform: uppercase;
+            font-weight: bold;
+        }
+
+        .badge-discussion { background: rgba(42, 157, 143, 0.3); color: var(--accent-green); }
+        .badge-vote { background: rgba(244, 162, 97, 0.3); color: var(--accent-gold); }
+        .badge-private_thoughts { background: rgba(136, 136, 204, 0.3); color: #aaaaee; }
+        .badge-murder_vote { background: rgba(233, 69, 96, 0.3); color: var(--accent-red); }
+        .badge-traitor_discussion { background: rgba(233, 69, 96, 0.3); color: var(--accent-red); }
+        .badge-pouch_vote { background: rgba(74, 144, 217, 0.3); color: var(--accent-blue); }
+
+        .interaction-meta {
+            display: flex;
+            gap: 1rem;
+            font-size: 0.8rem;
+            color: var(--text-muted);
+        }
+
+        .interaction-meta span {
+            display: flex;
+            align-items: center;
+            gap: 0.25rem;
+        }
+
+        .interaction-body {
+            padding: 1.5rem;
+        }
+
+        .prompt-section {
+            margin-bottom: 1.5rem;
+        }
+
+        .prompt-section:last-child {
+            margin-bottom: 0;
+        }
+
+        .prompt-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.5rem;
+        }
+
+        .prompt-header h4 {
+            color: var(--text-light);
+            font-size: 0.9rem;
+            font-weight: 600;
+        }
+
+        .toggle-btn {
+            background: rgba(255,255,255,0.1);
+            border: none;
+            color: var(--text-muted);
+            padding: 0.25rem 0.5rem;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.75rem;
+        }
+
+        .toggle-btn:hover {
+            background: rgba(255,255,255,0.2);
+        }
+
+        .prompt-content {
+            background: rgba(0,0,0,0.3);
+            border-radius: 6px;
+            padding: 1rem;
+            overflow-x: auto;
+        }
+
+        .prompt-content pre {
+            font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+            font-size: 0.85rem;
+            line-height: 1.5;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            margin: 0;
+            color: var(--text-light);
+        }
+
+        .prompt-content.collapsed {
+            max-height: 100px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .prompt-content.collapsed::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 50px;
+            background: linear-gradient(transparent, rgba(0,0,0,0.8));
+        }
+
+        .response-section .prompt-content {
+            background: rgba(42, 157, 143, 0.1);
+            border-left: 3px solid var(--accent-green);
+        }
+
+        .system-prompt-section .prompt-content {
+            background: rgba(136, 136, 204, 0.1);
+            border-left: 3px solid #8888cc;
+        }
+
+        .user-message-section .prompt-content {
+            background: rgba(244, 162, 97, 0.1);
+            border-left: 3px solid var(--accent-gold);
+        }
+
+        /* Loading and Error States */
+        .loading {
+            text-align: center;
+            color: var(--text-muted);
+            padding: 4rem 2rem;
+        }
+
+        .loading-spinner {
+            display: inline-block;
+            width: 40px;
+            height: 40px;
+            border: 3px solid rgba(255,255,255,0.1);
+            border-radius: 50%;
+            border-top-color: var(--accent-gold);
+            animation: spin 1s linear infinite;
+            margin-bottom: 1rem;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .error {
+            text-align: center;
+            color: var(--accent-red);
+            padding: 4rem 2rem;
+        }
+
+        .no-interactions {
+            text-align: center;
+            color: var(--text-muted);
+            padding: 4rem 2rem;
+            font-style: italic;
+        }
+
+        /* Round Divider */
+        .round-divider {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin: 2rem 0;
+            color: var(--accent-gold);
+            font-weight: bold;
+        }
+
+        .round-divider::before,
+        .round-divider::after {
+            content: '';
+            flex: 1;
+            height: 2px;
+            background: linear-gradient(90deg, transparent, var(--accent-gold), transparent);
+        }
+
+        /* Responsive */
+        @media (max-width: 900px) {
+            .sidebar {
+                width: 220px;
+                min-width: 220px;
+            }
+            .main-content {
+                margin-left: 220px;
+            }
+        }
+
+        @media (max-width: 700px) {
+            .layout {
+                flex-direction: column;
+            }
+            .sidebar {
+                position: static;
+                width: 100%;
+                max-height: 200px;
+                border-right: none;
+                border-bottom: 1px solid rgba(255,255,255,0.1);
+            }
+            .main-content {
+                margin-left: 0;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header class="page-header">
+        <h1 id="page-title">LLM Interactions</h1>
+        <div class="header-links">
+            <a href="#" class="header-link" id="back-to-game">&larr; Back to Game</a>
+        </div>
+    </header>
+
+    <div class="layout">
+        <nav class="sidebar" id="sidebar">
+            <h3>Interactions</h3>
+            <div class="loading">
+                <div class="loading-spinner"></div>
+                <div>Loading navigation...</div>
+            </div>
+        </nav>
+
+        <main class="main-content" id="main-content">
+            <div class="loading">
+                <div class="loading-spinner"></div>
+                <div>Loading interactions...</div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        // Global state
+        let allInteractions = [];
+
+        function getParams() {
+            const params = new URLSearchParams(window.location.search);
+            return {
+                runId: params.get('run'),
+                gameNum: parseInt(params.get('game')) || 1,
+                player: params.get('player') || ''
+            };
+        }
+
+        function getUniquePlayers(interactions) {
+            return [...new Set(interactions.map(i => i.player))].filter(Boolean).sort();
+        }
+
+        function filterInteractions(interactions, player) {
+            if (!player) return interactions;
+            return interactions.filter(i => i.player === player);
+        }
+
+        function updatePlayerFilter(player) {
+            const url = new URL(window.location);
+            if (player) {
+                url.searchParams.set('player', player);
+            } else {
+                url.searchParams.delete('player');
+            }
+            history.pushState({}, '', url);
+            rerender();
+        }
+
+        function rerender() {
+            const { player, gameNum } = getParams();
+            const filtered = filterInteractions(allInteractions, player);
+
+            // Update page title
+            if (player) {
+                document.getElementById('page-title').textContent = `${player}'s Interactions - Game ${gameNum}`;
+                document.title = `${player}'s Interactions - Game ${gameNum} - The Traitors`;
+            } else {
+                document.getElementById('page-title').textContent = `LLM Interactions - Game ${gameNum}`;
+                document.title = `LLM Interactions - Game ${gameNum} - The Traitors`;
+            }
+
+            // Render navigation with filter
+            document.getElementById('sidebar').innerHTML = renderNavigation(filtered, allInteractions, player);
+
+            // Render main content
+            document.getElementById('main-content').innerHTML = renderInteractions(filtered, allInteractions.length, player);
+
+            // Setup scroll spy
+            setupScrollSpy();
+        }
+
+        function escapeHtml(text) {
+            if (!text) return '';
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        function formatModelName(model) {
+            if (!model) return 'Unknown';
+            const map = {
+                'claude-3-5-haiku-20241022': 'Haiku 3.5',
+                'claude-3-5-sonnet-20241022': 'Sonnet 3.5',
+                'claude-opus-4-20250514': 'Opus 4',
+                'llama3.2': 'Llama 3.2',
+                'llama3.2:latest': 'Llama 3.2',
+            };
+            return map[model] || model;
+        }
+
+        function formatTimestamp(timestamp) {
+            if (!timestamp) return '';
+            try {
+                const date = new Date(timestamp);
+                return date.toLocaleTimeString();
+            } catch {
+                return timestamp;
+            }
+        }
+
+        function formatActionType(actionType) {
+            const map = {
+                'discussion': 'Discussion',
+                'vote': 'Vote',
+                'private_thoughts': 'Private Thoughts',
+                'murder_vote': 'Murder Vote',
+                'traitor_discussion': 'Traitor Discussion',
+                'pouch_vote': 'Pouch Vote'
+            };
+            return map[actionType] || actionType;
+        }
+
+        function extractRoundNum(interaction) {
+            // Try explicit round_num first
+            if (interaction.round_num !== undefined) {
+                return interaction.round_num;
+            }
+
+            // Try to extract from system_prompt "CURRENT STATE (Round X):"
+            const sys = interaction.system_prompt || '';
+            const sysMatch = sys.match(/CURRENT STATE \(Round\s*(\d+)\)/i);
+            if (sysMatch) {
+                return parseInt(sysMatch[1], 10);
+            }
+
+            // Fallback: extract from user_message (less reliable)
+            const msg = interaction.user_message || '';
+            const msgMatch = msg.match(/ROUND\s*(\d+)/i);
+            if (msgMatch) {
+                return parseInt(msgMatch[1], 10);
+            }
+
+            return 0; // Default to 0 if not found
+        }
+
+        function groupByRound(interactions) {
+            const byRound = {};
+            interactions.forEach((interaction, idx) => {
+                const round = extractRoundNum(interaction);
+                if (!byRound[round]) byRound[round] = [];
+                byRound[round].push({ ...interaction, idx, round_num: round });
+            });
+            return byRound;
+        }
+
+        function renderNavigation(interactions, allInteractions, currentPlayer) {
+            const byRound = groupByRound(interactions);
+            const rounds = Object.keys(byRound).map(Number).sort((a, b) => a - b);
+            const players = getUniquePlayers(allInteractions || interactions);
+
+            // Player filter dropdown
+            let html = `
+                <div class="player-filter">
+                    <label for="player-select">Filter by Player</label>
+                    <select id="player-select" onchange="updatePlayerFilter(this.value)">
+                        <option value="">All Players</option>
+                        ${players.map(p => `<option value="${escapeHtml(p)}"${p === currentPlayer ? ' selected' : ''}>${escapeHtml(p)}</option>`).join('')}
+                    </select>
+                </div>
+            `;
+
+            html += '<h3>Interactions</h3>';
+
+            rounds.forEach(round => {
+                html += `
+                    <div class="round-group">
+                        <h4>Round ${round}</h4>
+                `;
+
+                byRound[round].forEach(interaction => {
+                    const actionClass = `action-${interaction.action_type || 'unknown'}`;
+                    html += `
+                        <a href="#llm-${interaction.idx}" class="nav-item ${actionClass}">
+                            ${escapeHtml(interaction.player)}
+                            <span class="action-type">${formatActionType(interaction.action_type)}</span>
+                        </a>
+                    `;
+                });
+
+                html += '</div>';
+            });
+
+            return html;
+        }
+
+        function renderInteraction(interaction, idx) {
+            const actionType = interaction.action_type || 'unknown';
+            const badgeClass = `badge-${actionType}`;
+
+            return `
+                <article class="llm-interaction" id="llm-${idx}">
+                    <div class="interaction-header">
+                        <div class="interaction-title">
+                            <h3>${escapeHtml(interaction.player)}</h3>
+                            <span class="action-badge ${badgeClass}">${formatActionType(actionType)}</span>
+                        </div>
+                        <div class="interaction-meta">
+                            <span>Round ${interaction.round_num || '?'}</span>
+                            <span>${formatModelName(interaction.model)}</span>
+                            ${interaction.timestamp ? `<span>${formatTimestamp(interaction.timestamp)}</span>` : ''}
+                        </div>
+                    </div>
+                    <div class="interaction-body">
+                        <div class="prompt-section system-prompt-section">
+                            <div class="prompt-header">
+                                <h4>System Prompt</h4>
+                                <button class="toggle-btn" onclick="toggleCollapse(this)">Expand</button>
+                            </div>
+                            <div class="prompt-content collapsed">
+                                <pre>${escapeHtml(interaction.system_prompt || 'No system prompt')}</pre>
+                            </div>
+                        </div>
+
+                        <div class="prompt-section user-message-section">
+                            <div class="prompt-header">
+                                <h4>User Message</h4>
+                                <button class="toggle-btn" onclick="toggleCollapse(this)">Expand</button>
+                            </div>
+                            <div class="prompt-content collapsed">
+                                <pre>${escapeHtml(interaction.user_message || 'No user message')}</pre>
+                            </div>
+                        </div>
+
+                        <div class="prompt-section response-section">
+                            <div class="prompt-header">
+                                <h4>Response</h4>
+                            </div>
+                            <div class="prompt-content">
+                                <pre>${escapeHtml(interaction.response || 'No response')}</pre>
+                            </div>
+                        </div>
+                    </div>
+                </article>
+            `;
+        }
+
+        function renderInteractions(interactions, totalCount, currentPlayer) {
+            if (!interactions || interactions.length === 0) {
+                if (currentPlayer) {
+                    return `<div class="no-interactions">No interactions found for ${escapeHtml(currentPlayer)}.</div>`;
+                }
+                return '<div class="no-interactions">No LLM interactions recorded for this game.</div>';
+            }
+
+            const byRound = groupByRound(interactions);
+            const rounds = Object.keys(byRound).map(Number).sort((a, b) => a - b);
+            const isFiltered = totalCount && interactions.length !== totalCount;
+
+            let html = `
+                <div class="stats-bar">
+                    <div class="stat">
+                        <div class="stat-value">${isFiltered ? `${interactions.length} of ${totalCount}` : interactions.length}</div>
+                        <div class="stat-label">${isFiltered ? 'Filtered Interactions' : 'Total Interactions'}</div>
+                    </div>
+                    <div class="stat">
+                        <div class="stat-value">${rounds.length}</div>
+                        <div class="stat-label">Rounds</div>
+                    </div>
+                    <div class="stat">
+                        <div class="stat-value">${new Set(interactions.map(i => i.player)).size}</div>
+                        <div class="stat-label">${isFiltered ? 'Player' : 'Players'}</div>
+                    </div>
+                </div>
+            `;
+
+            rounds.forEach((round, roundIdx) => {
+                if (roundIdx > 0) {
+                    html += `<div class="round-divider">Round ${round}</div>`;
+                }
+
+                byRound[round].forEach(interaction => {
+                    html += renderInteraction(interaction, interaction.idx);
+                });
+            });
+
+            return html;
+        }
+
+        function toggleCollapse(btn) {
+            const content = btn.closest('.prompt-section').querySelector('.prompt-content');
+            content.classList.toggle('collapsed');
+            btn.textContent = content.classList.contains('collapsed') ? 'Expand' : 'Collapse';
+        }
+
+        // Highlight active nav item on scroll
+        function setupScrollSpy() {
+            const interactions = document.querySelectorAll('.llm-interaction');
+            const navItems = document.querySelectorAll('.nav-item');
+
+            if (interactions.length === 0) return;
+
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        const id = entry.target.id;
+                        navItems.forEach(item => {
+                            item.classList.toggle('active', item.getAttribute('href') === `#${id}`);
+                        });
+                    }
+                });
+            }, {
+                rootMargin: '-100px 0px -50% 0px',
+                threshold: 0
+            });
+
+            interactions.forEach(interaction => observer.observe(interaction));
+        }
+
+        async function loadInteractions() {
+            const { runId, gameNum, player } = getParams();
+
+            if (!runId) {
+                document.getElementById('main-content').innerHTML = '<div class="error">No run ID specified</div>';
+                document.getElementById('sidebar').innerHTML = '<h3>Interactions</h3><div class="error">No run ID</div>';
+                return;
+            }
+
+            // Update back link
+            document.getElementById('back-to-game').href = `game.html?run=${runId}&game=${gameNum}`;
+
+            // Set initial title (will be updated by rerender if player is set)
+            if (player) {
+                document.getElementById('page-title').textContent = `${player}'s Interactions - Game ${gameNum}`;
+                document.title = `${player}'s Interactions - Game ${gameNum} - The Traitors`;
+            } else {
+                document.getElementById('page-title').textContent = `LLM Interactions - Game ${gameNum}`;
+                document.title = `LLM Interactions - Game ${gameNum} - The Traitors`;
+            }
+
+            try {
+                const response = await fetch(`runs/${runId}/game_${gameNum}.json`);
+                if (!response.ok) throw new Error('Game not found');
+
+                const data = await response.json();
+                allInteractions = data.llm_interactions || [];
+
+                // Apply player filter if set
+                const filtered = filterInteractions(allInteractions, player);
+
+                // Render navigation with filter
+                document.getElementById('sidebar').innerHTML = renderNavigation(filtered, allInteractions, player);
+
+                // Render main content
+                document.getElementById('main-content').innerHTML = renderInteractions(filtered, allInteractions.length, player);
+
+                // Setup scroll spy for active nav highlighting
+                setupScrollSpy();
+
+            } catch (error) {
+                console.error('Error loading interactions:', error);
+                document.getElementById('main-content').innerHTML = `<div class="error">Failed to load game data: ${error.message}</div>`;
+                document.getElementById('sidebar').innerHTML = '<h3>Interactions</h3><div class="error">Load failed</div>';
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', loadInteractions);
+    </script>
+</body>
+</html>
