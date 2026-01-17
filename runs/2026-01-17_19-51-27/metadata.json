@@ -1,0 +1,28 @@
+{
+  "run_id": "2026-01-17_19-51-27",
+  "timestamp": "2026-01-17T19:53:27.175485",
+  "config_name": "Prompt Caching Test",
+  "config_description": "Test game to verify prompt caching implementation is working correctly with Haiku",
+  "num_games": 1,
+  "num_contestants": 6,
+  "num_traitors": 1,
+  "traitor_wins": 1,
+  "faithful_wins": 0,
+  "contestants": [
+    "Marcus",
+    "Sofia",
+    "Derek",
+    "Elena",
+    "Jaylen",
+    "Priya"
+  ],
+  "prompt_versions": {
+    "Marcus": "original",
+    "Sofia": "original",
+    "Derek": "original",
+    "Elena": "original",
+    "Jaylen": "original",
+    "Priya": "original"
+  },
+  "avg_rounds": 2.0
+}

@@ -44,7 +44,7 @@ class Agent:
         return events
 
     def _build_system_prompt(self, game_state: GameState) -> str:
-        """Build the system prompt for this agent using templates."""
+        """Build the system prompt for this agent using templates (legacy string version)."""
         prize_pool = game_state.prize_pool
         num_traitors = game_state.num_traitors
         total_players = len(game_state.players)
@@ -110,6 +110,108 @@ class Agent:
             last_revealed_round=game_state.finale_round,
             endgame_round=game_state.finale_round + 1
         )
+
+    def _build_cached_system_prompt(self, game_state: GameState) -> list:
+        """Build system prompt as content blocks with cache_control for prompt caching.
+
+        Structure (cached from beginning):
+        1. Static game rules (same for all players, all games) - CACHED
+        2. Player identity + personality (stable per player) - CACHED
+        3. Role info (changes when traitors die) - CACHED
+        4. Dynamic game state (changes each round) - NOT cached
+        """
+        prize_pool = game_state.prize_pool
+        num_traitors = game_state.num_traitors
+        total_players = len(game_state.players)
+
+        # Build role-specific content
+        if self.player.is_traitor:
+            other_traitors = [
+                p.name for p in game_state.alive_traitors
+                if p.name != self.player.name
+            ]
+            if other_traitors:
+                role_content = prompts.SYSTEM_PROMPT_ROLE_TRAITOR.format(
+                    other_traitors=', '.join(other_traitors)
+                )
+            else:
+                role_content = prompts.SYSTEM_PROMPT_ROLE_SOLO_TRAITOR
+        else:
+            role_content = prompts.SYSTEM_PROMPT_ROLE_FAITHFUL
+
+        # Build player identity with personality
+        identity_content = prompts.SYSTEM_PROMPT_PLAYER_IDENTITY.format(
+            player_name=self.player.name,
+            personality=self.player.personality_prompt
+        )
+
+        # Build dynamic state
+        alive_players = [p.name for p in game_state.alive_players]
+
+        eliminated_details = []
+        for player in game_state.players.values():
+            if not player.is_alive:
+                if player.status == PlayerStatus.BANISHED:
+                    if player.eliminated_round and player.eliminated_round > game_state.finale_round:
+                        eliminated_details.append(f"{player.name} - BANISHED (role unknown - finale)")
+                    else:
+                        eliminated_details.append(f"{player.name} - BANISHED (revealed: {player.role.value.upper()})")
+                else:
+                    eliminated_details.append(f"{player.name} - MURDERED (was {player.role.value.upper()})")
+
+        eliminated_str = "\n  ".join(eliminated_details) if eliminated_details else "None yet"
+
+        finale_status = ""
+        if game_state.is_finale:
+            finale_status = "\n⚠️  FINALE: Roles are NO LONGER revealed when players are banished! No more murders."
+
+        dynamic_content = prompts.SYSTEM_PROMPT_DYNAMIC_STATE.format(
+            num_traitors=num_traitors,
+            total_players=total_players,
+            prize_pool=prize_pool,
+            current_round=game_state.current_round,
+            alive_players=', '.join(alive_players),
+            eliminated_str=eliminated_str,
+            endgame_status=finale_status,
+            last_revealed_round=game_state.finale_round,
+            endgame_round=game_state.finale_round + 1
+        )
+
+        # Combine static content for caching (rules + identity + role)
+        # These change infrequently and benefit from caching
+        static_content = f"{prompts.SYSTEM_PROMPT_STATIC_RULES}\n\n{identity_content}\n\n{role_content}"
+
+        return [
+            {
+                "type": "text",
+                "text": static_content,
+                "cache_control": {"type": "ephemeral"}
+            },
+            {
+                "type": "text",
+                "text": dynamic_content
+            }
+        ]
+
+    def _build_cached_user_message(self, user_message: str, cached_history: Optional[str] = None) -> list:
+        """Build user message content blocks with optional cached history.
+
+        If cached_history is provided, it's marked for caching since the same
+        conversation history is sent to all players during voting.
+        """
+        if cached_history:
+            return [
+                {
+                    "type": "text",
+                    "text": cached_history,
+                    "cache_control": {"type": "ephemeral"}
+                },
+                {
+                    "type": "text",
+                    "text": user_message
+                }
+            ]
+        return user_message
 
     def _format_conversation_history(self, game_state: GameState) -> str:
         """Format the conversation history for context, including round events."""
@@ -192,8 +294,11 @@ class Agent:
         game_state.llm_interactions.append(interaction)
 
     def generate_discussion(self, game_state: GameState, instruction: str = "") -> str:
-        """Generate a discussion statement from this agent."""
-        system = self._build_system_prompt(game_state)
+        """Generate a discussion statement from this agent.
+
+        Note: Discussion doesn't use cached history since it changes after each speaker.
+        """
+        system = self._build_cached_system_prompt(game_state)
         history = self._format_conversation_history(game_state)
         round_context = self._get_round_context(game_state)
 
@@ -215,55 +320,75 @@ class Agent:
         )
 
         result = response.content[0].text.strip()
-        self._log_interaction(game_state, "discussion", system, user_message, result)
+        # For logging, convert system blocks back to string
+        system_str = "\n\n".join(block["text"] for block in system)
+        self._log_interaction(game_state, "discussion", system_str, user_message, result)
         return result
 
-    def generate_private_thoughts(self, game_state: GameState) -> str:
-        """Generate private thoughts before voting - reveals the player's internal reasoning."""
-        system = self._build_system_prompt(game_state)
-        history = self._format_conversation_history(game_state)
+    def generate_private_thoughts(self, game_state: GameState, cached_history: Optional[str] = None) -> str:
+        """Generate private thoughts before voting - reveals the player's internal reasoning.
+
+        Args:
+            game_state: Current game state
+            cached_history: Optional pre-formatted history shared across all voting players
+        """
+        system = self._build_cached_system_prompt(game_state)
+        history = cached_history if cached_history is not None else self._format_conversation_history(game_state)
         round_context = self._get_round_context(game_state)
 
         voteable = [p.name for p in game_state.alive_players if p.name != self.player.name]
 
-        user_message = prompts.PRIVATE_THOUGHTS_PROMPT.format(
+        user_prompt = prompts.PRIVATE_THOUGHTS_PROMPT.format(
             round_context=round_context,
             history=history,
             voteable=', '.join(voteable)
         )
 
+        # Use cached history in user message if provided
+        user_content = self._build_cached_user_message(user_prompt, cached_history) if cached_history else user_prompt
+
         response = self.client.messages.create(
             model=self.model,
             max_tokens=250,
             system=system,
-            messages=[{"role": "user", "content": user_message}]
+            messages=[{"role": "user", "content": user_content}]
         )
 
         result = response.content[0].text.strip()
-        self._log_interaction(game_state, "private_thoughts", system, user_message, result)
+        system_str = "\n\n".join(block["text"] for block in system)
+        self._log_interaction(game_state, "private_thoughts", system_str, user_prompt, result)
         return result
 
-    def generate_vote(self, game_state: GameState) -> str:
-        """Generate a vote for who to banish."""
-        system = self._build_system_prompt(game_state)
-        history = self._format_conversation_history(game_state)
+    def generate_vote(self, game_state: GameState, cached_history: Optional[str] = None) -> str:
+        """Generate a vote for who to banish.
+
+        Args:
+            game_state: Current game state
+            cached_history: Optional pre-formatted history shared across all voting players
+        """
+        system = self._build_cached_system_prompt(game_state)
+        history = cached_history if cached_history is not None else self._format_conversation_history(game_state)
 
         voteable = [p.name for p in game_state.alive_players if p.name != self.player.name]
 
-        user_message = prompts.VOTE_PROMPT.format(
+        user_prompt = prompts.VOTE_PROMPT.format(
             history=history,
             voteable=', '.join(voteable)
         )
+
+        # Use cached history in user message if provided
+        user_content = self._build_cached_user_message(user_prompt, cached_history) if cached_history else user_prompt
 
         response = self.client.messages.create(
             model=self.model,
             max_tokens=50,
             system=system,
-            messages=[{"role": "user", "content": user_message}]
+            messages=[{"role": "user", "content": user_content}]
         )
 
         vote = response.content[0].text.strip()
-        self._log_interaction(game_state, "vote", system, user_message, vote)
+        system_str = "\n\n".join(block["text"] for block in system)
+        self._log_interaction(game_state, "vote", system_str, user_prompt, vote)
 
         # Validate the vote is a valid player name
         for name in voteable:
@@ -273,30 +398,38 @@ class Agent:
         # Fallback to first available player if parsing failed
         return voteable[0] if voteable else ""
 
-    def generate_murder_vote(self, game_state: GameState) -> str:
-        """Generate a vote for who to murder (traitors only)."""
+    def generate_murder_vote(self, game_state: GameState, cached_history: Optional[str] = None) -> str:
+        """Generate a vote for who to murder (traitors only).
+
+        Args:
+            game_state: Current game state
+            cached_history: Optional pre-formatted history shared across traitors
+        """
         if not self.player.is_traitor:
             raise ValueError("Only traitors can vote to murder")
 
-        system = self._build_system_prompt(game_state)
-        history = self._format_conversation_history(game_state)
+        system = self._build_cached_system_prompt(game_state)
+        history = cached_history if cached_history is not None else self._format_conversation_history(game_state)
 
         targets = [p.name for p in game_state.alive_faithful]
 
-        user_message = prompts.MURDER_VOTE_PROMPT.format(
+        user_prompt = prompts.MURDER_VOTE_PROMPT.format(
             history=history,
             targets=', '.join(targets)
         )
+
+        user_content = self._build_cached_user_message(user_prompt, cached_history) if cached_history else user_prompt
 
         response = self.client.messages.create(
             model=self.model,
             max_tokens=50,
             system=system,
-            messages=[{"role": "user", "content": user_message}]
+            messages=[{"role": "user", "content": user_content}]
         )
 
         vote = response.content[0].text.strip()
-        self._log_interaction(game_state, "murder_vote", system, user_message, vote)
+        system_str = "\n\n".join(block["text"] for block in system)
+        self._log_interaction(game_state, "murder_vote", system_str, user_prompt, vote)
 
         # Validate the vote
         for name in targets:
@@ -305,13 +438,18 @@ class Agent:
 
         return targets[0] if targets else ""
 
-    def generate_traitor_discussion(self, game_state: GameState) -> str:
-        """Generate private traitor discussion (night phase)."""
+    def generate_traitor_discussion(self, game_state: GameState, cached_history: Optional[str] = None) -> str:
+        """Generate private traitor discussion (night phase).
+
+        Args:
+            game_state: Current game state
+            cached_history: Optional pre-formatted history shared across traitors
+        """
         if not self.player.is_traitor:
             raise ValueError("Only traitors can participate in traitor discussion")
 
-        system = self._build_system_prompt(game_state)
-        history = self._format_conversation_history(game_state)
+        system = self._build_cached_system_prompt(game_state)
+        history = cached_history if cached_history is not None else self._format_conversation_history(game_state)
         round_context = self._get_round_context(game_state)
 
         other_traitors = [
@@ -322,31 +460,38 @@ class Agent:
 
         other_traitor_text = f"Your fellow traitor(s): {', '.join(other_traitors)}" if other_traitors else "You are the only traitor left."
 
-        user_message = prompts.TRAITOR_DISCUSSION_PROMPT.format(
+        user_prompt = prompts.TRAITOR_DISCUSSION_PROMPT.format(
             round_context=round_context,
             history=history,
             other_traitor_text=other_traitor_text,
             targets=', '.join(targets)
         )
 
+        user_content = self._build_cached_user_message(user_prompt, cached_history) if cached_history else user_prompt
+
         response = self.client.messages.create(
             model=self.model,
             max_tokens=200,
             system=system,
-            messages=[{"role": "user", "content": user_message}]
+            messages=[{"role": "user", "content": user_content}]
         )
 
         result = response.content[0].text.strip()
-        self._log_interaction(game_state, "traitor_discussion", system, user_message, result)
+        system_str = "\n\n".join(block["text"] for block in system)
+        self._log_interaction(game_state, "traitor_discussion", system_str, user_prompt, result)
         return result
 
-    def generate_end_game_vote(self, game_state: GameState) -> bool:
+    def generate_end_game_vote(self, game_state: GameState, cached_history: Optional[str] = None) -> bool:
         """Generate a vote on whether to end the game or continue playing.
+
+        Args:
+            game_state: Current game state
+            cached_history: Optional pre-formatted history shared across all voting players
 
         Returns True to END the game, False to CONTINUE playing.
         """
-        system = self._build_system_prompt(game_state)
-        history = self._format_conversation_history(game_state)
+        system = self._build_cached_system_prompt(game_state)
+        history = cached_history if cached_history is not None else self._format_conversation_history(game_state)
         round_context = self._get_round_context(game_state)
 
         alive_count = len(game_state.alive_players)
@@ -363,7 +508,7 @@ class Agent:
         alive_faithful_count = len(game_state.alive_faithful)
         faithful_share = prize_pool // max(alive_faithful_count, 1) if alive_faithful_count > 0 else 0
 
-        user_message = prompts.END_GAME_VOTE_PROMPT.format(
+        user_prompt = prompts.END_GAME_VOTE_PROMPT.format(
             round_context=round_context,
             history=history,
             prize_pool=prize_pool,
@@ -373,24 +518,31 @@ class Agent:
             faithful_share=faithful_share
         )
 
+        user_content = self._build_cached_user_message(user_prompt, cached_history) if cached_history else user_prompt
+
         response = self.client.messages.create(
             model=self.model,
             max_tokens=20,
             system=system,
-            messages=[{"role": "user", "content": user_message}]
+            messages=[{"role": "user", "content": user_content}]
         )
 
         vote_text = response.content[0].text.strip().upper()
-        self._log_interaction(game_state, "end_game_vote", system, user_message, vote_text)
+        system_str = "\n\n".join(block["text"] for block in system)
+        self._log_interaction(game_state, "end_game_vote", system_str, user_prompt, vote_text)
         return "END" in vote_text
 
-    def generate_finale_pouch_choice(self, game_state: GameState) -> str:
+    def generate_finale_pouch_choice(self, game_state: GameState, cached_history: Optional[str] = None) -> str:
         """Generate a pouch choice for the UK-style finale fire pit vote.
+
+        Args:
+            game_state: Current game state
+            cached_history: Optional pre-formatted history shared across all voting players
 
         Returns "END_GAME" to end the game or "BANISH_AGAIN" to force another banishment.
         """
-        system = self._build_system_prompt(game_state)
-        history = self._format_conversation_history(game_state)
+        system = self._build_cached_system_prompt(game_state)
+        history = cached_history if cached_history is not None else self._format_conversation_history(game_state)
         round_context = self._get_round_context(game_state)
 
         alive_count = len(game_state.alive_players)
@@ -408,7 +560,7 @@ class Agent:
         else:
             role_hint = f"As faithful, if you end the game with a traitor still hidden, they win everything. {len(revealed_traitors)} traitor(s) have been revealed so far."
 
-        user_message = f"""{round_context}
+        user_prompt = f"""{round_context}
 
 The conversation so far:
 {history}
@@ -427,15 +579,18 @@ If EVERYONE chooses END_GAME, the game ends and roles are revealed.
 
 Respond with exactly one word: END_GAME or BANISH_AGAIN"""
 
+        user_content = self._build_cached_user_message(user_prompt, cached_history) if cached_history else user_prompt
+
         response = self.client.messages.create(
             model=self.model,
             max_tokens=20,
             system=system,
-            messages=[{"role": "user", "content": user_message}]
+            messages=[{"role": "user", "content": user_content}]
         )
 
         choice_text = response.content[0].text.strip().upper()
-        self._log_interaction(game_state, "finale_pouch_choice", system, user_message, choice_text)
+        system_str = "\n\n".join(block["text"] for block in system)
+        self._log_interaction(game_state, "finale_pouch_choice", system_str, user_prompt, choice_text)
 
         # Parse the response
         if "BANISH" in choice_text:
@@ -494,10 +649,10 @@ class OllamaAgent(Agent):
         self._log_interaction(game_state, "discussion", system, user_message, result, model=self.model)
         return result
 
-    def generate_private_thoughts(self, game_state: GameState) -> str:
+    def generate_private_thoughts(self, game_state: GameState, cached_history: Optional[str] = None) -> str:
         """Generate private thoughts before voting."""
         system = self._build_system_prompt(game_state)
-        history = self._format_conversation_history(game_state)
+        history = cached_history if cached_history is not None else self._format_conversation_history(game_state)
         round_context = self._get_round_context(game_state)
 
         voteable = [p.name for p in game_state.alive_players if p.name != self.player.name]
@@ -512,10 +667,10 @@ class OllamaAgent(Agent):
         self._log_interaction(game_state, "private_thoughts", system, user_message, result, model=self.model)
         return result
 
-    def generate_vote(self, game_state: GameState) -> str:
+    def generate_vote(self, game_state: GameState, cached_history: Optional[str] = None) -> str:
         """Generate a vote for who to banish."""
         system = self._build_system_prompt(game_state)
-        history = self._format_conversation_history(game_state)
+        history = cached_history if cached_history is not None else self._format_conversation_history(game_state)
 
         voteable = [p.name for p in game_state.alive_players if p.name != self.player.name]
 
@@ -534,13 +689,13 @@ class OllamaAgent(Agent):
 
         return voteable[0] if voteable else ""
 
-    def generate_murder_vote(self, game_state: GameState) -> str:
+    def generate_murder_vote(self, game_state: GameState, cached_history: Optional[str] = None) -> str:
         """Generate a vote for who to murder (traitors only)."""
         if not self.player.is_traitor:
             raise ValueError("Only traitors can vote to murder")
 
         system = self._build_system_prompt(game_state)
-        history = self._format_conversation_history(game_state)
+        history = cached_history if cached_history is not None else self._format_conversation_history(game_state)
 
         targets = [p.name for p in game_state.alive_faithful]
 
@@ -558,13 +713,13 @@ class OllamaAgent(Agent):
 
         return targets[0] if targets else ""
 
-    def generate_traitor_discussion(self, game_state: GameState) -> str:
+    def generate_traitor_discussion(self, game_state: GameState, cached_history: Optional[str] = None) -> str:
         """Generate private traitor discussion (night phase)."""
         if not self.player.is_traitor:
             raise ValueError("Only traitors can participate in traitor discussion")
 
         system = self._build_system_prompt(game_state)
-        history = self._format_conversation_history(game_state)
+        history = cached_history if cached_history is not None else self._format_conversation_history(game_state)
         round_context = self._get_round_context(game_state)
 
         other_traitors = [
@@ -586,10 +741,10 @@ class OllamaAgent(Agent):
         self._log_interaction(game_state, "traitor_discussion", system, user_message, result, model=self.model)
         return result
 
-    def generate_end_game_vote(self, game_state: GameState) -> bool:
+    def generate_end_game_vote(self, game_state: GameState, cached_history: Optional[str] = None) -> bool:
         """Generate a vote on whether to end the game or continue."""
         system = self._build_system_prompt(game_state)
-        history = self._format_conversation_history(game_state)
+        history = cached_history if cached_history is not None else self._format_conversation_history(game_state)
         round_context = self._get_round_context(game_state)
 
         alive_count = len(game_state.alive_players)
@@ -619,10 +774,10 @@ class OllamaAgent(Agent):
         self._log_interaction(game_state, "end_game_vote", system, user_message, vote_text, model=self.model)
         return "END" in vote_text.upper()
 
-    def generate_finale_pouch_choice(self, game_state: GameState) -> str:
+    def generate_finale_pouch_choice(self, game_state: GameState, cached_history: Optional[str] = None) -> str:
         """Generate a pouch choice for the UK-style finale fire pit vote."""
         system = self._build_system_prompt(game_state)
-        history = self._format_conversation_history(game_state)
+        history = cached_history if cached_history is not None else self._format_conversation_history(game_state)
         round_context = self._get_round_context(game_state)
 
         alive_count = len(game_state.alive_players)
@@ -678,29 +833,29 @@ class TestAgent(Agent):
         """Return empty discussion."""
         return ""
 
-    def generate_private_thoughts(self, game_state: GameState) -> str:
+    def generate_private_thoughts(self, game_state: GameState, cached_history: Optional[str] = None) -> str:
         """Return empty thoughts."""
         return ""
 
-    def generate_vote(self, game_state: GameState) -> str:
+    def generate_vote(self, game_state: GameState, cached_history: Optional[str] = None) -> str:
         """Vote for a random alive player (not self)."""
         candidates = [p.name for p in game_state.alive_players if p.name != self.player.name]
         return random.choice(candidates) if candidates else self.player.name
 
-    def generate_murder_vote(self, game_state: GameState) -> str:
+    def generate_murder_vote(self, game_state: GameState, cached_history: Optional[str] = None) -> str:
         """Vote to murder a random faithful player."""
         faithful = [p.name for p in game_state.alive_faithful]
         return random.choice(faithful) if faithful else ""
 
-    def generate_traitor_discussion(self, game_state: GameState) -> str:
+    def generate_traitor_discussion(self, game_state: GameState, cached_history: Optional[str] = None) -> str:
         """Return empty traitor discussion."""
         return ""
 
-    def generate_end_game_vote(self, game_state: GameState) -> bool:
+    def generate_end_game_vote(self, game_state: GameState, cached_history: Optional[str] = None) -> bool:
         """Random vote on whether to end the game."""
         return random.choice([True, False])
 
-    def generate_finale_pouch_choice(self, game_state: GameState) -> str:
+    def generate_finale_pouch_choice(self, game_state: GameState, cached_history: Optional[str] = None) -> str:
         """Random pouch choice for finale.
 
         Traitors prefer END_GAME (70% chance) since it helps them win.

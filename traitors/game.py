@@ -20,6 +20,9 @@ class TraitorsGame:
     - At night, Traitors secretly murder one Faithful player
     - Faithful win by banishing all Traitors
     - Traitors win by surviving until the end or being the last ones standing
+
+    Uses Anthropic prompt caching for efficiency - shared context (conversation history)
+    is built once and passed to all agents for caching.
     """
 
     def __init__(
@@ -105,6 +108,78 @@ class TraitorsGame:
         for player in self.state.players.values():
             self.log(f"  {player.name}: {player.role.value.upper()}")
 
+    def _build_cached_public_history(self) -> str:
+        """Build conversation history for caching (public messages only).
+
+        Used during voting phases where all faithful players see the same history.
+        This is built once and passed to all agents for prompt caching efficiency.
+        """
+        messages = self.state.get_public_messages()
+        return self._format_history_with_events(messages)
+
+    def _build_cached_traitor_history(self) -> str:
+        """Build conversation history for caching (includes private traitor messages).
+
+        Used during traitor meetings where all traitors see the same history.
+        This is built once and passed to all traitor agents for prompt caching efficiency.
+        """
+        messages = self.state.get_traitor_messages()
+        return self._format_history_with_events(messages)
+
+    def _format_history_with_events(self, messages: list) -> str:
+        """Format message history with round events (eliminations)."""
+        round_events = self._get_round_events()
+
+        if not messages and not round_events:
+            return "No discussion has happened yet."
+
+        formatted = []
+        current_round = 0
+
+        for msg in messages:
+            if msg.round_num != current_round:
+                # Before starting new round, add events from previous round
+                if current_round > 0 and current_round in round_events:
+                    formatted.append(f"\n--- END OF ROUND {current_round} ---")
+                    for event in round_events[current_round]:
+                        formatted.append(event)
+
+                current_round = msg.round_num
+                formatted.append(f"\n--- ROUND {current_round} DISCUSSION ---")
+
+            prefix = "[PRIVATE TRAITOR CHAT] " if msg.is_private else ""
+            formatted.append(f"{prefix}{msg.speaker}: {msg.content}")
+
+        # Add final round events if we're past them
+        if current_round > 0 and current_round in round_events and current_round < self.state.current_round:
+            formatted.append(f"\n--- END OF ROUND {current_round} ---")
+            for event in round_events[current_round]:
+                formatted.append(event)
+
+        return "\n".join(formatted)
+
+    def _get_round_events(self) -> dict[int, list[str]]:
+        """Get elimination events organized by round."""
+        events: dict[int, list[str]] = {}
+
+        for player in self.state.players.values():
+            if not player.is_alive:
+                round_num = player.eliminated_round or 1
+
+                if player.status == PlayerStatus.BANISHED:
+                    if round_num > self.state.finale_round:
+                        event = f"🗳️ {player.name} was BANISHED (role unknown - finale)"
+                    else:
+                        event = f"🗳️ {player.name} was BANISHED (revealed as {player.role.value.upper()})"
+                else:  # MURDERED
+                    event = f"💀 {player.name} was MURDERED overnight (they were {player.role.value.upper()})"
+
+                if round_num not in events:
+                    events[round_num] = []
+                events[round_num].append(event)
+
+        return events
+
     def _check_win_condition(self) -> Optional[str]:
         """Check if the game has ended. Returns winner or None."""
         alive_traitors = self.state.alive_traitors
@@ -129,9 +204,14 @@ class TraitorsGame:
         continue_votes = 0
         alive_players = self.state.alive_players
 
+        # Build cached history once for all voters
+        cached_public_history = self._build_cached_public_history()
+        cached_traitor_history = self._build_cached_traitor_history()
+
         for player in alive_players:
             agent = self.agents[player.name]
-            vote_to_end = agent.generate_end_game_vote(self.state)
+            cached_history = cached_traitor_history if player.is_traitor else cached_public_history
+            vote_to_end = agent.generate_end_game_vote(self.state, cached_history=cached_history)
 
             vote_str = "END" if vote_to_end else "CONTINUE"
             self.log(f"  {player.name} votes: {vote_str}")
@@ -169,9 +249,14 @@ class TraitorsGame:
         alive_players = self.state.alive_players
         choices: dict[str, str] = {}
 
+        # Build cached history once for all voters
+        cached_public_history = self._build_cached_public_history()
+        cached_traitor_history = self._build_cached_traitor_history()
+
         for player in alive_players:
             agent = self.agents[player.name]
-            choice = agent.generate_finale_pouch_choice(self.state)
+            cached_history = cached_traitor_history if player.is_traitor else cached_public_history
+            choice = agent.generate_finale_pouch_choice(self.state, cached_history=cached_history)
             choices[player.name] = choice
             self.log(f"  {player.name} throws: {choice}")
             # Record the pouch vote
@@ -209,9 +294,14 @@ class TraitorsGame:
         votes: dict[str, str] = {}
         alive_players = self.state.alive_players
 
+        # Build cached history once for all voters
+        cached_public_history = self._build_cached_public_history()
+        cached_traitor_history = self._build_cached_traitor_history()
+
         for player in alive_players:
             agent = self.agents[player.name]
-            vote_target = agent.generate_vote(self.state)
+            cached_history = cached_traitor_history if player.is_traitor else cached_public_history
+            vote_target = agent.generate_vote(self.state, cached_history=cached_history)
             votes[player.name] = vote_target
 
             vote = Vote(
@@ -303,9 +393,15 @@ class TraitorsGame:
 
         alive_players = self.state.alive_players
 
+        # Build cached history once for all players (separate for traitors vs faithful)
+        cached_public_history = self._build_cached_public_history()
+        cached_traitor_history = self._build_cached_traitor_history()
+
         for player in alive_players:
             agent = self.agents[player.name]
-            thoughts = agent.generate_private_thoughts(self.state)
+            # Use appropriate cached history based on role
+            cached_history = cached_traitor_history if player.is_traitor else cached_public_history
+            thoughts = agent.generate_private_thoughts(self.state, cached_history=cached_history)
 
             thought = PrivateThought(
                 player=player.name,
@@ -331,9 +427,15 @@ class TraitorsGame:
         votes: dict[str, str] = {}
         alive_players = self.state.alive_players
 
+        # Build cached history once for all voters
+        cached_public_history = self._build_cached_public_history()
+        cached_traitor_history = self._build_cached_traitor_history()
+
         for player in alive_players:
             agent = self.agents[player.name]
-            vote_target = agent.generate_vote(self.state)
+            # Use appropriate cached history based on role
+            cached_history = cached_traitor_history if player.is_traitor else cached_public_history
+            vote_target = agent.generate_vote(self.state, cached_history=cached_history)
             votes[player.name] = vote_target
 
             vote = Vote(
@@ -395,11 +497,14 @@ class TraitorsGame:
         self.log("NIGHT PHASE - Traitors meet in secret...")
         self.log("-" * 40)
 
+        # Build cached traitor history once for all traitors
+        cached_traitor_history = self._build_cached_traitor_history()
+
         # Traitors discuss (if more than one)
         if len(alive_traitors) > 1:
             for traitor in alive_traitors:
                 agent = self.agents[traitor.name]
-                discussion = agent.generate_traitor_discussion(self.state)
+                discussion = agent.generate_traitor_discussion(self.state, cached_history=cached_traitor_history)
 
                 message = Message(
                     speaker=traitor.name,
@@ -411,11 +516,12 @@ class TraitorsGame:
 
                 self.log(f"\n[TRAITOR] {traitor.name}: {discussion}")
 
-        # Traitors vote on victim
+        # Traitors vote on victim - rebuild cached history to include discussion
+        cached_traitor_history = self._build_cached_traitor_history()
         murder_votes: dict[str, str] = {}
         for traitor in alive_traitors:
             agent = self.agents[traitor.name]
-            vote = agent.generate_murder_vote(self.state)
+            vote = agent.generate_murder_vote(self.state, cached_history=cached_traitor_history)
             murder_votes[traitor.name] = vote
             self.log(f"\n[MURDER VOTE] {traitor.name} votes to kill: {vote}")
 

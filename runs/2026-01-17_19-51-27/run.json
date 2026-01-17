@@ -1,0 +1,104 @@
+{
+  "run_id": "2026-01-17_19-51-27",
+  "timestamp": "2026-01-17T19:53:03.492951",
+  "config_name": "Prompt Caching Test",
+  "config_description": "Test game to verify prompt caching implementation is working correctly with Haiku",
+  "num_traitors": 1,
+  "finale_round": 2,
+  "contestants": [
+    "Marcus",
+    "Sofia",
+    "Derek",
+    "Elena",
+    "Jaylen",
+    "Priya"
+  ],
+  "games": [
+    1
+  ],
+  "stats": {
+    "total_games": 1,
+    "traitor_wins": 1,
+    "faithful_wins": 0,
+    "avg_rounds": 2.0
+  },
+  "contestant_stats": {
+    "Marcus|claude-3-5-haiku-20241022": {
+      "name": "Marcus",
+      "model": "claude-3-5-haiku-20241022",
+      "games_played": 1,
+      "times_traitor": 1,
+      "times_faithful": 0,
+      "wins": 1,
+      "survived": 1,
+      "banished": 0,
+      "murdered": 0,
+      "total_prize": 100000
+    },
+    "Sofia|claude-3-5-haiku-20241022": {
+      "name": "Sofia",
+      "model": "claude-3-5-haiku-20241022",
+      "games_played": 1,
+      "times_traitor": 0,
+      "times_faithful": 1,
+      "wins": 0,
+      "survived": 0,
+      "banished": 0,
+      "murdered": 1,
+      "total_prize": 0
+    },
+    "Derek|claude-3-5-haiku-20241022": {
+      "name": "Derek",
+      "model": "claude-3-5-haiku-20241022",
+      "games_played": 1,
+      "times_traitor": 0,
+      "times_faithful": 1,
+      "wins": 0,
+      "survived": 0,
+      "banished": 1,
+      "murdered": 0,
+      "total_prize": 0
+    },
+    "Elena|claude-3-5-haiku-20241022": {
+      "name": "Elena",
+      "model": "claude-3-5-haiku-20241022",
+      "games_played": 1,
+      "times_traitor": 0,
+      "times_faithful": 1,
+      "wins": 0,
+      "survived": 0,
+      "banished": 0,
+      "murdered": 1,
+      "total_prize": 0
+    },
+    "Jaylen|claude-3-5-haiku-20241022": {
+      "name": "Jaylen",
+      "model": "claude-3-5-haiku-20241022",
+      "games_played": 1,
+      "times_traitor": 0,
+      "times_faithful": 1,
+      "wins": 0,
+      "survived": 0,
+      "banished": 1,
+      "murdered": 0,
+      "total_prize": 0
+    },
+    "Priya|claude-3-5-haiku-20241022": {
+      "name": "Priya",
+      "model": "claude-3-5-haiku-20241022",
+      "games_played": 1,
+      "times_traitor": 0,
+      "times_faithful": 1,
+      "wins": 0,
+      "survived": 1,
+      "banished": 0,
+      "murdered": 0,
+      "total_prize": 0
+    }
+  },
+  "analysis": {
+    "generated_at": "2026-01-17T19:53:27.174642",
+    "model": "claude-opus-4-20250514",
+    "content": "**Game Balance Analysis:** With a 100% traitor win rate, this single-game simulation appears heavily skewed toward the traitors, though drawing conclusions from just one game is premature. The remarkably short average of 2.0 rounds suggests the traitors executed a swift, decisive victory before the faithful could mount any meaningful resistance. This rapid conclusion indicates either exceptional traitor strategy or significant game mechanics favoring the antagonists.\n\n**Dominant Performance:** Marcus emerged as the clear victor with a perfect record\u2014100% win rate and survival with 0% murder rate\u2014strongly suggesting he was a traitor who masterfully avoided suspicion. Priya also survived the entire game without being murdered, but her 0% win rate confirms she was faithful who couldn't identify the traitor in time. Marcus's ability to remain completely undetected while orchestrating the faithful's downfall in just two rounds demonstrates either superior deception skills or a game structure that makes traitor detection extremely difficult.\n\n**Struggling Players:** Sofia and Elena bore the brunt of the traitors' strategy, both suffering 100% murder rates, making them the primary victims of the nighttime eliminations. Derek's 0% murder rate but 0% survival suggests he was the sole banishment victim\u2014likely a faithful player who drew suspicion during discussions. Jaylen's appearance only in the bottom performers with 0% across all metrics indicates another early casualty, possibly banished in round one.\n\n**Notable Patterns:** The two-round game reveals an aggressive traitor strategy focused on rapid elimination rather than prolonged deception. With at least two murders (Sofia and Elena) and likely two banishments (Derek and Jaylen) in just two rounds, the faithful never had time to gather behavioral evidence or voting patterns. This lightning-fast victory suggests either the game's starting ratio heavily favors traitors, or the faithful lack sufficient tools to identify traitors before reaching a critical numbers disadvantage."
+  }
+}

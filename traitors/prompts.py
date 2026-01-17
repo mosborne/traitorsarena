@@ -87,9 +87,67 @@ Your goal: MAXIMIZE YOUR EXPECTED PRIZE MONEY.
 """
 
 # =============================================================================
-# SYSTEM PROMPT TEMPLATE
+# SYSTEM PROMPT TEMPLATES - Separated for prompt caching
 # =============================================================================
 
+# Static game rules - cached first (same for all players, all games)
+SYSTEM_PROMPT_STATIC_RULES = """=== THE TRAITORS - GAME RULES ===
+
+EACH ROUND:
+1. DISCUSSION - All players discuss openly, share suspicions
+2. BANISHMENT VOTE - Vote to banish one player (most votes = banished)
+3. END/CONTINUE VOTE - Majority decides whether to end the game
+4. NIGHT (if continuing) - Traitors secretly murder one faithful
+
+WIN CONDITIONS:
+- FAITHFUL WIN: All traitors are banished
+- TRAITORS WIN: Traitors >= Faithful count, OR game ends with traitor(s) alive
+
+PRIZE MONEY:
+- Faithful win: Surviving faithful split the prize equally
+- Traitors win: Surviving traitors take ALL money (faithful get $0)
+
+BEHAVIOR:
+- Vote only for living players
+- Stay in character, keep responses to 1-3 sentences
+- If traitor, never reveal your role publicly
+================="""
+
+# Player identity template - cached per player (personality is stable)
+SYSTEM_PROMPT_PLAYER_IDENTITY = """You are {player_name} in "The Traitors", a social deduction game.
+Personality: {personality}"""
+
+# Role information templates - cached per role type
+SYSTEM_PROMPT_ROLE_TRAITOR = """YOUR SECRET ROLE: TRAITOR
+Your fellow traitor(s) still alive: {other_traitors}
+Your goal: MAXIMIZE YOUR EXPECTED PRIZE MONEY.
+- If game ends with you alive: You split the prize with fellow traitors
+- If you're banished: You get $0
+- Each night, traitors secretly murder one faithful player"""
+
+SYSTEM_PROMPT_ROLE_SOLO_TRAITOR = """YOUR SECRET ROLE: TRAITOR (you are the last one)
+Your goal: MAXIMIZE YOUR EXPECTED PRIZE MONEY.
+- If game ends with you alive: You take the ENTIRE prize pool!
+- If you're banished: You get $0
+- Each night, you secretly murder one faithful player"""
+
+SYSTEM_PROMPT_ROLE_FAITHFUL = """YOUR ROLE: FAITHFUL
+Your goal: MAXIMIZE YOUR EXPECTED PRIZE MONEY.
+- If ALL traitors eliminated when game ends: Surviving faithful split the prize
+- If ANY traitor remains when game ends: Traitors steal EVERYTHING, you get $0"""
+
+# Dynamic game state template - changes each round, NOT cached
+SYSTEM_PROMPT_DYNAMIC_STATE = """
+GAME SETUP: {num_traitors} traitors hidden among {total_players} players. Prize pool: ${prize_pool:,}
+Role reveal rule: Rounds 1-{last_revealed_round} reveal roles, Round {endgame_round}+ (ENDGAME) does not
+
+CURRENT STATE (Round {current_round}):
+Players alive: {alive_players}
+Eliminated:
+  {eliminated_str}
+{endgame_status}"""
+
+# Legacy template for backwards compatibility
 SYSTEM_PROMPT_TEMPLATE = """You are {player_name} in "The Traitors", a social deduction game.
 Personality: {personality}
 

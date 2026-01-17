@@ -1,0 +1,35 @@
+{
+  "name": "Prompt Caching Test",
+  "description": "Test game to verify prompt caching implementation is working correctly with Haiku",
+  "num_games": 1,
+  "num_traitors": 1,
+  "finale_round": 2,
+  "provider": "anthropic",
+  "default_model": "claude-3-5-haiku-20241022",
+  "contestants": [
+    {
+      "source": "original",
+      "name": "Marcus"
+    },
+    {
+      "source": "original",
+      "name": "Sofia"
+    },
+    {
+      "source": "original",
+      "name": "Derek"
+    },
+    {
+      "source": "original",
+      "name": "Elena"
+    },
+    {
+      "source": "original",
+      "name": "Jaylen"
+    },
+    {
+      "source": "original",
+      "name": "Priya"
+    }
+  ]
+}
