@@ -847,6 +847,13 @@ class TraitorsGame:
             "faithful": [p.name for p in self.state.players.values() if not p.is_traitor],
             "prize_pool": self.state.prize_pool,
             "prize_distribution": self.state.prize_distribution,
+            "finale_round": self.state.finale_round,
+            "players": self.state.players,
+            "messages": self.state.messages,
+            "votes": self.state.votes,
+            "pouch_votes": self.state.pouch_votes,
+            "private_thoughts": self.state.private_thoughts,
+            "llm_interactions": self.state.llm_interactions,
         }
 
     def _distribute_prize_money(self) -> None:
