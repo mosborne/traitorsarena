@@ -28,7 +28,8 @@ def serialize_value(obj: Any) -> Any:
         return obj
 
 
-def save_game_json(run_dir: str, game_num: int, results: dict, game_log: list[str]) -> str:
+def save_game_json(run_dir: str, game_num: int, results: dict, game_log: list[str],
+                   cost: float = 0.0, duration_sec: float = 0.0) -> str:
     """
     Save a single game's results to JSON.
 
@@ -37,6 +38,8 @@ def save_game_json(run_dir: str, game_num: int, results: dict, game_log: list[st
         game_num: Game number (1-indexed)
         results: Game results from TraitorsGame.run()
         game_log: List of log messages from the game
+        cost: Total API cost for this game in USD
+        duration_sec: Total duration of this game in seconds
 
     Returns:
         Path to the saved JSON file
@@ -103,6 +106,8 @@ def save_game_json(run_dir: str, game_num: int, results: dict, game_log: list[st
         "prize_pool": results.get("prize_pool", 100000),
         "prize_distribution": results.get("prize_distribution", {}),
         "finale_round": results.get("finale_round", 8),
+        "cost_usd": cost,
+        "duration_sec": duration_sec,
         "players": players_data,
         "rounds": rounds_data,
         "game_log": game_log,
@@ -115,6 +120,10 @@ def save_game_json(run_dir: str, game_num: int, results: dict, game_log: list[st
                 "response": i.response,
                 "model": i.model,
                 "timestamp": i.timestamp,
+                "input_tokens": i.input_tokens,
+                "output_tokens": i.output_tokens,
+                "cache_creation_tokens": i.cache_creation_tokens,
+                "cache_read_tokens": i.cache_read_tokens,
             }
             for i in results.get("llm_interactions", [])
         ],
@@ -134,7 +143,9 @@ def _get_player_key(name: str, model: Optional[str]) -> str:
 
 
 def save_run_json(run_dir: str, run_id: str, config: dict, games_data: list, contestants: list,
-                   pool_size: Optional[int] = None) -> str:
+                   pool_size: Optional[int] = None,
+                   games_costs: Optional[list[float]] = None,
+                   games_durations: Optional[list[float]] = None) -> str:
     """
     Save run summary to JSON.
 
@@ -145,10 +156,14 @@ def save_run_json(run_dir: str, run_id: str, config: dict, games_data: list, con
         games_data: List of game results
         contestants: List of contestant dicts (with optional 'model' key)
         pool_size: If set, indicates pool mode where not all contestants play every game
+        games_costs: List of per-game costs in USD
+        games_durations: List of per-game durations in seconds
 
     Returns:
         Path to the saved JSON file
     """
+    games_costs = games_costs or []
+    games_durations = games_durations or []
     # Calculate contestant stats with composite keys (name|model)
     contestant_stats = {}
     for c in contestants:
@@ -226,6 +241,29 @@ def save_run_json(run_dir: str, run_id: str, config: dict, games_data: list, con
             # Prize
             stats["total_prize"] += prize_dist.get(name, 0)
 
+    # Calculate cost/duration totals
+    total_cost = sum(games_costs) if games_costs else 0.0
+    total_duration = sum(games_durations) if games_durations else 0.0
+
+    # Calculate aggregate token stats from all games' llm_interactions
+    total_input_tokens = 0
+    total_output_tokens = 0
+    total_cache_creation_tokens = 0
+    total_cache_read_tokens = 0
+    for game in games_data:
+        for interaction in game.get("llm_interactions", []):
+            # Handle both dataclass objects and dicts
+            if hasattr(interaction, 'input_tokens'):
+                total_input_tokens += interaction.input_tokens
+                total_output_tokens += interaction.output_tokens
+                total_cache_creation_tokens += interaction.cache_creation_tokens
+                total_cache_read_tokens += interaction.cache_read_tokens
+            elif isinstance(interaction, dict):
+                total_input_tokens += interaction.get("input_tokens", 0)
+                total_output_tokens += interaction.get("output_tokens", 0)
+                total_cache_creation_tokens += interaction.get("cache_creation_tokens", 0)
+                total_cache_read_tokens += interaction.get("cache_read_tokens", 0)
+
     run_data = {
         "run_id": run_id,
         "timestamp": datetime.now().isoformat(),
@@ -240,7 +278,17 @@ def save_run_json(run_dir: str, run_id: str, config: dict, games_data: list, con
             "traitor_wins": traitor_wins,
             "faithful_wins": faithful_wins,
             "avg_rounds": total_rounds / len(games_data) if games_data else 0,
+            "total_cost_usd": total_cost,
+            "total_duration_sec": total_duration,
+            "avg_cost_usd": total_cost / len(games_data) if games_data else 0.0,
+            "avg_duration_sec": total_duration / len(games_data) if games_data else 0.0,
+            "total_input_tokens": total_input_tokens,
+            "total_output_tokens": total_output_tokens,
+            "total_cache_creation_tokens": total_cache_creation_tokens,
+            "total_cache_read_tokens": total_cache_read_tokens,
         },
+        "games_costs": games_costs,
+        "games_durations": games_durations,
         "contestant_stats": contestant_stats,
     }
 
@@ -281,15 +329,20 @@ def update_runs_index(runs_dir: str = "runs", data_dir: str = "data") -> str:
             if os.path.exists(run_json):
                 with open(run_json) as f:
                     data = json.load(f)
+                stats = data.get("stats", {})
                 runs.append({
                     "id": run_id,
                     "timestamp": data.get("timestamp"),
                     "config_name": data.get("config_name"),
                     "config_description": data.get("config_description", ""),
-                    "total_games": data.get("stats", {}).get("total_games", 0),
-                    "traitor_wins": data.get("stats", {}).get("traitor_wins", 0),
-                    "faithful_wins": data.get("stats", {}).get("faithful_wins", 0),
-                    "avg_rounds": data.get("stats", {}).get("avg_rounds", 0),
+                    "total_games": stats.get("total_games", 0),
+                    "traitor_wins": stats.get("traitor_wins", 0),
+                    "faithful_wins": stats.get("faithful_wins", 0),
+                    "avg_rounds": stats.get("avg_rounds", 0),
+                    "total_cost_usd": stats.get("total_cost_usd", 0.0),
+                    "total_duration_sec": stats.get("total_duration_sec", 0.0),
+                    "avg_cost_usd": stats.get("avg_cost_usd", 0.0),
+                    "avg_duration_sec": stats.get("avg_duration_sec", 0.0),
                     "contestants": data.get("contestants", []),
                     "num_traitors": data.get("num_traitors", 3),
                     "has_json": True,

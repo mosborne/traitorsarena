@@ -1,0 +1,3165 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Game: Game 1</title>
+    <style>
+        :root {
+            --bg-dark: #1a1a2e;
+            --bg-card: #16213e;
+            --accent-red: #e94560;
+            --accent-gold: #f4a261;
+            --accent-green: #2a9d8f;
+            --text-light: #eee;
+            --text-muted: #888;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            background: var(--bg-dark);
+            color: var(--text-light);
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        header {
+            text-align: center;
+            padding: 3rem 0;
+            background: linear-gradient(135deg, #1a1a2e 0%, #0f3460 100%);
+            border-bottom: 3px solid var(--accent-red);
+        }
+
+        h1 {
+            font-size: 3rem;
+            color: var(--accent-red);
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+            margin-bottom: 0.5rem;
+        }
+
+        .subtitle {
+            color: var(--accent-gold);
+            font-size: 1.2rem;
+        }
+
+        .mode-badge {
+            display: inline-block;
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            font-weight: bold;
+            margin-top: 1rem;
+        }
+
+        .mode-badge.llm {
+            background: var(--accent-green);
+            color: white;
+        }
+
+        .back-link {
+            margin-top: 1rem;
+        }
+
+        .back-link a {
+            color: var(--accent-gold);
+            text-decoration: none;
+        }
+
+        .back-link a:hover {
+            text-decoration: underline;
+        }
+
+        section {
+            margin: 2rem 0;
+            padding: 2rem;
+            background: var(--bg-card);
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+        }
+
+        h2 {
+            color: var(--accent-gold);
+            border-bottom: 2px solid var(--accent-red);
+            padding-bottom: 0.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        h3 {
+            color: var(--accent-green);
+            margin: 1.5rem 0 1rem;
+        }
+
+        h4 {
+            color: var(--text-light);
+            margin: 1rem 0 0.5rem;
+        }
+
+        .rules-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1.5rem;
+        }
+
+        .rule-card {
+            background: rgba(255,255,255,0.05);
+            padding: 1.5rem;
+            border-radius: 8px;
+            border-left: 4px solid var(--accent-gold);
+        }
+
+        .rule-card h4 {
+            color: var(--accent-gold);
+            margin-bottom: 0.5rem;
+        }
+
+        .parameters {
+            background: #0a0a15;
+            padding: 1.5rem;
+            border-radius: 8px;
+            font-family: 'Consolas', monospace;
+        }
+
+        .param {
+            margin: 0.5rem 0;
+        }
+
+        .param-name {
+            color: var(--accent-green);
+        }
+
+        .param-value {
+            color: var(--accent-gold);
+        }
+
+        .contestant-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 1.5rem;
+        }
+
+        .contestant-card {
+            background: rgba(255,255,255,0.05);
+            padding: 1.5rem;
+            border-radius: 8px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .contestant-card.traitor {
+            border: 2px solid var(--accent-red);
+        }
+
+        .contestant-card.faithful {
+            border: 2px solid var(--accent-green);
+        }
+
+        .contestant-card.banished::after,
+        .contestant-card.murdered::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.5);
+            pointer-events: none;
+        }
+
+        .contestant-name {
+            font-size: 1.5rem;
+            font-weight: bold;
+            margin-bottom: 0.5rem;
+        }
+
+        .contestant-role {
+            display: inline-block;
+            padding: 0.25rem 0.75rem;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: bold;
+            margin-bottom: 0.5rem;
+        }
+
+        .traitor .contestant-role {
+            background: var(--accent-red);
+        }
+
+        .faithful .contestant-role {
+            background: var(--accent-green);
+        }
+
+        .contestant-fate {
+            color: var(--text-muted);
+            font-style: italic;
+            margin-bottom: 0.5rem;
+        }
+
+        .contestant-personality {
+            font-size: 0.9rem;
+            color: var(--text-muted);
+        }
+
+        .contestant-winnings {
+            font-size: 1.1rem;
+            font-weight: bold;
+            color: var(--text-muted);
+            margin: 0.5rem 0;
+        }
+
+        .contestant-winnings.winner {
+            color: var(--accent-gold);
+            font-size: 1.3rem;
+        }
+
+        .winner-banner {
+            text-align: center;
+            padding: 2rem;
+            border-radius: 10px;
+            margin: 2rem 0;
+        }
+
+        .faithful-win {
+            background: linear-gradient(135deg, #1a4d4d 0%, #2a9d8f 100%);
+            border: 3px solid var(--accent-green);
+        }
+
+        .traitor-win {
+            background: linear-gradient(135deg, #4a1a2e 0%, #e94560 100%);
+            border: 3px solid var(--accent-red);
+        }
+
+        .winner-text {
+            font-size: 2.5rem;
+            font-weight: bold;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+        }
+
+        .round-section {
+            margin: 1.5rem 0;
+            padding: 1rem;
+            background: rgba(0,0,0,0.2);
+            border-radius: 8px;
+        }
+
+        .message {
+            margin: 0.75rem 0;
+            padding: 0.5rem;
+            background: rgba(255,255,255,0.03);
+            border-radius: 4px;
+        }
+
+        .private-msg {
+            background: rgba(233, 69, 96, 0.15);
+            border-left: 3px solid var(--accent-red);
+        }
+
+        .night-phase-section {
+            background: rgba(20, 10, 30, 0.6);
+            border: 2px solid rgba(233, 69, 96, 0.4);
+            border-radius: 8px;
+            padding: 1rem;
+            margin: 1.5rem 0;
+        }
+
+        .night-header {
+            color: var(--accent-red) !important;
+            font-size: 1.1rem;
+        }
+
+        .night-subtext {
+            color: var(--text-muted);
+            font-style: italic;
+            font-size: 0.9rem;
+            margin-bottom: 1rem;
+        }
+
+        .thought {
+            margin: 0.75rem 0;
+            padding: 0.75rem;
+            background: rgba(100, 100, 150, 0.15);
+            border-left: 3px solid #8888cc;
+            border-radius: 4px;
+            font-style: italic;
+        }
+
+        .thought.traitor-thought {
+            background: rgba(233, 69, 96, 0.1);
+            border-left-color: var(--accent-red);
+        }
+
+        .thought.faithful-thought {
+            background: rgba(42, 157, 143, 0.1);
+            border-left-color: var(--accent-green);
+        }
+
+        .thought-label {
+            font-size: 0.75rem;
+            font-weight: bold;
+            text-transform: uppercase;
+            margin-bottom: 0.25rem;
+        }
+
+        .traitor-thought .thought-label {
+            color: var(--accent-red);
+        }
+
+        .faithful-thought .thought-label {
+            color: var(--accent-green);
+        }
+
+        .speaker {
+            font-weight: bold;
+            color: var(--accent-gold);
+        }
+
+        .content {
+            color: var(--text-light);
+        }
+
+        .phase-header {
+            color: var(--accent-gold);
+            font-weight: bold;
+            margin: 1rem 0 0.5rem;
+            padding-bottom: 0.25rem;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .game-summary {
+            background: rgba(0,0,0,0.2);
+            padding: 1.5rem;
+            border-radius: 8px;
+            margin-bottom: 1.5rem;
+            line-height: 1.8;
+        }
+
+        .game-summary p {
+            margin: 0.75rem 0;
+        }
+
+        .traitor-text {
+            color: var(--accent-red);
+            font-weight: bold;
+        }
+
+        .faithful-text {
+            color: var(--accent-green);
+            font-weight: bold;
+        }
+
+        .outcome {
+            padding: 1rem;
+            border-radius: 8px;
+            margin-top: 1rem;
+            font-size: 1.1rem;
+        }
+
+        .traitor-outcome {
+            background: rgba(233, 69, 96, 0.2);
+            border-left: 4px solid var(--accent-red);
+        }
+
+        .faithful-outcome {
+            background: rgba(42, 157, 143, 0.2);
+            border-left: 4px solid var(--accent-green);
+        }
+
+        .voting-outcome {
+            margin: 1.5rem 0;
+            padding: 1rem;
+            background: rgba(244, 162, 97, 0.1);
+            border-radius: 8px;
+            border: 1px solid rgba(244, 162, 97, 0.3);
+        }
+
+        .vote-breakdown {
+            margin: 0.75rem 0;
+            padding: 0.75rem;
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 4px;
+            font-size: 0.9rem;
+        }
+
+        .vote-target {
+            color: var(--accent-gold);
+            font-weight: bold;
+        }
+
+        .banishment-announcement {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-top: 1rem;
+            padding: 1rem;
+            border-radius: 8px;
+        }
+
+        .banishment-announcement.traitor-caught {
+            background: rgba(42, 157, 143, 0.2);
+            border: 2px solid var(--accent-green);
+        }
+
+        .banishment-announcement.faithful-lost {
+            background: rgba(233, 69, 96, 0.2);
+            border: 2px solid var(--accent-red);
+        }
+
+        .banishment-icon {
+            font-size: 2.5rem;
+        }
+
+        .banishment-text {
+            flex: 1;
+        }
+
+        .role-reveal {
+            font-size: 0.9rem;
+            margin-top: 0.25rem;
+        }
+
+        .result-text {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+        }
+
+        .murder-announcement {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin: 1rem 0;
+            padding: 1rem;
+            background: rgba(233, 69, 96, 0.15);
+            border: 2px solid var(--accent-red);
+            border-radius: 8px;
+        }
+
+        .murder-icon {
+            font-size: 2.5rem;
+        }
+
+        .murder-text {
+            flex: 1;
+        }
+
+        .murder-subtext {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            display: block;
+            margin-top: 0.25rem;
+        }
+
+        .game-log {
+            background: #0a0a15;
+            padding: 1rem;
+            border-radius: 8px;
+            max-height: 500px;
+            overflow-y: auto;
+            font-family: 'Consolas', monospace;
+            font-size: 0.85rem;
+        }
+
+        .log-line {
+            padding: 0.1rem 0;
+            white-space: pre-wrap;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 1rem;
+            text-align: center;
+        }
+
+        .stat-box {
+            background: rgba(255,255,255,0.05);
+            padding: 1.5rem;
+            border-radius: 8px;
+        }
+
+        .stat-value {
+            font-size: 2rem;
+            font-weight: bold;
+            color: var(--accent-gold);
+        }
+
+        .stat-label {
+            color: var(--text-muted);
+            font-size: 0.9rem;
+        }
+
+        .rounds-table-container {
+            margin: 2rem 0;
+            overflow-x: auto;
+        }
+
+        .rounds-table {
+            width: 100%;
+            border-collapse: collapse;
+            background: rgba(0,0,0,0.2);
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        .rounds-table th {
+            background: rgba(233, 69, 96, 0.3);
+            color: var(--accent-gold);
+            padding: 1rem;
+            text-align: left;
+            font-weight: bold;
+            border-bottom: 2px solid var(--accent-red);
+        }
+
+        .rounds-table td {
+            padding: 0.75rem 1rem;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+            vertical-align: middle;
+        }
+
+        .rounds-table tr:hover {
+            background: rgba(255,255,255,0.05);
+        }
+
+        .rounds-table .event-phase {
+            font-weight: bold;
+            color: var(--accent-gold);
+            text-align: center;
+            width: 100px;
+        }
+
+        .rounds-table .event-phase small {
+            display: block;
+            font-weight: normal;
+            color: var(--text-muted);
+            font-size: 0.75rem;
+        }
+
+        .rounds-table .event-desc {
+            min-width: 200px;
+        }
+
+        .rounds-table .event-desc small {
+            display: block;
+            color: var(--text-muted);
+            font-size: 0.8rem;
+            margin-top: 0.25rem;
+        }
+
+        .rounds-table .remaining-traitors,
+        .rounds-table .remaining-faithful {
+            text-align: center;
+            font-weight: bold;
+            width: 90px;
+        }
+
+        .rounds-table .player-list {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            max-width: 300px;
+        }
+
+        .rounds-table .state-row {
+            background: rgba(42, 157, 143, 0.1);
+        }
+
+        .rounds-table .banishment-row {
+            background: rgba(244, 162, 97, 0.1);
+        }
+
+        .rounds-table .murder-row {
+            background: rgba(233, 69, 96, 0.1);
+        }
+
+        .rounds-table .final-row {
+            background: rgba(255, 255, 255, 0.1);
+            font-weight: bold;
+        }
+
+        .rounds-table small {
+            color: var(--text-muted);
+            font-size: 0.8rem;
+        }
+
+        footer {
+            text-align: center;
+            padding: 2rem;
+            color: var(--text-muted);
+            font-size: 0.9rem;
+        }
+
+        code {
+            background: rgba(0,0,0,0.3);
+            padding: 0.2rem 0.5rem;
+            border-radius: 4px;
+            font-family: 'Consolas', monospace;
+        }
+
+        /* LLM Interactions Styles */
+        .llm-interactions-container {
+            margin-top: 1rem;
+        }
+
+        .player-interactions {
+            margin-bottom: 1rem;
+            background: rgba(0,0,0,0.2);
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        .player-interactions-header {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            padding: 1rem;
+            background: rgba(255,255,255,0.05);
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .player-interactions-header:hover {
+            background: rgba(255,255,255,0.1);
+        }
+
+        .player-name-header {
+            font-weight: bold;
+            font-size: 1.1rem;
+            color: var(--accent-gold);
+        }
+
+        .interaction-count {
+            margin-left: auto;
+            color: var(--text-muted);
+            font-size: 0.9rem;
+        }
+
+        .player-toggle, .interaction-toggle {
+            font-weight: bold;
+            color: var(--accent-gold);
+            font-size: 1.2rem;
+            width: 20px;
+            text-align: center;
+        }
+
+        .player-interactions-content {
+            padding: 1rem;
+        }
+
+        .personality-prompt-section {
+            margin-bottom: 1rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .llm-interaction-card {
+            margin: 0.75rem 0;
+            background: rgba(0,0,0,0.3);
+            border-radius: 6px;
+            overflow: hidden;
+        }
+
+        .llm-interaction-header {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            padding: 0.75rem 1rem;
+            background: rgba(255,255,255,0.03);
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .llm-interaction-header:hover {
+            background: rgba(255,255,255,0.08);
+        }
+
+        .interaction-type {
+            font-weight: bold;
+            color: var(--accent-green);
+            text-transform: uppercase;
+            font-size: 0.85rem;
+        }
+
+        .interaction-round {
+            color: var(--text-muted);
+            font-size: 0.85rem;
+            margin-left: auto;
+        }
+
+        .llm-interaction-content {
+            padding: 1rem;
+        }
+
+        .llm-section {
+            margin-bottom: 1rem;
+        }
+
+        .llm-section-label {
+            font-weight: bold;
+            color: var(--accent-gold);
+            font-size: 0.85rem;
+            margin-bottom: 0.5rem;
+            text-transform: uppercase;
+        }
+
+        .llm-text {
+            background: rgba(0,0,0,0.4);
+            padding: 1rem;
+            border-radius: 4px;
+            font-family: 'Consolas', monospace;
+            font-size: 0.8rem;
+            overflow-x: auto;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            max-height: 300px;
+            overflow-y: auto;
+            color: var(--text-light);
+            line-height: 1.4;
+        }
+
+        .llm-response {
+            background: rgba(42, 157, 143, 0.15);
+            border-left: 3px solid var(--accent-green);
+        }
+
+        .personality-text {
+            background: rgba(244, 162, 97, 0.1);
+            border-left: 3px solid var(--accent-gold);
+        }
+
+        .llm-meta {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            margin-top: 0.5rem;
+            padding-top: 0.5rem;
+            border-top: 1px solid rgba(255,255,255,0.1);
+        }
+    </style>
+    <script>
+        function togglePlayer(header) {
+            const content = header.nextElementSibling;
+            const toggle = header.querySelector('.player-toggle');
+            if (content.style.display === 'none') {
+                content.style.display = 'block';
+                toggle.textContent = '-';
+            } else {
+                content.style.display = 'none';
+                toggle.textContent = '+';
+            }
+        }
+
+        function toggleInteraction(header) {
+            const content = header.nextElementSibling;
+            const toggle = header.querySelector('.interaction-toggle');
+            if (content.style.display === 'none') {
+                content.style.display = 'block';
+                toggle.textContent = '-';
+            } else {
+                content.style.display = 'none';
+                toggle.textContent = '+';
+            }
+        }
+    </script>
+</head>
+<body>
+    <header>
+        <h1>THE TRAITORS</h1>
+        <p class="subtitle">LLM-Powered Game Simulator</p>
+        <span class="mode-badge llm">LLM-Powered (Claude Haiku)</span>
+        <p class="back-link"><a href="index.html">&larr; Back to Run Summary</a></p>
+    </header>
+
+    <div class="container">
+        <section>
+            <h2>About The Game</h2>
+            <p>The Traitors is a social deduction game based on the hit TV show. Players are secretly assigned roles as either <strong>Faithful</strong> or <strong>Traitors</strong>. The Faithful must work together to identify and banish the Traitors, while the Traitors must deceive, manipulate, and eliminate the Faithful without being caught.</p>
+
+            <div class="rules-grid" style="margin-top: 1.5rem;">
+                <div class="rule-card">
+                    <h4>Role Assignment</h4>
+                    <p>At the start, players are randomly assigned as Traitors or Faithful. Only Traitors know who the other Traitors are.</p>
+                </div>
+                <div class="rule-card">
+                    <h4>Discussion Phase</h4>
+                    <p>All players discuss, share observations, and voice suspicions. This is where alliances form and accusations fly.</p>
+                </div>
+                <div class="rule-card">
+                    <h4>Voting Phase</h4>
+                    <p>Players vote to banish someone they suspect is a Traitor. The player with the most votes is eliminated and their role revealed.</p>
+                </div>
+                <div class="rule-card">
+                    <h4>Night Phase</h4>
+                    <p>Traitors meet secretly and choose one Faithful player to "murder". The victim is eliminated from the game.</p>
+                </div>
+            </div>
+
+            <h3>Win Conditions</h3>
+            <ul style="margin-left: 1.5rem;">
+                <li><strong style="color: var(--accent-green);">Faithful Win:</strong> All Traitors are banished</li>
+                <li><strong style="color: var(--accent-red);">Traitors Win:</strong> They survive to the end OR outnumber the Faithful</li>
+            </ul>
+        </section>
+
+        <section>
+            <h2>Simulation Parameters</h2>
+            <div class="parameters">
+                <div class="param"><span class="param-name">contestants:</span> <span class="param-value">list[dict]</span> - List of players with name and personality_prompt</div>
+                <div class="param"><span class="param-name">num_traitors:</span> <span class="param-value">int = 2</span> - Number of traitors to assign</div>
+                <div class="param"><span class="param-name">client:</span> <span class="param-value">Anthropic = None</span> - Optional Anthropic client for LLM calls</div>
+                <div class="param"><span class="param-name">log_callback:</span> <span class="param-value">Callable = print</span> - Function to handle game logging</div>
+            </div>
+
+            <h3>Game Flow</h3>
+            <p>The game continues until players vote to end it (after a banishment). If traitors remain when the game ends, they win. If all traitors have been banished, the faithful win.</p>
+
+            <h3>Example Usage</h3>
+            <div class="parameters" style="margin-top: 1rem;">
+                <code style="display: block; white-space: pre;">from traitors import TraitorsGame
+
+contestants = [
+    {"name": "Alice", "personality_prompt": "You are analytical and suspicious..."},
+    {"name": "Bob", "personality_prompt": "You are charismatic and deflective..."},
+    # ... more contestants
+]
+
+game = TraitorsGame(contestants=contestants, num_traitors=2)
+results = game.run()</code>
+            </div>
+        </section>
+
+        <section>
+            <h2>Game Results</h2>
+
+            <div class="winner-banner traitor-win">
+                <div class="winner-text">THE TRAITORS WIN!</div>
+            </div>
+
+            <div class="stats-grid">
+                <div class="stat-box">
+                    <div class="stat-value" style="color: var(--accent-gold);">$100,000</div>
+                    <div class="stat-label">Prize Pool</div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-value">7</div>
+                    <div class="stat-label">Rounds Played</div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-value">6</div>
+                    <div class="stat-label">Survivors</div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-value">3</div>
+                    <div class="stat-label">Total Traitors</div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-value">16</div>
+                    <div class="stat-label">Total Faithful</div>
+                </div>
+            </div>
+
+            <h3>Round by Round</h3>
+            
+    <div class="rounds-table-container">
+        <table class="rounds-table">
+            <thead>
+                <tr>
+                    <th>Phase</th>
+                    <th>Event</th>
+                    <th>Traitors</th>
+                    <th>Faithful</th>
+                    <th>Remaining Players</th>
+                </tr>
+            </thead>
+            <tbody>
+                
+        <tr class="state-row">
+            <td class="event-phase">Start</td>
+            <td class="event-desc">Game begins</td>
+            <td class="remaining-traitors"><span class="traitor-text">3</span> traitors</td>
+            <td class="remaining-faithful"><span class="faithful-text">16</span> faithful</td>
+            <td class="player-list">Aaliyah, Camille, Carlos, Dahlia, Derek, Elena, Freya, Gloria, Jaylen, Marcus, Nathan, Olivia, Priya, Rashid, Simone, Sofia, Terrence, Victor, Wesley</td>
+        </tr>
+    
+        <tr class="banishment-row">
+            <td class="event-phase">Round 1<br><small>Banishment</small></td>
+            <td class="event-desc">😇 <span class='faithful-text'>Victor</span> banished<br><small>Votes: Victor: 4, Nathan: 3, Rashid: 2</small></td>
+            <td class="remaining-traitors"><span class="traitor-text">3</span> traitors</td>
+            <td class="remaining-faithful"><span class="faithful-text">15</span> faithful</td>
+            <td class="player-list">Aaliyah, Camille, Carlos, Dahlia, Derek, Elena, Freya, Gloria, Jaylen, Marcus, Nathan, Olivia, Priya, Rashid, Simone, Sofia, Terrence, Wesley</td>
+        </tr>
+            
+        <tr class="murder-row">
+            <td class="event-phase">Round 1<br><small>Night</small></td>
+            <td class="event-desc">🔪 <span class='faithful-text'>Marcus</span> murdered</td>
+            <td class="remaining-traitors"><span class="traitor-text">3</span> traitors</td>
+            <td class="remaining-faithful"><span class="faithful-text">14</span> faithful</td>
+            <td class="player-list">Aaliyah, Camille, Carlos, Dahlia, Derek, Elena, Freya, Gloria, Jaylen, Nathan, Olivia, Priya, Rashid, Simone, Sofia, Terrence, Wesley</td>
+        </tr>
+            
+        <tr class="banishment-row">
+            <td class="event-phase">Round 2<br><small>Banishment</small></td>
+            <td class="event-desc">😇 <span class='faithful-text'>Jaylen</span> banished<br><small>Votes: Jaylen: 5, Olivia: 2, Wesley: 2</small></td>
+            <td class="remaining-traitors"><span class="traitor-text">3</span> traitors</td>
+            <td class="remaining-faithful"><span class="faithful-text">13</span> faithful</td>
+            <td class="player-list">Aaliyah, Camille, Carlos, Dahlia, Derek, Elena, Freya, Gloria, Nathan, Olivia, Priya, Rashid, Simone, Sofia, Terrence, Wesley</td>
+        </tr>
+            
+        <tr class="murder-row">
+            <td class="event-phase">Round 2<br><small>Night</small></td>
+            <td class="event-desc">🔪 <span class='faithful-text'>Terrence</span> murdered</td>
+            <td class="remaining-traitors"><span class="traitor-text">3</span> traitors</td>
+            <td class="remaining-faithful"><span class="faithful-text">12</span> faithful</td>
+            <td class="player-list">Aaliyah, Camille, Carlos, Dahlia, Derek, Elena, Freya, Gloria, Nathan, Olivia, Priya, Rashid, Simone, Sofia, Wesley</td>
+        </tr>
+            
+        <tr class="banishment-row">
+            <td class="event-phase">Round 3<br><small>Banishment</small></td>
+            <td class="event-desc">😇 <span class='faithful-text'>Camille</span> banished<br><small>Votes: Camille: 3, Priya: 2, Freya: 2</small></td>
+            <td class="remaining-traitors"><span class="traitor-text">3</span> traitors</td>
+            <td class="remaining-faithful"><span class="faithful-text">11</span> faithful</td>
+            <td class="player-list">Aaliyah, Carlos, Dahlia, Derek, Elena, Freya, Gloria, Nathan, Olivia, Priya, Rashid, Simone, Sofia, Wesley</td>
+        </tr>
+            
+        <tr class="murder-row">
+            <td class="event-phase">Round 3<br><small>Night</small></td>
+            <td class="event-desc">🔪 <span class='faithful-text'>Aaliyah</span> murdered</td>
+            <td class="remaining-traitors"><span class="traitor-text">3</span> traitors</td>
+            <td class="remaining-faithful"><span class="faithful-text">10</span> faithful</td>
+            <td class="player-list">Carlos, Dahlia, Derek, Elena, Freya, Gloria, Nathan, Olivia, Priya, Rashid, Simone, Sofia, Wesley</td>
+        </tr>
+            
+        <tr class="banishment-row">
+            <td class="event-phase">Round 4<br><small>Banishment</small></td>
+            <td class="event-desc">😇 <span class='faithful-text'>Dahlia</span> banished<br><small>Votes: Dahlia: 4, Aaliyah: 3, Elena: 2</small></td>
+            <td class="remaining-traitors"><span class="traitor-text">3</span> traitors</td>
+            <td class="remaining-faithful"><span class="faithful-text">9</span> faithful</td>
+            <td class="player-list">Carlos, Derek, Elena, Freya, Gloria, Nathan, Olivia, Priya, Rashid, Simone, Sofia, Wesley</td>
+        </tr>
+            
+        <tr class="murder-row">
+            <td class="event-phase">Round 4<br><small>Night</small></td>
+            <td class="event-desc">🔪 <span class='faithful-text'>Gloria</span> murdered</td>
+            <td class="remaining-traitors"><span class="traitor-text">3</span> traitors</td>
+            <td class="remaining-faithful"><span class="faithful-text">8</span> faithful</td>
+            <td class="player-list">Carlos, Derek, Elena, Freya, Nathan, Olivia, Priya, Rashid, Simone, Sofia, Wesley</td>
+        </tr>
+            
+        <tr class="banishment-row">
+            <td class="event-phase">Round 5<br><small>Banishment</small></td>
+            <td class="event-desc">😇 <span class='faithful-text'>Elena</span> banished<br><small>Votes: Elena: 3, Carlos: 2, Priya: 2</small></td>
+            <td class="remaining-traitors"><span class="traitor-text">3</span> traitors</td>
+            <td class="remaining-faithful"><span class="faithful-text">7</span> faithful</td>
+            <td class="player-list">Carlos, Derek, Freya, Nathan, Olivia, Priya, Rashid, Simone, Sofia, Wesley</td>
+        </tr>
+            
+        <tr class="murder-row">
+            <td class="event-phase">Round 5<br><small>Night</small></td>
+            <td class="event-desc">🔪 <span class='faithful-text'>Simone</span> murdered</td>
+            <td class="remaining-traitors"><span class="traitor-text">3</span> traitors</td>
+            <td class="remaining-faithful"><span class="faithful-text">6</span> faithful</td>
+            <td class="player-list">Carlos, Derek, Freya, Nathan, Olivia, Priya, Rashid, Sofia, Wesley</td>
+        </tr>
+            
+        <tr class="banishment-row">
+            <td class="event-phase">Round 6<br><small>Banishment</small></td>
+            <td class="event-desc">😇 <span class='faithful-text'>Nathan</span> banished<br><small>Votes: Nathan: 3, Olivia: 2, Sofia: 2</small></td>
+            <td class="remaining-traitors"><span class="traitor-text">3</span> traitors</td>
+            <td class="remaining-faithful"><span class="faithful-text">5</span> faithful</td>
+            <td class="player-list">Carlos, Derek, Freya, Olivia, Priya, Rashid, Sofia, Wesley</td>
+        </tr>
+            
+        <tr class="murder-row">
+            <td class="event-phase">Round 6<br><small>Night</small></td>
+            <td class="event-desc">🔪 <span class='faithful-text'>Wesley</span> murdered</td>
+            <td class="remaining-traitors"><span class="traitor-text">3</span> traitors</td>
+            <td class="remaining-faithful"><span class="faithful-text">4</span> faithful</td>
+            <td class="player-list">Carlos, Derek, Freya, Olivia, Priya, Rashid, Sofia</td>
+        </tr>
+            
+        <tr class="banishment-row">
+            <td class="event-phase">Round 7<br><small>Banishment</small></td>
+            <td class="event-desc">😇 <span class='faithful-text'>Derek</span> banished<br><small>Votes: Derek: 2, Olivia: 1, Rashid: 1</small></td>
+            <td class="remaining-traitors"><span class="traitor-text">3</span> traitors</td>
+            <td class="remaining-faithful"><span class="faithful-text">3</span> faithful</td>
+            <td class="player-list">Carlos, Freya, Olivia, Priya, Rashid, Sofia</td>
+        </tr>
+            
+        <tr class="final-row">
+            <td class="event-phase">Final</td>
+            <td class="event-desc"><strong class="traitor-text">TRAITORS WIN</strong></td>
+            <td class="remaining-traitors"><span class="traitor-text">3</span> traitors</td>
+            <td class="remaining-faithful"><span class="faithful-text">3</span> faithful</td>
+            <td class="player-list">Carlos, Freya, Olivia, Priya, Rashid, Sofia</td>
+        </tr>
+    
+            </tbody>
+        </table>
+    </div>
+    
+
+            <h3>What Happened</h3>
+            
+    <div class="game-summary">
+        <p><strong>The Setup:</strong> 3 traitors (<span class='traitor-text'>Rashid, Olivia, Freya</span>) infiltrated a group of 16 faithful players (<span class='faithful-text'>Marcus, Sofia, Derek, Elena, Jaylen, Priya, Terrence, Aaliyah, Victor, Camille, Gloria, Nathan, Simone, Wesley, Dahlia, Carlos</span>).</p>
+        <p><strong>Round 1:</strong> <strong>Dahlia</strong> was banished but was actually <span class='faithful-text'>FAITHFUL</span> - the traitors celebrate as an innocent falls.</p><p><strong>Round 6:</strong> That night, the traitors murdered <strong>Wesley</strong> (faithful).</p>
+        <p class='outcome traitor-outcome'>The traitors achieved victory! <strong>Rashid, Olivia, Freya</strong> successfully deceived the group and stole the entire <strong>$100,000</strong> prize pool!</p>
+    </div>
+    
+        </section>
+
+        <section>
+            <h2>The Contestants</h2>
+            <div class="contestant-grid">
+                
+        <div class="contestant-card faithful murdered">
+            <div class="contestant-name">Marcus</div>
+            <div class="contestant-role">FAITHFUL</div>
+            <div class="contestant-fate">Murdered</div>
+            <div class='contestant-winnings'>$0</div>
+            <div class="contestant-personality">You are Marcus, a 45-year-old former detective.
+You are analytical, observant, and methodical. You pay attention to small details
+and inconsistencies ...</div>
+        </div>
+        
+        <div class="contestant-card faithful survived">
+            <div class="contestant-name">Sofia</div>
+            <div class="contestant-role">FAITHFUL</div>
+            <div class="contestant-fate">Survived</div>
+            <div class='contestant-winnings'>$0</div>
+            <div class="contestant-personality">You are Sofia, a 32-year-old social worker.
+You are empathetic, intuitive, and good at reading emotions. You focus on
+building alliances and trust wit...</div>
+        </div>
+        
+        <div class="contestant-card faithful banished">
+            <div class="contestant-name">Derek</div>
+            <div class="contestant-role">FAITHFUL</div>
+            <div class="contestant-fate">Banished</div>
+            <div class='contestant-winnings'>$0</div>
+            <div class="contestant-personality">You are Derek, a 28-year-old sales executive.
+You are charismatic, persuasive, and quick-thinking. You&#x27;re good at deflecting
+attention and changing to...</div>
+        </div>
+        
+        <div class="contestant-card faithful banished">
+            <div class="contestant-name">Elena</div>
+            <div class="contestant-role">FAITHFUL</div>
+            <div class="contestant-fate">Banished</div>
+            <div class='contestant-winnings'>$0</div>
+            <div class="contestant-personality">You are Elena, a 55-year-old retired professor.
+You are wise, patient, and observant. You often stay quiet and watch how
+others interact before speaki...</div>
+        </div>
+        
+        <div class="contestant-card faithful banished">
+            <div class="contestant-name">Jaylen</div>
+            <div class="contestant-role">FAITHFUL</div>
+            <div class="contestant-fate">Banished</div>
+            <div class='contestant-winnings'>$0</div>
+            <div class="contestant-personality">You are Jaylen, a 24-year-old graduate student.
+You are enthusiastic, energetic, and sometimes impulsive. You wear your emotions
+on your sleeve and ca...</div>
+        </div>
+        
+        <div class="contestant-card faithful survived">
+            <div class="contestant-name">Priya</div>
+            <div class="contestant-role">FAITHFUL</div>
+            <div class="contestant-fate">Survived</div>
+            <div class='contestant-winnings'>$0</div>
+            <div class="contestant-personality">You are Priya, a 38-year-old entrepreneur.
+You are strategic, confident, and decisive. You&#x27;re used to leading and making
+tough decisions. You analyze ...</div>
+        </div>
+        
+        <div class="contestant-card faithful murdered">
+            <div class="contestant-name">Terrence</div>
+            <div class="contestant-role">FAITHFUL</div>
+            <div class="contestant-fate">Murdered</div>
+            <div class='contestant-winnings'>$0</div>
+            <div class="contestant-personality">You are Terrence, a 50-year-old former military officer.
+You are disciplined, direct, and no-nonsense. You believe in chain of command
+and organized a...</div>
+        </div>
+        
+        <div class="contestant-card faithful murdered">
+            <div class="contestant-name">Aaliyah</div>
+            <div class="contestant-role">FAITHFUL</div>
+            <div class="contestant-fate">Murdered</div>
+            <div class='contestant-winnings'>$0</div>
+            <div class="contestant-personality">You are Aaliyah, a 29-year-old nurse.
+You are caring, observant, and emotionally intelligent. You notice when people
+are stressed or lying based on th...</div>
+        </div>
+        
+        <div class="contestant-card faithful banished">
+            <div class="contestant-name">Victor</div>
+            <div class="contestant-role">FAITHFUL</div>
+            <div class="contestant-fate">Banished</div>
+            <div class='contestant-winnings'>$0</div>
+            <div class="contestant-personality">You are Victor, a 42-year-old poker player.
+You are skilled at reading tells and maintaining a poker face yourself. You&#x27;re
+calculating and never show ...</div>
+        </div>
+        
+        <div class="contestant-card faithful banished">
+            <div class="contestant-name">Camille</div>
+            <div class="contestant-role">FAITHFUL</div>
+            <div class="contestant-fate">Banished</div>
+            <div class='contestant-winnings'>$0</div>
+            <div class="contestant-personality">You are Camille, a 35-year-old actress.
+You are dramatic, expressive, and good at reading a room. You understand the
+power of performance and can play...</div>
+        </div>
+        
+        <div class="contestant-card traitor survived">
+            <div class="contestant-name">Rashid</div>
+            <div class="contestant-role">TRAITOR</div>
+            <div class="contestant-fate">Survived</div>
+            <div class='contestant-winnings winner'>$33,333</div>
+            <div class="contestant-personality">You are Rashid, a 31-year-old data scientist.
+You are logical, pattern-oriented, and probabilistic in your thinking. You
+approach the game like a puzz...</div>
+        </div>
+        
+        <div class="contestant-card faithful murdered">
+            <div class="contestant-name">Gloria</div>
+            <div class="contestant-role">FAITHFUL</div>
+            <div class="contestant-fate">Murdered</div>
+            <div class='contestant-winnings'>$0</div>
+            <div class="contestant-personality">You are Gloria, a 62-year-old retired judge.
+You are fair, authoritative, and excellent at weighing evidence. You listen to
+all sides before making de...</div>
+        </div>
+        
+        <div class="contestant-card traitor survived">
+            <div class="contestant-name">Olivia</div>
+            <div class="contestant-role">TRAITOR</div>
+            <div class="contestant-fate">Survived</div>
+            <div class='contestant-winnings winner'>$33,333</div>
+            <div class="contestant-personality">You are Olivia, a 34-year-old family therapist who specializes in conflict resolution.
+
+Your approach to this game:
+
+1. DE-ESCALATE CONFLICT: When acc...</div>
+        </div>
+        
+        <div class="contestant-card faithful banished">
+            <div class="contestant-name">Nathan</div>
+            <div class="contestant-role">FAITHFUL</div>
+            <div class="contestant-fate">Banished</div>
+            <div class='contestant-winnings'>$0</div>
+            <div class="contestant-personality">You are Nathan, a 42-year-old investigative journalist who has spent years uncovering fraud and deception.
+
+Your approach to this game:
+
+1. TRUST NO O...</div>
+        </div>
+        
+        <div class="contestant-card faithful murdered">
+            <div class="contestant-name">Simone</div>
+            <div class="contestant-role">FAITHFUL</div>
+            <div class="contestant-fate">Murdered</div>
+            <div class='contestant-winnings'>$0</div>
+            <div class="contestant-personality">You are Simone, a 31-year-old poker dealer who has spent years reading people at the table.
+
+Your approach to this game:
+
+1. READ THE TONE: Pay attent...</div>
+        </div>
+        
+        <div class="contestant-card faithful murdered">
+            <div class="contestant-name">Wesley</div>
+            <div class="contestant-role">FAITHFUL</div>
+            <div class="contestant-fate">Murdered</div>
+            <div class='contestant-winnings'>$0</div>
+            <div class="contestant-personality">You are Wesley, a 45-year-old actuary who calculates risk for a living.
+
+Your approach to this game:
+
+1. COUNT THE NUMBERS: Always know how many trait...</div>
+        </div>
+        
+        <div class="contestant-card faithful banished">
+            <div class="contestant-name">Dahlia</div>
+            <div class="contestant-role">FAITHFUL</div>
+            <div class="contestant-fate">Banished</div>
+            <div class='contestant-winnings'>$0</div>
+            <div class="contestant-personality">You are Dahlia, a 38-year-old true crime podcaster who loves piecing together mysteries.
+
+Your approach to this game:
+
+1. BUILD THE NARRATIVE: Connect...</div>
+        </div>
+        
+        <div class="contestant-card faithful survived">
+            <div class="contestant-name">Carlos</div>
+            <div class="contestant-role">FAITHFUL</div>
+            <div class="contestant-fate">Survived</div>
+            <div class='contestant-winnings'>$0</div>
+            <div class="contestant-personality">You are Carlos, a 29-year-old firefighter who lives by the code of loyalty to your team.
+
+Your approach to this game:
+
+1. FIND YOUR PEOPLE: In the fir...</div>
+        </div>
+        
+        <div class="contestant-card traitor survived">
+            <div class="contestant-name">Freya</div>
+            <div class="contestant-role">TRAITOR</div>
+            <div class="contestant-fate">Survived</div>
+            <div class='contestant-winnings winner'>$33,333</div>
+            <div class="contestant-personality">You are Freya, a 27-year-old improv comedian who thrives on chaos and spontaneity.
+
+Your approach to this game:
+
+1. STAY UNPREDICTABLE: If you always ...</div>
+        </div>
+        
+            </div>
+        </section>
+
+        <section>
+            <h2>Game Transcript</h2>
+            <div class='round-section'><h4>Round 1</h4><div class='phase-header'>☀️ Discussion Phase</div>
+        <div class="message ">
+            <span class="speaker">Priya:</span>
+            <span class="content"></span>
+        </div>
+        
+        <div class="message ">
+            <span class="speaker">Carlos:</span>
+            <span class="content"></span>
+        </div>
+        
+        <div class="message ">
+            <span class="speaker">Marcus:</span>
+            <span class="content"></span>
+        </div>
+        
+        <div class="message ">
+            <span class="speaker">Terrence:</span>
+            <span class="content"></span>
+        </div>
+        
+        <div class="message ">
+            <span class="speaker">Dahlia:</span>
+            <span class="content"></span>
+        </div>
+        
+        <div class="message ">
+            <span class="speaker">Elena:</span>
+            <span class="content"></span>
+        </div>
+        
+        <div class="message ">
+            <span class="speaker">Olivia:</span>
+            <span class="content"></span>
+        </div>
+        
+        <div class="message ">
+            <span class="speaker">Aaliyah:</span>
+            <span class="content"></span>
+        </div>
+        
+        <div class="message ">
+            <span class="speaker">Wesley:</span>
+            <span class="content"></span>
+        </div>
+        
+        <div class="message ">
+            <span class="speaker">Freya:</span>
+            <span class="content"></span>
+        </div>
+        
+        <div class="message ">
+            <span class="speaker">Rashid:</span>
+            <span class="content"></span>
+        </div>
+        
+        <div class="message ">
+            <span class="speaker">Camille:</span>
+            <span class="content"></span>
+        </div>
+        
+        <div class="message ">
+            <span class="speaker">Simone:</span>
+            <span class="content"></span>
+        </div>
+        
+        <div class="message ">
+            <span class="speaker">Gloria:</span>
+            <span class="content"></span>
+        </div>
+        
+        <div class="message ">
+            <span class="speaker">Derek:</span>
+            <span class="content"></span>
+        </div>
+        
+        <div class="message ">
+            <span class="speaker">Victor:</span>
+            <span class="content"></span>
+        </div>
+        
+        <div class="message ">
+            <span class="speaker">Sofia:</span>
+            <span class="content"></span>
+        </div>
+        
+        <div class="message ">
+            <span class="speaker">Nathan:</span>
+            <span class="content"></span>
+        </div>
+        
+        <div class="message ">
+            <span class="speaker">Jaylen:</span>
+            <span class="content"></span>
+        </div>
+        
+        <div class="message ">
+            <span class="speaker">Camille:</span>
+            <span class="content"></span>
+        </div>
+        
+        <div class="message ">
+            <span class="speaker">Wesley:</span>
+            <span class="content"></span>
+        </div>
+        
+        <div class="message ">
+            <span class="speaker">Marcus:</span>
+            <span class="content"></span>
+        </div>
+        
+        <div class="message ">
+            <span class="speaker">Victor:</span>
+            <span class="content"></span>
+        </div>
+        
+        <div class="message ">
+            <span class="speaker">Terrence:</span>
+            <span class="content"></span>
+        </div>
+        
+        <div class="message ">
+            <span class="speaker">Simone:</span>
+            <span class="content"></span>
+        </div>
+        
+        <div class="message ">
+            <span class="speaker">Marcus:</span>
+            <span class="content"></span>
+        </div>
+        
+            <div class='night-phase-section'>
+                <div class='phase-header night-header'>🌙 Night Phase - Traitor Meeting</div>
+                <div class='night-subtext'>The traitors meet in secret while the faithful sleep...</div>
+            
+        <div class="message private-msg">
+            <span class="speaker">Rashid:</span>
+            <span class="content"></span>
+        </div>
+        
+        <div class="message private-msg">
+            <span class="speaker">Olivia:</span>
+            <span class="content"></span>
+        </div>
+        
+        <div class="message private-msg">
+            <span class="speaker">Freya:</span>
+            <span class="content"></span>
+        </div>
+        
+        <div class="murder-announcement">
+            <div class="murder-icon">💀</div>
+            <div class="murder-text">
+                <strong class="faithful-text">Marcus</strong> was found murdered.
+                <br><em class="murder-subtext">The traitors struck under cover of darkness...</em>
+            </div>
+        </div>
+        </div>
+        <div class="voting-outcome">
+            <div class="phase-header">🗳️ Voting Results</div>
+            <div class="vote-breakdown">
+                <span class='vote-target'>Victor</span>: 4 votes &nbsp;|&nbsp; <span class='vote-target'>Nathan</span>: 3 votes &nbsp;|&nbsp; <span class='vote-target'>Rashid</span>: 2 votes &nbsp;|&nbsp; <span class='vote-target'>Freya</span>: 2 votes &nbsp;|&nbsp; <span class='vote-target'>Simone</span>: 1 vote &nbsp;|&nbsp; <span class='vote-target'>Marcus</span>: 1 vote &nbsp;|&nbsp; <span class='vote-target'>Derek</span>: 1 vote &nbsp;|&nbsp; <span class='vote-target'>Jaylen</span>: 1 vote &nbsp;|&nbsp; <span class='vote-target'>Aaliyah</span>: 1 vote &nbsp;|&nbsp; <span class='vote-target'>Camille</span>: 1 vote &nbsp;|&nbsp; <span class='vote-target'>Elena</span>: 1 vote &nbsp;|&nbsp; <span class='vote-target'>Dahlia</span>: 1 vote
+            </div>
+            
+            <div class="banishment-announcement faithful-lost">
+                <div class="banishment-icon">😇</div>
+                <div class="banishment-text">
+                    <strong class="faithful-text">Victor</strong> has been banished!
+                    <br><span class="role-reveal">Revealed as: <span class="faithful-text">FAITHFUL</span></span>
+                    <br><em class="result-text">An innocent was wrongly banished...</em>
+                </div>
+            </div>
+            
+        </div>
+        </div><div class='round-section'><h4>Round 2</h4><div class='phase-header'>☀️ Discussion Phase</div>
+        <div class="message ">
+            <span class="speaker">Simone:</span>
+            <span class="content"></span>
+        </div>
+        
+        <div class="message ">
+            <span class="speaker">Sofia:</span>
+            <span class="content"></span>
+        </div>
+        
+        <div class="message ">
+            <span class="speaker">Aaliyah:</span>
+            <span class="content"></span>
+        </div>
+        
+        <div class="message ">
+            <span class="speaker">Jaylen:</span>
+            <span class="content"></span>
+        </div>
+        
+        <div class="message ">
+            <span class="speaker">Wesley:</span>
+            <span class="content"></span>
+        </div>
+        
+        <div class="message ">
+            <span class="speaker">Nathan:</span>
+            <span class="content"></span>
+        </div>
+        
+        <div class="message ">
+            <span class="speaker">Terrence:</span>
+            <span class="content"></span>
+        </div>
+        
+        <div class="message ">
+            <span class="speaker">Priya:</span>
+            <span class="content"></span>
+        </div>
+        
+        <div class="message ">
+            <span class="speaker">Camille:</span>
+            <span class="content"></span>
+        </div>
+        
+        <div class="message ">
+            <span class="speaker">Freya:</span>
+            <span class="content"></span>
+        </div>
+        
+        <div class="message ">
+            <span class="speaker">Dahlia:</span>
+            <span class="content"></span>
+        </div>
+        
+        <div class="message ">
+            <span class="speaker">Marcus:</span>
+            <span class="content"></span>
+        </div>
+        
+        <div class="message ">
+            <span class="speaker">Derek:</span>
+            <span class="content"></span>
+        </div>
+        
+        <div class="message ">
+            <span class="speaker">Olivia:</span>
+            <span class="content"></span>
+        </div>
+        
+        <div class="message ">
+            <span class="speaker">Elena:</span>
+            <span class="content"></span>
+        </div>
+        
+        <div class="message ">
+            <span class="speaker">Carlos:</span>
+            <span class="content"></span>
+        </div>
+        
+        <div class="message ">
+            <span class="speaker">Rashid:</span>
+            <span class="content"></span>
+        </div>
+        
+        <div class="message ">
+            <span class="speaker">Terrence:</span>
+            <span class="content"></span>
+        </div>
+        
+        <div class="message ">
+            <span class="speaker">Jaylen:</span>
+            <span class="content"></span>
+        </div>
+        
+        <div class="message ">
+            <span class="speaker">Derek:</span>
+            <span class="content"></span>
+        </div>
+        
+        <div class="message ">
+            <span class="speaker">Marcus:</span>
+            <span class="content"></span>
+        </div>
+        
+        <div class="message ">
+            <span class="speaker">Wesley:</span>
+            <span class="content"></span>
+        </div>
+        
+        <div class="message ">
+            <span class="speaker">Carlos:</span>
+            <span class="content"></span>
+        </div>
+        
+        <div class="message ">
+            <span class="speaker">Nathan:</span>
+            <span class="content"></span>
+        </div>
+        
+        <div class="message ">
+            <span class="speaker">Terrence:</span>
+            <span class="content"></span>
+        </div>
+        
+        <div class="message ">
+            <span class="speaker">Wesley:</span>
+            <span class="content"></span>
+        </div>
+        
+        <div class="message ">
+            <span class="speaker">Marcus:</span>
+            <span class="content"></span>
+        </div>
+        
+        <div class="message ">
+            <span class="speaker">Jaylen:</span>
+            <span class="content"></span>
+        </div>
+        
+        <div class="message ">
+            <span class="speaker">Carlos:</span>
+            <span class="content"></span>
+        </div>
+        
+            <div class='night-phase-section'>
+                <div class='phase-header night-header'>🌙 Night Phase - Traitor Meeting</div>
+                <div class='night-subtext'>The traitors meet in secret while the faithful sleep...</div>
+            
+        <div class="message private-msg">
+            <span class="speaker">Rashid:</span>
+            <span class="content"></span>
+        </div>
+        
+        <div class="message private-msg">
+            <span class="speaker">Olivia:</span>
+            <span class="content"></span>
+        </div>
+        
+        <div class="message private-msg">
+            <span class="speaker">Freya:</span>
+            <span class="content"></span>
+        </div>
+        
+        <div class="murder-announcement">
+            <div class="murder-icon">💀</div>
+            <div class="murder-text">
+                <strong class="faithful-text">Terrence</strong> was found murdered.
+                <br><em class="murder-subtext">The traitors struck under cover of darkness...</em>
+            </div>
+        </div>
+        </div>
+        <div class="voting-outcome">
+            <div class="phase-header">🗳️ Voting Results</div>
+            <div class="vote-breakdown">
+                <span class='vote-target'>Jaylen</span>: 5 votes &nbsp;|&nbsp; <span class='vote-target'>Olivia</span>: 2 votes &nbsp;|&nbsp; <span class='vote-target'>Wesley</span>: 2 votes &nbsp;|&nbsp; <span class='vote-target'>Aaliyah</span>: 2 votes &nbsp;|&nbsp; <span class='vote-target'>Elena</span>: 1 vote &nbsp;|&nbsp; <span class='vote-target'>Dahlia</span>: 1 vote &nbsp;|&nbsp; <span class='vote-target'>Nathan</span>: 1 vote &nbsp;|&nbsp; <span class='vote-target'>Marcus</span>: 1 vote &nbsp;|&nbsp; <span class='vote-target'>Simone</span>: 1 vote &nbsp;|&nbsp; <span class='vote-target'>Terrence</span>: 1 vote
+            </div>
+            
+            <div class="banishment-announcement faithful-lost">
+                <div class="banishment-icon">😇</div>
+                <div class="banishment-text">
+                    <strong class="faithful-text">Jaylen</strong> has been banished!
+                    <br><span class="role-reveal">Revealed as: <span class="faithful-text">FAITHFUL</span></span>
+                    <br><em class="result-text">An innocent was wrongly banished...</em>
+                </div>
+            </div>
+            
+        </div>
+        </div><div class='round-section'><h4>Round 3</h4><div class='phase-header'>☀️ Discussion Phase</div>
+        <div class="message ">
+            <span class="speaker">Carlos:</span>
+            <span class="content"></span>
+        </div>
+        
+        <div class="message ">
+            <span class="speaker">Sofia:</span>
+            <span class="content"></span>
+        </div>
+        
+        <div class="message ">
+            <span class="speaker">Priya:</span>
+            <span class="content"></span>
+        </div>
+        
+        <div class="message ">
+            <span class="speaker">Freya:</span>
+            <span class="content"></span>
+        </div>
+        
+        <div class="message ">
+            <span class="speaker">Rashid:</span>
+            <span class="content"></span>
+        </div>
+        
+        <div class="message ">
+            <span class="speaker">Simone:</span>
+            <span class="content"></span>
+        </div>
+        
+        <div class="message ">
+            <span class="speaker">Camille:</span>
+            <span class="content"></span>
+        </div>
+        
+        <div class="message ">
+            <span class="speaker">Marcus:</span>
+            <span class="content"></span>
+        </div>
+        
+        <div class="message ">
+            <span class="speaker">Elena:</span>
+            <span class="content"></span>
+        </div>
+        
+        <div class="message ">
+            <span class="speaker">Nathan:</span>
+            <span class="content"></span>
+        </div>
+        
+        <div class="message ">
+            <span class="speaker">Derek:</span>
+            <span class="content"></span>
+        </div>
+        
+        <div class="message ">
+            <span class="speaker">Dahlia:</span>
+            <span class="content"></span>
+        </div>
+        
+        <div class="message ">
+            <span class="speaker">Aaliyah:</span>
+            <span class="content"></span>
+        </div>
+        
+        <div class="message ">
+            <span class="speaker">Olivia:</span>
+            <span class="content"></span>
+        </div>
+        
+        <div class="message ">
+            <span class="speaker">Wesley:</span>
+            <span class="content"></span>
+        </div>
+        
+        <div class="message ">
+            <span class="speaker">Sofia:</span>
+            <span class="content"></span>
+        </div>
+        
+        <div class="message ">
+            <span class="speaker">Nathan:</span>
+            <span class="content"></span>
+        </div>
+        
+        <div class="message ">
+            <span class="speaker">Camille:</span>
+            <span class="content"></span>
+        </div>
+        
+        <div class="message ">
+            <span class="speaker">Simone:</span>
+            <span class="content"></span>
+        </div>
+        
+        <div class="message ">
+            <span class="speaker">Freya:</span>
+            <span class="content"></span>
+        </div>
+        
+        <div class="message ">
+            <span class="speaker">Rashid:</span>
+            <span class="content"></span>
+        </div>
+        
+        <div class="message ">
+            <span class="speaker">Nathan:</span>
+            <span class="content"></span>
+        </div>
+        
+            <div class='night-phase-section'>
+                <div class='phase-header night-header'>🌙 Night Phase - Traitor Meeting</div>
+                <div class='night-subtext'>The traitors meet in secret while the faithful sleep...</div>
+            
+        <div class="message private-msg">
+            <span class="speaker">Rashid:</span>
+            <span class="content"></span>
+        </div>
+        
+        <div class="message private-msg">
+            <span class="speaker">Olivia:</span>
+            <span class="content"></span>
+        </div>
+        
+        <div class="message private-msg">
+            <span class="speaker">Freya:</span>
+            <span class="content"></span>
+        </div>
+        
+        <div class="murder-announcement">
+            <div class="murder-icon">💀</div>
+            <div class="murder-text">
+                <strong class="faithful-text">Aaliyah</strong> was found murdered.
+                <br><em class="murder-subtext">The traitors struck under cover of darkness...</em>
+            </div>
+        </div>
+        </div>
+        <div class="voting-outcome">
+            <div class="phase-header">🗳️ Voting Results</div>
+            <div class="vote-breakdown">
+                <span class='vote-target'>Camille</span>: 3 votes &nbsp;|&nbsp; <span class='vote-target'>Priya</span>: 2 votes &nbsp;|&nbsp; <span class='vote-target'>Freya</span>: 2 votes &nbsp;|&nbsp; <span class='vote-target'>Derek</span>: 2 votes &nbsp;|&nbsp; <span class='vote-target'>Wesley</span>: 1 vote &nbsp;|&nbsp; <span class='vote-target'>Aaliyah</span>: 1 vote &nbsp;|&nbsp; <span class='vote-target'>Carlos</span>: 1 vote &nbsp;|&nbsp; <span class='vote-target'>Sofia</span>: 1 vote &nbsp;|&nbsp; <span class='vote-target'>Simone</span>: 1 vote &nbsp;|&nbsp; <span class='vote-target'>Marcus</span>: 1 vote
+            </div>
+            
+            <div class="banishment-announcement faithful-lost">
+                <div class="banishment-icon">😇</div>
+                <div class="banishment-text">
+                    <strong class="faithful-text">Camille</strong> has been banished!
+                    <br><span class="role-reveal">Revealed as: <span class="faithful-text">FAITHFUL</span></span>
+                    <br><em class="result-text">An innocent was wrongly banished...</em>
+                </div>
+            </div>
+            
+        </div>
+        </div><div class='round-section'><h4>Round 4</h4><div class='phase-header'>☀️ Discussion Phase</div>
+        <div class="message ">
+            <span class="speaker">Simone:</span>
+            <span class="content"></span>
+        </div>
+        
+        <div class="message ">
+            <span class="speaker">Sofia:</span>
+            <span class="content"></span>
+        </div>
+        
+        <div class="message ">
+            <span class="speaker">Dahlia:</span>
+            <span class="content"></span>
+        </div>
+        
+        <div class="message ">
+            <span class="speaker">Derek:</span>
+            <span class="content"></span>
+        </div>
+        
+        <div class="message ">
+            <span class="speaker">Freya:</span>
+            <span class="content"></span>
+        </div>
+        
+        <div class="message ">
+            <span class="speaker">Aaliyah:</span>
+            <span class="content"></span>
+        </div>
+        
+        <div class="message ">
+            <span class="speaker">Marcus:</span>
+            <span class="content"></span>
+        </div>
+        
+        <div class="message ">
+            <span class="speaker">Carlos:</span>
+            <span class="content"></span>
+        </div>
+        
+        <div class="message ">
+            <span class="speaker">Nathan:</span>
+            <span class="content"></span>
+        </div>
+        
+        <div class="message ">
+            <span class="speaker">Priya:</span>
+            <span class="content"></span>
+        </div>
+        
+        <div class="message ">
+            <span class="speaker">Olivia:</span>
+            <span class="content"></span>
+        </div>
+        
+        <div class="message ">
+            <span class="speaker">Elena:</span>
+            <span class="content"></span>
+        </div>
+        
+        <div class="message ">
+            <span class="speaker">Rashid:</span>
+            <span class="content"></span>
+        </div>
+        
+        <div class="message ">
+            <span class="speaker">Sofia:</span>
+            <span class="content"></span>
+        </div>
+        
+        <div class="message ">
+            <span class="speaker">Olivia:</span>
+            <span class="content"></span>
+        </div>
+        
+        <div class="message ">
+            <span class="speaker">Dahlia:</span>
+            <span class="content"></span>
+        </div>
+        
+        <div class="message ">
+            <span class="speaker">Freya:</span>
+            <span class="content"></span>
+        </div>
+        
+        <div class="message ">
+            <span class="speaker">Aaliyah:</span>
+            <span class="content"></span>
+        </div>
+        
+        <div class="message ">
+            <span class="speaker">Simone:</span>
+            <span class="content"></span>
+        </div>
+        
+        <div class="message ">
+            <span class="speaker">Nathan:</span>
+            <span class="content"></span>
+        </div>
+        
+        <div class="message ">
+            <span class="speaker">Sofia:</span>
+            <span class="content"></span>
+        </div>
+        
+        <div class="message ">
+            <span class="speaker">Dahlia:</span>
+            <span class="content"></span>
+        </div>
+        
+        <div class="message ">
+            <span class="speaker">Freya:</span>
+            <span class="content"></span>
+        </div>
+        
+        <div class="message ">
+            <span class="speaker">Aaliyah:</span>
+            <span class="content"></span>
+        </div>
+        
+            <div class='night-phase-section'>
+                <div class='phase-header night-header'>🌙 Night Phase - Traitor Meeting</div>
+                <div class='night-subtext'>The traitors meet in secret while the faithful sleep...</div>
+            
+        <div class="message private-msg">
+            <span class="speaker">Rashid:</span>
+            <span class="content"></span>
+        </div>
+        
+        <div class="message private-msg">
+            <span class="speaker">Olivia:</span>
+            <span class="content"></span>
+        </div>
+        
+        <div class="message private-msg">
+            <span class="speaker">Freya:</span>
+            <span class="content"></span>
+        </div>
+        
+        <div class="murder-announcement">
+            <div class="murder-icon">💀</div>
+            <div class="murder-text">
+                <strong class="faithful-text">Gloria</strong> was found murdered.
+                <br><em class="murder-subtext">The traitors struck under cover of darkness...</em>
+            </div>
+        </div>
+        </div>
+        <div class="voting-outcome">
+            <div class="phase-header">🗳️ Voting Results</div>
+            <div class="vote-breakdown">
+                <span class='vote-target'>Dahlia</span>: 4 votes &nbsp;|&nbsp; <span class='vote-target'>Aaliyah</span>: 3 votes &nbsp;|&nbsp; <span class='vote-target'>Elena</span>: 2 votes &nbsp;|&nbsp; <span class='vote-target'>Rashid</span>: 2 votes &nbsp;|&nbsp; <span class='vote-target'>Freya</span>: 1 vote &nbsp;|&nbsp; <span class='vote-target'>Nathan</span>: 1 vote
+            </div>
+            
+            <div class="banishment-announcement faithful-lost">
+                <div class="banishment-icon">😇</div>
+                <div class="banishment-text">
+                    <strong class="faithful-text">Dahlia</strong> has been banished!
+                    <br><span class="role-reveal">Revealed as: <span class="faithful-text">FAITHFUL</span></span>
+                    <br><em class="result-text">An innocent was wrongly banished...</em>
+                </div>
+            </div>
+            
+        </div>
+        </div><div class='round-section'><h4>Round 5</h4><div class='phase-header'>☀️ Discussion Phase</div>
+        <div class="message ">
+            <span class="speaker">Priya:</span>
+            <span class="content"></span>
+        </div>
+        
+        <div class="message ">
+            <span class="speaker">Derek:</span>
+            <span class="content"></span>
+        </div>
+        
+        <div class="message ">
+            <span class="speaker">Carlos:</span>
+            <span class="content"></span>
+        </div>
+        
+        <div class="message ">
+            <span class="speaker">Olivia:</span>
+            <span class="content"></span>
+        </div>
+        
+        <div class="message ">
+            <span class="speaker">Sofia:</span>
+            <span class="content"></span>
+        </div>
+        
+        <div class="message ">
+            <span class="speaker">Marcus:</span>
+            <span class="content"></span>
+        </div>
+        
+        <div class="message ">
+            <span class="speaker">Simone:</span>
+            <span class="content"></span>
+        </div>
+        
+        <div class="message ">
+            <span class="speaker">Elena:</span>
+            <span class="content"></span>
+        </div>
+        
+        <div class="message ">
+            <span class="speaker">Freya:</span>
+            <span class="content"></span>
+        </div>
+        
+        <div class="message ">
+            <span class="speaker">Rashid:</span>
+            <span class="content"></span>
+        </div>
+        
+        <div class="message ">
+            <span class="speaker">Nathan:</span>
+            <span class="content"></span>
+        </div>
+        
+        <div class="message ">
+            <span class="speaker">Marcus:</span>
+            <span class="content"></span>
+        </div>
+        
+        <div class="message ">
+            <span class="speaker">Olivia:</span>
+            <span class="content"></span>
+        </div>
+        
+        <div class="message ">
+            <span class="speaker">Elena:</span>
+            <span class="content"></span>
+        </div>
+        
+        <div class="message ">
+            <span class="speaker">Derek:</span>
+            <span class="content"></span>
+        </div>
+        
+        <div class="message ">
+            <span class="speaker">Simone:</span>
+            <span class="content"></span>
+        </div>
+        
+        <div class="message ">
+            <span class="speaker">Olivia:</span>
+            <span class="content"></span>
+        </div>
+        
+        <div class="message ">
+            <span class="speaker">Simone:</span>
+            <span class="content"></span>
+        </div>
+        
+        <div class="message ">
+            <span class="speaker">Derek:</span>
+            <span class="content"></span>
+        </div>
+        
+            <div class='night-phase-section'>
+                <div class='phase-header night-header'>🌙 Night Phase - Traitor Meeting</div>
+                <div class='night-subtext'>The traitors meet in secret while the faithful sleep...</div>
+            
+        <div class="message private-msg">
+            <span class="speaker">Rashid:</span>
+            <span class="content"></span>
+        </div>
+        
+        <div class="message private-msg">
+            <span class="speaker">Olivia:</span>
+            <span class="content"></span>
+        </div>
+        
+        <div class="message private-msg">
+            <span class="speaker">Freya:</span>
+            <span class="content"></span>
+        </div>
+        
+        <div class="murder-announcement">
+            <div class="murder-icon">💀</div>
+            <div class="murder-text">
+                <strong class="faithful-text">Simone</strong> was found murdered.
+                <br><em class="murder-subtext">The traitors struck under cover of darkness...</em>
+            </div>
+        </div>
+        </div>
+        <div class="voting-outcome">
+            <div class="phase-header">🗳️ Voting Results</div>
+            <div class="vote-breakdown">
+                <span class='vote-target'>Elena</span>: 3 votes &nbsp;|&nbsp; <span class='vote-target'>Carlos</span>: 2 votes &nbsp;|&nbsp; <span class='vote-target'>Priya</span>: 2 votes &nbsp;|&nbsp; <span class='vote-target'>Marcus</span>: 2 votes &nbsp;|&nbsp; <span class='vote-target'>Olivia</span>: 1 vote &nbsp;|&nbsp; <span class='vote-target'>Derek</span>: 1 vote
+            </div>
+            
+            <div class="banishment-announcement faithful-lost">
+                <div class="banishment-icon">😇</div>
+                <div class="banishment-text">
+                    <strong class="faithful-text">Elena</strong> has been banished!
+                    <br><span class="role-reveal">Revealed as: <span class="faithful-text">FAITHFUL</span></span>
+                    <br><em class="result-text">An innocent was wrongly banished...</em>
+                </div>
+            </div>
+            
+        </div>
+        </div><div class='round-section'><h4>Round 6</h4><div class='phase-header'>☀️ Discussion Phase</div>
+        <div class="message ">
+            <span class="speaker">Carlos:</span>
+            <span class="content"></span>
+        </div>
+        
+        <div class="message ">
+            <span class="speaker">Derek:</span>
+            <span class="content"></span>
+        </div>
+        
+        <div class="message ">
+            <span class="speaker">Rashid:</span>
+            <span class="content"></span>
+        </div>
+        
+        <div class="message ">
+            <span class="speaker">Freya:</span>
+            <span class="content"></span>
+        </div>
+        
+        <div class="message ">
+            <span class="speaker">Simone:</span>
+            <span class="content"></span>
+        </div>
+        
+        <div class="message ">
+            <span class="speaker">Nathan:</span>
+            <span class="content"></span>
+        </div>
+        
+        <div class="message ">
+            <span class="speaker">Olivia:</span>
+            <span class="content"></span>
+        </div>
+        
+        <div class="message ">
+            <span class="speaker">Priya:</span>
+            <span class="content"></span>
+        </div>
+        
+        <div class="message ">
+            <span class="speaker">Sofia:</span>
+            <span class="content"></span>
+        </div>
+        
+        <div class="message ">
+            <span class="speaker">Derek:</span>
+            <span class="content"></span>
+        </div>
+        
+        <div class="message ">
+            <span class="speaker">Freya:</span>
+            <span class="content"></span>
+        </div>
+        
+        <div class="message ">
+            <span class="speaker">Priya:</span>
+            <span class="content"></span>
+        </div>
+        
+        <div class="message ">
+            <span class="speaker">Carlos:</span>
+            <span class="content"></span>
+        </div>
+        
+            <div class='night-phase-section'>
+                <div class='phase-header night-header'>🌙 Night Phase - Traitor Meeting</div>
+                <div class='night-subtext'>The traitors meet in secret while the faithful sleep...</div>
+            
+        <div class="message private-msg">
+            <span class="speaker">Rashid:</span>
+            <span class="content"></span>
+        </div>
+        
+        <div class="message private-msg">
+            <span class="speaker">Olivia:</span>
+            <span class="content"></span>
+        </div>
+        
+        <div class="message private-msg">
+            <span class="speaker">Freya:</span>
+            <span class="content"></span>
+        </div>
+        
+        <div class="murder-announcement">
+            <div class="murder-icon">💀</div>
+            <div class="murder-text">
+                <strong class="faithful-text">Wesley</strong> was found murdered.
+                <br><em class="murder-subtext">The traitors struck under cover of darkness...</em>
+            </div>
+        </div>
+        </div>
+        <div class="voting-outcome">
+            <div class="phase-header">🗳️ Voting Results</div>
+            <div class="vote-breakdown">
+                <span class='vote-target'>Nathan</span>: 3 votes &nbsp;|&nbsp; <span class='vote-target'>Olivia</span>: 2 votes &nbsp;|&nbsp; <span class='vote-target'>Sofia</span>: 2 votes &nbsp;|&nbsp; <span class='vote-target'>Freya</span>: 1 vote &nbsp;|&nbsp; <span class='vote-target'>Derek</span>: 1 vote
+            </div>
+            
+            <div class="banishment-announcement faithful-lost">
+                <div class="banishment-icon">😇</div>
+                <div class="banishment-text">
+                    <strong class="faithful-text">Nathan</strong> has been banished!
+                    <br><span class="role-reveal">Revealed as: <span class="faithful-text">FAITHFUL</span></span>
+                    <br><em class="result-text">An innocent was wrongly banished...</em>
+                </div>
+            </div>
+            
+        </div>
+        </div><div class='round-section'><h4>Round 7</h4><div class='phase-header'>☀️ Discussion Phase</div>
+        <div class="message ">
+            <span class="speaker">Olivia:</span>
+            <span class="content"></span>
+        </div>
+        
+        <div class="message ">
+            <span class="speaker">Rashid:</span>
+            <span class="content"></span>
+        </div>
+        
+        <div class="message ">
+            <span class="speaker">Priya:</span>
+            <span class="content"></span>
+        </div>
+        
+        <div class="message ">
+            <span class="speaker">Carlos:</span>
+            <span class="content"></span>
+        </div>
+        
+        <div class="message ">
+            <span class="speaker">Derek:</span>
+            <span class="content"></span>
+        </div>
+        
+        <div class="message ">
+            <span class="speaker">Sofia:</span>
+            <span class="content"></span>
+        </div>
+        
+        <div class="message ">
+            <span class="speaker">Freya:</span>
+            <span class="content"></span>
+        </div>
+        
+        <div class="message ">
+            <span class="speaker">Freya:</span>
+            <span class="content"></span>
+        </div>
+        
+        <div class="message ">
+            <span class="speaker">Priya:</span>
+            <span class="content"></span>
+        </div>
+        
+        <div class="message ">
+            <span class="speaker">Olivia:</span>
+            <span class="content"></span>
+        </div>
+        
+        <div class="message ">
+            <span class="speaker">Rashid:</span>
+            <span class="content"></span>
+        </div>
+        
+        <div class="message ">
+            <span class="speaker">Sofia:</span>
+            <span class="content"></span>
+        </div>
+        
+        <div class="message ">
+            <span class="speaker">Freya:</span>
+            <span class="content"></span>
+        </div>
+        
+        <div class="message ">
+            <span class="speaker">Olivia:</span>
+            <span class="content"></span>
+        </div>
+        
+        <div class="voting-outcome">
+            <div class="phase-header">🗳️ Voting Results</div>
+            <div class="vote-breakdown">
+                <span class='vote-target'>Derek</span>: 2 votes &nbsp;|&nbsp; <span class='vote-target'>Olivia</span>: 1 vote &nbsp;|&nbsp; <span class='vote-target'>Rashid</span>: 1 vote &nbsp;|&nbsp; <span class='vote-target'>Sofia</span>: 1 vote &nbsp;|&nbsp; <span class='vote-target'>Carlos</span>: 1 vote &nbsp;|&nbsp; <span class='vote-target'>Freya</span>: 1 vote
+            </div>
+            
+            <div class="banishment-announcement faithful-lost">
+                <div class="banishment-icon">😇</div>
+                <div class="banishment-text">
+                    <strong class="faithful-text">Derek</strong> has been banished!
+                    <br><span class="role-reveal">Revealed as: <span class="faithful-text">FAITHFUL</span></span>
+                    <br><em class="result-text">An innocent was wrongly banished...</em>
+                </div>
+            </div>
+            
+        </div>
+        </div>
+        </section>
+
+        <section>
+            <h2>LLM Interaction Details</h2>
+            <p style="margin-bottom: 1rem; color: var(--text-muted);">
+                Click on a player to see all their LLM interactions during the game.
+                Each interaction shows the exact system prompt, user message, and response.
+            </p>
+            <p><em>No LLM interaction data available for this game.</em></p>
+        </section>
+
+        <section>
+            <h2>Full Game Log</h2>
+            <div class="game-log">
+                <div class='log-line'>
+============================================================</div>
+<div class='log-line'>THE TRAITORS - GAME SIMULATION</div>
+<div class='log-line'>============================================================</div>
+<div class='log-line'>Players: Marcus, Sofia, Derek, Elena, Jaylen, Priya, Terrence, Aaliyah, Victor, Camille, Rashid, Gloria, Olivia, Nathan, Simone, Wesley, Dahlia, Carlos, Freya</div>
+<div class='log-line'>Finale begins after round 8</div>
+<div class='log-line'>
+============================================================</div>
+<div class='log-line'>ROLE ASSIGNMENT (Secret - players don&#x27;t know each other&#x27;s roles)</div>
+<div class='log-line'>============================================================</div>
+<div class='log-line'>  Marcus: FAITHFUL</div>
+<div class='log-line'>  Sofia: FAITHFUL</div>
+<div class='log-line'>  Derek: FAITHFUL</div>
+<div class='log-line'>  Elena: FAITHFUL</div>
+<div class='log-line'>  Jaylen: FAITHFUL</div>
+<div class='log-line'>  Priya: FAITHFUL</div>
+<div class='log-line'>  Terrence: FAITHFUL</div>
+<div class='log-line'>  Aaliyah: FAITHFUL</div>
+<div class='log-line'>  Victor: FAITHFUL</div>
+<div class='log-line'>  Camille: FAITHFUL</div>
+<div class='log-line'>  Rashid: TRAITOR</div>
+<div class='log-line'>  Gloria: FAITHFUL</div>
+<div class='log-line'>  Olivia: TRAITOR</div>
+<div class='log-line'>  Nathan: FAITHFUL</div>
+<div class='log-line'>  Simone: FAITHFUL</div>
+<div class='log-line'>  Wesley: FAITHFUL</div>
+<div class='log-line'>  Dahlia: FAITHFUL</div>
+<div class='log-line'>  Carlos: FAITHFUL</div>
+<div class='log-line'>  Freya: TRAITOR</div>
+<div class='log-line'>
+############################################################</div>
+<div class='log-line'>ROUND 1</div>
+<div class='log-line'>############################################################</div>
+<div class='log-line'>Alive: Marcus, Sofia, Derek, Elena, Jaylen, Priya, Terrence, Aaliyah, Victor, Camille, Rashid, Gloria, Olivia, Nathan, Simone, Wesley, Dahlia, Carlos, Freya</div>
+<div class='log-line'>
+----------------------------------------</div>
+<div class='log-line'>ROUND 1 - DISCUSSION PHASE</div>
+<div class='log-line'>----------------------------------------</div>
+<div class='log-line'>
+--- Turn 1 of 3 ---</div>
+<div class='log-line'>
+Priya: </div>
+<div class='log-line'>
+Carlos: </div>
+<div class='log-line'>
+Marcus: </div>
+<div class='log-line'>
+Terrence: </div>
+<div class='log-line'>
+Dahlia: </div>
+<div class='log-line'>
+Elena: </div>
+<div class='log-line'>
+Olivia: </div>
+<div class='log-line'>
+Aaliyah: </div>
+<div class='log-line'>
+Wesley: </div>
+<div class='log-line'>
+Freya: </div>
+<div class='log-line'>
+Rashid: </div>
+<div class='log-line'>
+Camille: </div>
+<div class='log-line'>
+Simone: </div>
+<div class='log-line'>
+Gloria: </div>
+<div class='log-line'>
+Derek: </div>
+<div class='log-line'>
+Victor: </div>
+<div class='log-line'>
+Sofia: </div>
+<div class='log-line'>
+Nathan: </div>
+<div class='log-line'>
+Jaylen: </div>
+<div class='log-line'>
+--- Turn 2 of 3 ---</div>
+<div class='log-line'>
+Sofia: [PASS]</div>
+<div class='log-line'>
+Elena: [PASS]</div>
+<div class='log-line'>
+Dahlia: [PASS]</div>
+<div class='log-line'>
+Derek: [PASS]</div>
+<div class='log-line'>
+Nathan: [PASS]</div>
+<div class='log-line'>
+Gloria: [PASS]</div>
+<div class='log-line'>
+Camille: </div>
+<div class='log-line'>
+Wesley: </div>
+<div class='log-line'>
+Priya: [PASS]</div>
+<div class='log-line'>
+Marcus: </div>
+<div class='log-line'>
+Victor: </div>
+<div class='log-line'>
+Aaliyah: [PASS]</div>
+<div class='log-line'>
+Terrence: </div>
+<div class='log-line'>
+Freya: [PASS]</div>
+<div class='log-line'>
+Carlos: [PASS]</div>
+<div class='log-line'>
+Olivia: [PASS]</div>
+<div class='log-line'>
+Rashid: [PASS]</div>
+<div class='log-line'>
+Jaylen: [PASS]</div>
+<div class='log-line'>
+Simone: </div>
+<div class='log-line'>
+--- Turn 3 of 3 ---</div>
+<div class='log-line'>
+Camille: [PASS]</div>
+<div class='log-line'>
+Simone: [PASS]</div>
+<div class='log-line'>
+Terrence: [PASS]</div>
+<div class='log-line'>
+Marcus: </div>
+<div class='log-line'>
+Wesley: [PASS]</div>
+<div class='log-line'>
+Victor: [PASS]</div>
+<div class='log-line'>
+----------------------------------------</div>
+<div class='log-line'>VOTING PHASE - Who will be banished?</div>
+<div class='log-line'>----------------------------------------</div>
+<div class='log-line'>  Marcus votes for: Simone</div>
+<div class='log-line'>  Sofia votes for: Marcus</div>
+<div class='log-line'>  Derek votes for: Victor</div>
+<div class='log-line'>  Elena votes for: Nathan</div>
+<div class='log-line'>  Jaylen votes for: Rashid</div>
+<div class='log-line'>  Priya votes for: Derek</div>
+<div class='log-line'>  Terrence votes for: Nathan</div>
+<div class='log-line'>  Aaliyah votes for: Jaylen</div>
+<div class='log-line'>  Victor votes for: Freya</div>
+<div class='log-line'>  Camille votes for: Freya</div>
+<div class='log-line'>  Rashid votes for: Victor</div>
+<div class='log-line'>  Gloria votes for: Nathan</div>
+<div class='log-line'>  Olivia votes for: Aaliyah</div>
+<div class='log-line'>  Nathan votes for: Rashid</div>
+<div class='log-line'>  Simone votes for: Camille</div>
+<div class='log-line'>  Wesley votes for: Elena</div>
+<div class='log-line'>  Dahlia votes for: Victor</div>
+<div class='log-line'>  Carlos votes for: Dahlia</div>
+<div class='log-line'>  Freya votes for: Victor</div>
+<div class='log-line'>
+========================================</div>
+<div class='log-line'>BANISHED: Victor</div>
+<div class='log-line'>They were a: FAITHFUL</div>
+<div class='log-line'>========================================</div>
+<div class='log-line'>
+----------------------------------------</div>
+<div class='log-line'>NIGHT PHASE - Traitors meet in secret...</div>
+<div class='log-line'>----------------------------------------</div>
+<div class='log-line'>
+[Traitors discuss strategy...]</div>
+<div class='log-line'>
+[TRAITOR] Rashid: </div>
+<div class='log-line'>
+[TRAITOR] Olivia: </div>
+<div class='log-line'>
+[TRAITOR] Freya: </div>
+<div class='log-line'>
+[Traitors vote on target...]</div>
+<div class='log-line'>[MURDER VOTE] Rashid votes: Gloria</div>
+<div class='log-line'>[MURDER VOTE] Olivia votes: Gloria</div>
+<div class='log-line'>[MURDER VOTE] Freya votes: Priya</div>
+<div class='log-line'>
+========================================</div>
+<div class='log-line'>MURDERED: Gloria</div>
+<div class='log-line'>The faithful mourn their loss...</div>
+<div class='log-line'>========================================</div>
+<div class='log-line'>
+############################################################</div>
+<div class='log-line'>ROUND 2</div>
+<div class='log-line'>############################################################</div>
+<div class='log-line'>Alive: Marcus, Sofia, Derek, Elena, Jaylen, Priya, Terrence, Aaliyah, Camille, Rashid, Olivia, Nathan, Simone, Wesley, Dahlia, Carlos, Freya</div>
+<div class='log-line'>
+----------------------------------------</div>
+<div class='log-line'>ROUND 2 - DISCUSSION PHASE</div>
+<div class='log-line'>----------------------------------------</div>
+<div class='log-line'>
+--- Turn 1 of 3 ---</div>
+<div class='log-line'>
+Simone: </div>
+<div class='log-line'>
+Sofia: </div>
+<div class='log-line'>
+Aaliyah: </div>
+<div class='log-line'>
+Jaylen: </div>
+<div class='log-line'>
+Wesley: </div>
+<div class='log-line'>
+Nathan: </div>
+<div class='log-line'>
+Terrence: </div>
+<div class='log-line'>
+Priya: </div>
+<div class='log-line'>
+Camille: </div>
+<div class='log-line'>
+Freya: </div>
+<div class='log-line'>
+Dahlia: </div>
+<div class='log-line'>
+Marcus: </div>
+<div class='log-line'>
+Derek: </div>
+<div class='log-line'>
+Olivia: </div>
+<div class='log-line'>
+Elena: </div>
+<div class='log-line'>
+Carlos: </div>
+<div class='log-line'>
+Rashid: </div>
+<div class='log-line'>
+--- Turn 2 of 3 ---</div>
+<div class='log-line'>
+Olivia: [PASS]</div>
+<div class='log-line'>
+Dahlia: [PASS]</div>
+<div class='log-line'>
+Elena: [PASS]</div>
+<div class='log-line'>
+Freya: [PASS]</div>
+<div class='log-line'>
+Camille: [PASS]</div>
+<div class='log-line'>
+Terrence: </div>
+<div class='log-line'>
+Jaylen: </div>
+<div class='log-line'>
+Derek: </div>
+<div class='log-line'>
+Marcus: </div>
+<div class='log-line'>
+Wesley: </div>
+<div class='log-line'>
+Aaliyah: [PASS]</div>
+<div class='log-line'>
+Carlos: </div>
+<div class='log-line'>
+Simone: [PASS]</div>
+<div class='log-line'>
+Sofia: [PASS]</div>
+<div class='log-line'>
+Nathan: </div>
+<div class='log-line'>
+Priya: [PASS]</div>
+<div class='log-line'>
+Rashid: [PASS]</div>
+<div class='log-line'>
+--- Turn 3 of 3 ---</div>
+<div class='log-line'>
+Derek: [PASS]</div>
+<div class='log-line'>
+Terrence: </div>
+<div class='log-line'>
+Wesley: </div>
+<div class='log-line'>
+Nathan: [PASS]</div>
+<div class='log-line'>
+Marcus: </div>
+<div class='log-line'>
+Jaylen: </div>
+<div class='log-line'>
+Carlos: </div>
+<div class='log-line'>
+----------------------------------------</div>
+<div class='log-line'>VOTING PHASE - Who will be banished?</div>
+<div class='log-line'>----------------------------------------</div>
+<div class='log-line'>  Marcus votes for: Elena</div>
+<div class='log-line'>  Sofia votes for: Dahlia</div>
+<div class='log-line'>  Derek votes for: Olivia</div>
+<div class='log-line'>  Elena votes for: Wesley</div>
+<div class='log-line'>  Jaylen votes for: Nathan</div>
+<div class='log-line'>  Priya votes for: Jaylen</div>
+<div class='log-line'>  Terrence votes for: Marcus</div>
+<div class='log-line'>  Aaliyah votes for: Jaylen</div>
+<div class='log-line'>  Camille votes for: Jaylen</div>
+<div class='log-line'>  Rashid votes for: Simone</div>
+<div class='log-line'>  Olivia votes for: Jaylen</div>
+<div class='log-line'>  Nathan votes for: Jaylen</div>
+<div class='log-line'>  Simone votes for: Olivia</div>
+<div class='log-line'>  Wesley votes for: Terrence</div>
+<div class='log-line'>  Dahlia votes for: Wesley</div>
+<div class='log-line'>  Carlos votes for: Aaliyah</div>
+<div class='log-line'>  Freya votes for: Aaliyah</div>
+<div class='log-line'>
+========================================</div>
+<div class='log-line'>BANISHED: Jaylen</div>
+<div class='log-line'>They were a: FAITHFUL</div>
+<div class='log-line'>========================================</div>
+<div class='log-line'>
+----------------------------------------</div>
+<div class='log-line'>NIGHT PHASE - Traitors meet in secret...</div>
+<div class='log-line'>----------------------------------------</div>
+<div class='log-line'>
+[Traitors discuss strategy...]</div>
+<div class='log-line'>
+[TRAITOR] Rashid: </div>
+<div class='log-line'>
+[TRAITOR] Olivia: </div>
+<div class='log-line'>
+[TRAITOR] Freya: </div>
+<div class='log-line'>
+[Traitors vote on target...]</div>
+<div class='log-line'>[MURDER VOTE] Rashid votes: Camille</div>
+<div class='log-line'>[MURDER VOTE] Olivia votes: Terrence</div>
+<div class='log-line'>[MURDER VOTE] Freya votes: Simone</div>
+<div class='log-line'>
+========================================</div>
+<div class='log-line'>MURDERED: Terrence</div>
+<div class='log-line'>The faithful mourn their loss...</div>
+<div class='log-line'>========================================</div>
+<div class='log-line'>
+############################################################</div>
+<div class='log-line'>ROUND 3</div>
+<div class='log-line'>############################################################</div>
+<div class='log-line'>Alive: Marcus, Sofia, Derek, Elena, Priya, Aaliyah, Camille, Rashid, Olivia, Nathan, Simone, Wesley, Dahlia, Carlos, Freya</div>
+<div class='log-line'>
+----------------------------------------</div>
+<div class='log-line'>ROUND 3 - DISCUSSION PHASE</div>
+<div class='log-line'>----------------------------------------</div>
+<div class='log-line'>
+--- Turn 1 of 3 ---</div>
+<div class='log-line'>
+Carlos: </div>
+<div class='log-line'>
+Sofia: </div>
+<div class='log-line'>
+Priya: </div>
+<div class='log-line'>
+Freya: </div>
+<div class='log-line'>
+Rashid: </div>
+<div class='log-line'>
+Simone: </div>
+<div class='log-line'>
+Camille: </div>
+<div class='log-line'>
+Marcus: </div>
+<div class='log-line'>
+Elena: </div>
+<div class='log-line'>
+Nathan: </div>
+<div class='log-line'>
+Derek: </div>
+<div class='log-line'>
+Dahlia: </div>
+<div class='log-line'>
+Aaliyah: </div>
+<div class='log-line'>
+Olivia: </div>
+<div class='log-line'>
+Wesley: </div>
+<div class='log-line'>
+--- Turn 2 of 3 ---</div>
+<div class='log-line'>
+Marcus: [PASS]</div>
+<div class='log-line'>
+Derek: [PASS]</div>
+<div class='log-line'>
+Sofia: </div>
+<div class='log-line'>
+Nathan: </div>
+<div class='log-line'>
+Dahlia: [PASS]</div>
+<div class='log-line'>
+Priya: [PASS]</div>
+<div class='log-line'>
+Camille: </div>
+<div class='log-line'>
+Carlos: [PASS]</div>
+<div class='log-line'>
+Simone: </div>
+<div class='log-line'>
+Olivia: [PASS]</div>
+<div class='log-line'>
+Wesley: [PASS]</div>
+<div class='log-line'>
+Freya: </div>
+<div class='log-line'>
+Rashid: </div>
+<div class='log-line'>
+Elena: [PASS]</div>
+<div class='log-line'>
+Aaliyah: [PASS]</div>
+<div class='log-line'>
+--- Turn 3 of 3 ---</div>
+<div class='log-line'>
+Freya: [PASS]</div>
+<div class='log-line'>
+Nathan: </div>
+<div class='log-line'>
+Simone: [PASS]</div>
+<div class='log-line'>
+Rashid: [PASS]</div>
+<div class='log-line'>
+Camille: [PASS]</div>
+<div class='log-line'>
+Sofia: [PASS]</div>
+<div class='log-line'>
+----------------------------------------</div>
+<div class='log-line'>VOTING PHASE - Who will be banished?</div>
+<div class='log-line'>----------------------------------------</div>
+<div class='log-line'>  Marcus votes for: Priya</div>
+<div class='log-line'>  Sofia votes for: Wesley</div>
+<div class='log-line'>  Derek votes for: Camille</div>
+<div class='log-line'>  Elena votes for: Camille</div>
+<div class='log-line'>  Priya votes for: Camille</div>
+<div class='log-line'>  Aaliyah votes for: Freya</div>
+<div class='log-line'>  Camille votes for: Derek</div>
+<div class='log-line'>  Rashid votes for: Aaliyah</div>
+<div class='log-line'>  Olivia votes for: Carlos</div>
+<div class='log-line'>  Nathan votes for: Sofia</div>
+<div class='log-line'>  Simone votes for: Freya</div>
+<div class='log-line'>  Wesley votes for: Simone</div>
+<div class='log-line'>  Dahlia votes for: Marcus</div>
+<div class='log-line'>  Carlos votes for: Priya</div>
+<div class='log-line'>  Freya votes for: Derek</div>
+<div class='log-line'>
+========================================</div>
+<div class='log-line'>BANISHED: Camille</div>
+<div class='log-line'>They were a: FAITHFUL</div>
+<div class='log-line'>========================================</div>
+<div class='log-line'>
+----------------------------------------</div>
+<div class='log-line'>NIGHT PHASE - Traitors meet in secret...</div>
+<div class='log-line'>----------------------------------------</div>
+<div class='log-line'>
+[Traitors discuss strategy...]</div>
+<div class='log-line'>
+[TRAITOR] Rashid: </div>
+<div class='log-line'>
+[TRAITOR] Olivia: </div>
+<div class='log-line'>
+[TRAITOR] Freya: </div>
+<div class='log-line'>
+[Traitors vote on target...]</div>
+<div class='log-line'>[MURDER VOTE] Rashid votes: Wesley</div>
+<div class='log-line'>[MURDER VOTE] Olivia votes: Wesley</div>
+<div class='log-line'>[MURDER VOTE] Freya votes: Sofia</div>
+<div class='log-line'>
+========================================</div>
+<div class='log-line'>MURDERED: Wesley</div>
+<div class='log-line'>The faithful mourn their loss...</div>
+<div class='log-line'>========================================</div>
+<div class='log-line'>
+############################################################</div>
+<div class='log-line'>ROUND 4</div>
+<div class='log-line'>############################################################</div>
+<div class='log-line'>Alive: Marcus, Sofia, Derek, Elena, Priya, Aaliyah, Rashid, Olivia, Nathan, Simone, Dahlia, Carlos, Freya</div>
+<div class='log-line'>
+----------------------------------------</div>
+<div class='log-line'>ROUND 4 - DISCUSSION PHASE</div>
+<div class='log-line'>----------------------------------------</div>
+<div class='log-line'>
+--- Turn 1 of 3 ---</div>
+<div class='log-line'>
+Simone: </div>
+<div class='log-line'>
+Sofia: </div>
+<div class='log-line'>
+Dahlia: </div>
+<div class='log-line'>
+Derek: </div>
+<div class='log-line'>
+Freya: </div>
+<div class='log-line'>
+Aaliyah: </div>
+<div class='log-line'>
+Marcus: </div>
+<div class='log-line'>
+Carlos: </div>
+<div class='log-line'>
+Nathan: </div>
+<div class='log-line'>
+Priya: </div>
+<div class='log-line'>
+Olivia: </div>
+<div class='log-line'>
+Elena: </div>
+<div class='log-line'>
+Rashid: </div>
+<div class='log-line'>
+--- Turn 2 of 3 ---</div>
+<div class='log-line'>
+Marcus: [PASS]</div>
+<div class='log-line'>
+Sofia: </div>
+<div class='log-line'>
+Elena: [PASS]</div>
+<div class='log-line'>
+Olivia: </div>
+<div class='log-line'>
+Derek: [PASS]</div>
+<div class='log-line'>
+Priya: [PASS]</div>
+<div class='log-line'>
+Dahlia: </div>
+<div class='log-line'>
+Rashid: [PASS]</div>
+<div class='log-line'>
+Carlos: [PASS]</div>
+<div class='log-line'>
+Freya: </div>
+<div class='log-line'>
+Aaliyah: </div>
+<div class='log-line'>
+Simone: </div>
+<div class='log-line'>
+Nathan: </div>
+<div class='log-line'>
+--- Turn 3 of 3 ---</div>
+<div class='log-line'>
+Sofia: </div>
+<div class='log-line'>
+Nathan: [PASS]</div>
+<div class='log-line'>
+Dahlia: </div>
+<div class='log-line'>
+Freya: </div>
+<div class='log-line'>
+Olivia: [PASS]</div>
+<div class='log-line'>
+Aaliyah: </div>
+<div class='log-line'>
+Simone: [PASS]</div>
+<div class='log-line'>
+----------------------------------------</div>
+<div class='log-line'>VOTING PHASE - Who will be banished?</div>
+<div class='log-line'>----------------------------------------</div>
+<div class='log-line'>  Marcus votes for: Elena</div>
+<div class='log-line'>  Sofia votes for: Freya</div>
+<div class='log-line'>  Derek votes for: Dahlia</div>
+<div class='log-line'>  Elena votes for: Rashid</div>
+<div class='log-line'>  Priya votes for: Dahlia</div>
+<div class='log-line'>  Aaliyah votes for: Nathan</div>
+<div class='log-line'>  Rashid votes for: Aaliyah</div>
+<div class='log-line'>  Olivia votes for: Aaliyah</div>
+<div class='log-line'>  Nathan votes for: Dahlia</div>
+<div class='log-line'>  Simone votes for: Rashid</div>
+<div class='log-line'>  Dahlia votes for: Elena</div>
+<div class='log-line'>  Carlos votes for: Dahlia</div>
+<div class='log-line'>  Freya votes for: Aaliyah</div>
+<div class='log-line'>
+========================================</div>
+<div class='log-line'>BANISHED: Dahlia</div>
+<div class='log-line'>They were a: FAITHFUL</div>
+<div class='log-line'>========================================</div>
+<div class='log-line'>
+----------------------------------------</div>
+<div class='log-line'>NIGHT PHASE - Traitors meet in secret...</div>
+<div class='log-line'>----------------------------------------</div>
+<div class='log-line'>
+[Traitors discuss strategy...]</div>
+<div class='log-line'>
+[TRAITOR] Rashid: </div>
+<div class='log-line'>
+[TRAITOR] Olivia: </div>
+<div class='log-line'>
+[TRAITOR] Freya: </div>
+<div class='log-line'>
+[Traitors vote on target...]</div>
+<div class='log-line'>[MURDER VOTE] Rashid votes: Nathan</div>
+<div class='log-line'>[MURDER VOTE] Olivia votes: Aaliyah</div>
+<div class='log-line'>[MURDER VOTE] Freya votes: Marcus</div>
+<div class='log-line'>
+========================================</div>
+<div class='log-line'>MURDERED: Aaliyah</div>
+<div class='log-line'>The faithful mourn their loss...</div>
+<div class='log-line'>========================================</div>
+<div class='log-line'>
+############################################################</div>
+<div class='log-line'>ROUND 5</div>
+<div class='log-line'>############################################################</div>
+<div class='log-line'>Alive: Marcus, Sofia, Derek, Elena, Priya, Rashid, Olivia, Nathan, Simone, Carlos, Freya</div>
+<div class='log-line'>
+----------------------------------------</div>
+<div class='log-line'>ROUND 5 - DISCUSSION PHASE</div>
+<div class='log-line'>----------------------------------------</div>
+<div class='log-line'>
+--- Turn 1 of 3 ---</div>
+<div class='log-line'>
+Priya: </div>
+<div class='log-line'>
+Derek: </div>
+<div class='log-line'>
+Carlos: </div>
+<div class='log-line'>
+Olivia: </div>
+<div class='log-line'>
+Sofia: </div>
+<div class='log-line'>
+Marcus: </div>
+<div class='log-line'>
+Simone: </div>
+<div class='log-line'>
+Elena: </div>
+<div class='log-line'>
+Freya: </div>
+<div class='log-line'>
+Rashid: </div>
+<div class='log-line'>
+Nathan: </div>
+<div class='log-line'>
+--- Turn 2 of 3 ---</div>
+<div class='log-line'>
+Marcus: </div>
+<div class='log-line'>
+Rashid: [PASS]</div>
+<div class='log-line'>
+Nathan: [PASS]</div>
+<div class='log-line'>
+Carlos: [PASS]</div>
+<div class='log-line'>
+Olivia: </div>
+<div class='log-line'>
+Elena: </div>
+<div class='log-line'>
+Freya: [PASS]</div>
+<div class='log-line'>
+Derek: </div>
+<div class='log-line'>
+Priya: [PASS]</div>
+<div class='log-line'>
+Simone: </div>
+<div class='log-line'>
+Sofia: [PASS]</div>
+<div class='log-line'>
+--- Turn 3 of 3 ---</div>
+<div class='log-line'>
+Olivia: </div>
+<div class='log-line'>
+Simone: </div>
+<div class='log-line'>
+Derek: </div>
+<div class='log-line'>
+Elena: [PASS]</div>
+<div class='log-line'>
+Marcus: [PASS]</div>
+<div class='log-line'>
+----------------------------------------</div>
+<div class='log-line'>VOTING PHASE - Who will be banished?</div>
+<div class='log-line'>----------------------------------------</div>
+<div class='log-line'>  Marcus votes for: Olivia</div>
+<div class='log-line'>  Sofia votes for: Carlos</div>
+<div class='log-line'>  Derek votes for: Elena</div>
+<div class='log-line'>  Elena votes for: Priya</div>
+<div class='log-line'>  Priya votes for: Derek</div>
+<div class='log-line'>  Rashid votes for: Carlos</div>
+<div class='log-line'>  Olivia votes for: Elena</div>
+<div class='log-line'>  Nathan votes for: Marcus</div>
+<div class='log-line'>  Simone votes for: Elena</div>
+<div class='log-line'>  Carlos votes for: Marcus</div>
+<div class='log-line'>  Freya votes for: Priya</div>
+<div class='log-line'>
+========================================</div>
+<div class='log-line'>BANISHED: Elena</div>
+<div class='log-line'>They were a: FAITHFUL</div>
+<div class='log-line'>========================================</div>
+<div class='log-line'>
+----------------------------------------</div>
+<div class='log-line'>NIGHT PHASE - Traitors meet in secret...</div>
+<div class='log-line'>----------------------------------------</div>
+<div class='log-line'>
+[Traitors discuss strategy...]</div>
+<div class='log-line'>
+[TRAITOR] Rashid: </div>
+<div class='log-line'>
+[TRAITOR] Olivia: </div>
+<div class='log-line'>
+[TRAITOR] Freya: </div>
+<div class='log-line'>
+[Traitors vote on target...]</div>
+<div class='log-line'>[MURDER VOTE] Rashid votes: Marcus</div>
+<div class='log-line'>[MURDER VOTE] Olivia votes: Marcus</div>
+<div class='log-line'>[MURDER VOTE] Freya votes: Nathan</div>
+<div class='log-line'>
+========================================</div>
+<div class='log-line'>MURDERED: Marcus</div>
+<div class='log-line'>The faithful mourn their loss...</div>
+<div class='log-line'>========================================</div>
+<div class='log-line'>
+############################################################</div>
+<div class='log-line'>ROUND 6</div>
+<div class='log-line'>############################################################</div>
+<div class='log-line'>Alive: Sofia, Derek, Priya, Rashid, Olivia, Nathan, Simone, Carlos, Freya</div>
+<div class='log-line'>
+----------------------------------------</div>
+<div class='log-line'>ROUND 6 - DISCUSSION PHASE</div>
+<div class='log-line'>----------------------------------------</div>
+<div class='log-line'>
+--- Turn 1 of 3 ---</div>
+<div class='log-line'>
+Carlos: </div>
+<div class='log-line'>
+Derek: </div>
+<div class='log-line'>
+Rashid: </div>
+<div class='log-line'>
+Freya: </div>
+<div class='log-line'>
+Simone: </div>
+<div class='log-line'>
+Nathan: </div>
+<div class='log-line'>
+Olivia: </div>
+<div class='log-line'>
+Priya: </div>
+<div class='log-line'>
+Sofia: </div>
+<div class='log-line'>
+--- Turn 2 of 3 ---</div>
+<div class='log-line'>
+Olivia: [PASS]</div>
+<div class='log-line'>
+Derek: </div>
+<div class='log-line'>
+Rashid: [PASS]</div>
+<div class='log-line'>
+Nathan: [PASS]</div>
+<div class='log-line'>
+Freya: </div>
+<div class='log-line'>
+Sofia: [PASS]</div>
+<div class='log-line'>
+Priya: </div>
+<div class='log-line'>
+Carlos: </div>
+<div class='log-line'>
+Simone: [PASS]</div>
+<div class='log-line'>
+--- Turn 3 of 3 ---</div>
+<div class='log-line'>
+Priya: [PASS]</div>
+<div class='log-line'>
+Freya: [PASS]</div>
+<div class='log-line'>
+Carlos: [PASS]</div>
+<div class='log-line'>
+Derek: [PASS]</div>
+<div class='log-line'>
+----------------------------------------</div>
+<div class='log-line'>VOTING PHASE - Who will be banished?</div>
+<div class='log-line'>----------------------------------------</div>
+<div class='log-line'>  Sofia votes for: Olivia</div>
+<div class='log-line'>  Derek votes for: Nathan</div>
+<div class='log-line'>  Priya votes for: Sofia</div>
+<div class='log-line'>  Rashid votes for: Nathan</div>
+<div class='log-line'>  Olivia votes for: Sofia</div>
+<div class='log-line'>  Nathan votes for: Freya</div>
+<div class='log-line'>  Simone votes for: Derek</div>
+<div class='log-line'>  Carlos votes for: Olivia</div>
+<div class='log-line'>  Freya votes for: Nathan</div>
+<div class='log-line'>
+========================================</div>
+<div class='log-line'>BANISHED: Nathan</div>
+<div class='log-line'>They were a: FAITHFUL</div>
+<div class='log-line'>========================================</div>
+<div class='log-line'>
+----------------------------------------</div>
+<div class='log-line'>NIGHT PHASE - Traitors meet in secret...</div>
+<div class='log-line'>----------------------------------------</div>
+<div class='log-line'>
+[Traitors discuss strategy...]</div>
+<div class='log-line'>
+[TRAITOR] Rashid: </div>
+<div class='log-line'>
+[TRAITOR] Olivia: </div>
+<div class='log-line'>
+[TRAITOR] Freya: </div>
+<div class='log-line'>
+[Traitors vote on target...]</div>
+<div class='log-line'>[MURDER VOTE] Rashid votes: Simone</div>
+<div class='log-line'>[MURDER VOTE] Olivia votes: Carlos</div>
+<div class='log-line'>[MURDER VOTE] Freya votes: Simone</div>
+<div class='log-line'>
+========================================</div>
+<div class='log-line'>MURDERED: Simone</div>
+<div class='log-line'>The faithful mourn their loss...</div>
+<div class='log-line'>========================================</div>
+<div class='log-line'>
+############################################################</div>
+<div class='log-line'>ROUND 7</div>
+<div class='log-line'>############################################################</div>
+<div class='log-line'>Alive: Sofia, Derek, Priya, Rashid, Olivia, Carlos, Freya</div>
+<div class='log-line'>
+----------------------------------------</div>
+<div class='log-line'>ROUND 7 - DISCUSSION PHASE</div>
+<div class='log-line'>----------------------------------------</div>
+<div class='log-line'>
+--- Turn 1 of 3 ---</div>
+<div class='log-line'>
+Olivia: </div>
+<div class='log-line'>
+Rashid: </div>
+<div class='log-line'>
+Priya: </div>
+<div class='log-line'>
+Carlos: </div>
+<div class='log-line'>
+Derek: </div>
+<div class='log-line'>
+Sofia: </div>
+<div class='log-line'>
+Freya: </div>
+<div class='log-line'>
+--- Turn 2 of 3 ---</div>
+<div class='log-line'>
+Freya: </div>
+<div class='log-line'>
+Priya: </div>
+<div class='log-line'>
+Olivia: </div>
+<div class='log-line'>
+Rashid: </div>
+<div class='log-line'>
+Sofia: </div>
+<div class='log-line'>
+Derek: [PASS]</div>
+<div class='log-line'>
+Carlos: [PASS]</div>
+<div class='log-line'>
+--- Turn 3 of 3 ---</div>
+<div class='log-line'>
+Sofia: [PASS]</div>
+<div class='log-line'>
+Freya: </div>
+<div class='log-line'>
+Priya: [PASS]</div>
+<div class='log-line'>
+Rashid: [PASS]</div>
+<div class='log-line'>
+Olivia: </div>
+<div class='log-line'>
+----------------------------------------</div>
+<div class='log-line'>VOTING PHASE - Who will be banished?</div>
+<div class='log-line'>----------------------------------------</div>
+<div class='log-line'>  Sofia votes for: Derek</div>
+<div class='log-line'>  Derek votes for: Olivia</div>
+<div class='log-line'>  Priya votes for: Rashid</div>
+<div class='log-line'>  Rashid votes for: Sofia</div>
+<div class='log-line'>  Olivia votes for: Carlos</div>
+<div class='log-line'>  Carlos votes for: Freya</div>
+<div class='log-line'>  Freya votes for: Derek</div>
+<div class='log-line'>
+========================================</div>
+<div class='log-line'>BANISHED: Derek</div>
+<div class='log-line'>They were a: FAITHFUL</div>
+<div class='log-line'>========================================</div>
+<div class='log-line'>
+============================================================</div>
+<div class='log-line'>GAME OVER</div>
+<div class='log-line'>============================================================</div>
+<div class='log-line'>
+WINNER: THE TRAITORS!</div>
+<div class='log-line'>
+PRIZE POOL: $100,000</div>
+<div class='log-line'>
+Final Player Status:</div>
+<div class='log-line'>  Marcus: FAITHFUL - MURDERED - $0</div>
+<div class='log-line'>  Sofia: FAITHFUL - SURVIVED - $0</div>
+<div class='log-line'>  Derek: FAITHFUL - BANISHED - $0</div>
+<div class='log-line'>  Elena: FAITHFUL - BANISHED - $0</div>
+<div class='log-line'>  Jaylen: FAITHFUL - BANISHED - $0</div>
+<div class='log-line'>  Priya: FAITHFUL - SURVIVED - $0</div>
+<div class='log-line'>  Terrence: FAITHFUL - MURDERED - $0</div>
+<div class='log-line'>  Aaliyah: FAITHFUL - MURDERED - $0</div>
+<div class='log-line'>  Victor: FAITHFUL - BANISHED - $0</div>
+<div class='log-line'>  Camille: FAITHFUL - BANISHED - $0</div>
+<div class='log-line'>  Rashid: TRAITOR - SURVIVED - $33,333</div>
+<div class='log-line'>  Gloria: FAITHFUL - MURDERED - $0</div>
+<div class='log-line'>  Olivia: TRAITOR - SURVIVED - $33,333</div>
+<div class='log-line'>  Nathan: FAITHFUL - BANISHED - $0</div>
+<div class='log-line'>  Simone: FAITHFUL - MURDERED - $0</div>
+<div class='log-line'>  Wesley: FAITHFUL - MURDERED - $0</div>
+<div class='log-line'>  Dahlia: FAITHFUL - BANISHED - $0</div>
+<div class='log-line'>  Carlos: FAITHFUL - SURVIVED - $0</div>
+<div class='log-line'>  Freya: TRAITOR - SURVIVED - $33,333</div>
+<div class='log-line'>
+============================================================</div>
+            </div>
+        </section>
+    </div>
+
+    <footer>
+        <p>The Traitors LLM Simulator - Powered by Claude AI</p>
+        <p>Each contestant is controlled by an AI agent with a unique personality prompt.</p>
+    </footer>
+</body>
+</html>

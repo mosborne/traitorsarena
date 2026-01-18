@@ -311,6 +311,19 @@
             return div.innerHTML;
         }
 
+        function formatDuration(seconds) {
+            if (!seconds || seconds === 0) return '-';
+            if (seconds < 60) return `${Math.round(seconds)}s`;
+            const mins = Math.floor(seconds / 60);
+            const secs = Math.round(seconds % 60);
+            return secs > 0 ? `${mins}m ${secs}s` : `${mins}m`;
+        }
+
+        function formatCost(cost) {
+            if (!cost || cost === 0) return '-';
+            return `$${cost.toFixed(4)}`;
+        }
+
         function renderRun(run) {
             const traitorRate = run.total_games > 0
                 ? Math.round((run.traitor_wins / run.total_games) * 100)
@@ -330,6 +343,19 @@
             const legacyBadge = run.has_json
                 ? ''
                 : '<span class="badge legacy">Legacy</span>';
+
+            // Cost/duration display
+            const hasCostData = run.total_cost_usd && run.total_cost_usd > 0;
+            const costDurationHtml = hasCostData ? `
+                        <div class="run-stat">
+                            <div class="run-stat-value" style="color: var(--accent-gold);">${formatCost(run.total_cost_usd)}</div>
+                            <div class="run-stat-label">Total Cost</div>
+                        </div>
+                        <div class="run-stat">
+                            <div class="run-stat-value" style="color: var(--text-muted);">${formatDuration(run.total_duration_sec)}</div>
+                            <div class="run-stat-label">Duration</div>
+                        </div>
+            ` : '';
 
             return `
                 <li class="run-item">
@@ -365,6 +391,7 @@
                             <div class="run-stat-value" style="color: var(--accent-red);">${traitorRate}%</div>
                             <div class="run-stat-label">Traitor Rate</div>
                         </div>
+                        ${costDurationHtml}
                     </div>
                 </li>
             `;

@@ -34,6 +34,32 @@ MODEL_PRICING = {
         "cache_write": 18.75,
         "cache_read": 1.50,
     },
+    # Google Gemini models (pricing per 1M tokens)
+    # Cache pricing: 75% discount on cached tokens (read = 25% of input)
+    "gemini-2.0-flash-lite": {
+        "input": 0.075,
+        "output": 0.30,
+        "cache_write": 0.01875,  # 25% of input (storage cost)
+        "cache_read": 0.01875,   # 25% of input (75% discount)
+    },
+    "gemini-2.0-flash": {
+        "input": 0.10,
+        "output": 0.40,
+        "cache_write": 0.025,
+        "cache_read": 0.025,
+    },
+    "gemini-1.5-flash": {
+        "input": 0.075,
+        "output": 0.30,
+        "cache_write": 0.01875,
+        "cache_read": 0.01875,
+    },
+    "gemini-1.5-pro": {
+        "input": 1.25,
+        "output": 5.00,
+        "cache_write": 0.3125,
+        "cache_read": 0.3125,
+    },
 }
 
 # Default pricing for unknown models (conservative estimate)

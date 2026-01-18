@@ -9,6 +9,9 @@ Usage:
 The config file specifies contestants, number of games, and other parameters.
 """
 
+from dotenv import load_dotenv
+load_dotenv()  # Load .env file before other imports
+
 import argparse
 import html
 import json
@@ -23,7 +26,7 @@ from pathlib import Path
 import anthropic
 
 from main import EXAMPLE_CONTESTANTS
-from traitors import TraitorsGame, OllamaAgent, TestAgent, Agent
+from traitors import TraitorsGame, OllamaAgent, GeminiAgent, TestAgent, Agent
 from traitors.types import PlayerStatus
 from generate_html import generate_game_html
 from data_store import save_game_json, save_run_json, update_runs_index
@@ -99,6 +102,7 @@ Be specific with numbers. Keep it engaging but concise."""
 PROVIDER_MAP = {
     "anthropic": Agent,
     "ollama": OllamaAgent,
+    "gemini": GeminiAgent,
     "test": TestAgent,
 }
 
@@ -106,6 +110,7 @@ PROVIDER_MAP = {
 DEFAULT_MODELS = {
     "anthropic": "claude-3-5-haiku-20241022",
     "ollama": "llama3.2",
+    "gemini": "gemini-2.0-flash-lite",
     "test": None,
 }
 
@@ -186,8 +191,11 @@ def load_contestants_from_config(config: dict) -> list[dict]:
 
 
 def run_single_game(client, contestants, num_traitors, game_log, finale_round=8, verbose=True,
-                    agent_class=None, model=None):
-    """Run a single game and return results."""
+                    agent_class=None, model=None, enable_caching=True):
+    """Run a single game and return (results, duration_sec)."""
+    import time
+    start_time = time.time()
+
     def log_handler(msg):
         game_log.append(msg)
         if verbose:
@@ -201,8 +209,11 @@ def run_single_game(client, contestants, num_traitors, game_log, finale_round=8,
         log_callback=log_handler,
         agent_class=agent_class,
         model=model,
+        enable_caching=enable_caching,
     )
     results = game.run()
+
+    duration_sec = time.time() - start_time
 
     # Add additional data for HTML generation
     results["players"] = game.state.players
@@ -212,12 +223,12 @@ def run_single_game(client, contestants, num_traitors, game_log, finale_round=8,
     results["llm_interactions"] = getattr(game.state, 'llm_interactions', [])
     results["finale_round"] = finale_round
 
-    return results
+    return results, duration_sec
 
 
 def run_game_worker(args):
     """Worker function for parallel game execution."""
-    game_num, contestants, num_traitors, finale_round, api_key, agent_class, model = args
+    game_num, contestants, num_traitors, finale_round, api_key, agent_class, model, enable_caching = args
 
     # Create client only for Anthropic provider
     if agent_class == Agent:
@@ -228,13 +239,15 @@ def run_game_worker(args):
     game_log = []
 
     # Run game silently (verbose=False) when in parallel mode
-    results = run_single_game(client, contestants, num_traitors, game_log, finale_round,
-                              verbose=False, agent_class=agent_class, model=model)
+    results, duration_sec = run_single_game(client, contestants, num_traitors, game_log, finale_round,
+                              verbose=False, agent_class=agent_class, model=model,
+                              enable_caching=enable_caching)
 
     return {
         "game_num": game_num,
         "results": results,
         "game_log": game_log,
+        "duration_sec": duration_sec,
     }
 
 
@@ -800,7 +813,7 @@ def main():
     parser.add_argument("--parallel", "-p", type=int, default=1, metavar="N",
                         help="Run N games in parallel (default: 1, sequential)")
     parser.add_argument("--provider", type=str,
-                        choices=["anthropic", "ollama", "test"],
+                        choices=["anthropic", "ollama", "gemini", "test"],
                         help="LLM provider to use (default: from config or anthropic)")
     parser.add_argument("--model", "-m", type=str,
                         help="Model name (default depends on provider: claude-3-5-haiku for anthropic, llama3.2 for ollama)")
@@ -822,11 +835,18 @@ def main():
     agent_class = PROVIDER_MAP[provider]
     model = args.model or config.get("default_model") or DEFAULT_MODELS[provider]
 
-    # Check for API key only if using Anthropic
+    # Check for API keys based on provider
     api_key = os.environ.get("ANTHROPIC_API_KEY")
+    gemini_key = os.environ.get("GEMINI_API_KEY")
+
     if provider == "anthropic" and not api_key:
         print("Error: ANTHROPIC_API_KEY environment variable is required for Anthropic provider.")
-        print("Use --provider ollama for free local inference, or --provider test for testing.")
+        print("Use --provider ollama for free local inference, --provider gemini for Gemini, or --provider test for testing.")
+        return 1
+
+    if provider == "gemini" and not gemini_key:
+        print("Error: GEMINI_API_KEY environment variable is required for Gemini provider.")
+        print("Get your API key from https://aistudio.google.com/")
         return 1
 
     # Create client only for Anthropic provider
@@ -860,6 +880,7 @@ def main():
     num_games = args.num_games if args.num_games else config.get("num_games", 3)
     num_traitors = config.get("num_traitors", 3)
     finale_round = config.get("finale_round", 8)  # UK Celebrity format default
+    enable_caching = config.get("enable_caching", True)  # Only affects Gemini provider
 
     # Create run directory
     run_id = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
@@ -875,6 +896,8 @@ def main():
     if config.get("description"):
         print(f"Description: {config['description']}")
     print(f"Provider: {provider} (model: {model or 'default'})")
+    if provider == "gemini":
+        print(f"Caching: {'enabled' if enable_caching else 'DISABLED'}")
     print(f"Running {num_games} game(s) with {num_traitors} traitors (finale after round {finale_round})...")
     if args.parallel > 1:
         print(f"Parallel execution: {args.parallel} games at a time")
@@ -887,6 +910,7 @@ def main():
     print("=" * 60)
 
     games_data = []
+    games_durations = []  # Track durations for all games
     game_logs = {}
 
     # For pool mode, track full pool for stats (games_played will vary per player)
@@ -905,11 +929,12 @@ def main():
             else:
                 game_contestants = contestants
             work_items.append(
-                (i, game_contestants, num_traitors, finale_round, api_key, agent_class, model)
+                (i, game_contestants, num_traitors, finale_round, api_key, agent_class, model, enable_caching)
             )
 
         completed = 0
         games_data_tuples = []  # Store as tuples for sorting
+        games_durations_dict = {}  # Track durations by game number
         with ThreadPoolExecutor(max_workers=args.parallel) as executor:
             futures = {executor.submit(run_game_worker, item): item[0] for item in work_items}
 
@@ -919,13 +944,16 @@ def main():
                     result = future.result()
                     games_data_tuples.append((result["game_num"], result["results"]))
                     game_logs[result["game_num"]] = result["game_log"]
+                    games_durations_dict[result["game_num"]] = result["duration_sec"]
                     completed += 1
                     winner = result["results"]["winner"].upper()
-                    print(f"  Game {result['game_num']} complete: {winner} win ({completed}/{num_games})")
+                    duration_min = result["duration_sec"] / 60
+                    print(f"  Game {result['game_num']} complete: {winner} win ({completed}/{num_games}) [{duration_min:.1f} min]")
 
                     # Save individual game files immediately
                     gn = result["game_num"]
-                    save_game_json(run_dir, gn, result["results"], result["game_log"])
+                    save_game_json(run_dir, gn, result["results"], result["game_log"],
+                                   duration_sec=result["duration_sec"])
                     game_html = generate_game_html(result["results"], result["game_log"], contestants,
                                                    back_link=f"index.html", title=f"Game {gn}")
                     with open(os.path.join(run_dir, f"game_{gn}.html"), "w") as f:
@@ -934,7 +962,10 @@ def main():
                     # Update run progress (sort games_data for consistent stats)
                     games_data_tuples.sort(key=lambda x: x[0])
                     games_data = [g[1] for g in games_data_tuples]
-                    save_run_json(run_dir, run_id, config, games_data, all_contestants, pool_size)
+                    # Build sorted durations list
+                    sorted_durations = [games_durations_dict[i] for i in sorted(games_durations_dict.keys())]
+                    save_run_json(run_dir, run_id, config, games_data, all_contestants, pool_size,
+                                  games_durations=sorted_durations)
                     update_runs_index("runs", "data")
 
                     # Git push if enabled
@@ -948,6 +979,8 @@ def main():
         # Final sort after all games
         games_data_tuples.sort(key=lambda x: x[0])
         games_data = [g[1] for g in games_data_tuples]
+        # Convert durations dict to sorted list
+        games_durations = [games_durations_dict[i] for i in sorted(games_durations_dict.keys())]
 
     else:
         # Sequential execution (original behavior)
@@ -964,12 +997,13 @@ def main():
                 game_contestants = contestants
 
             game_log = []
-            results = run_single_game(client, game_contestants, num_traitors, game_log, finale_round,
-                                     agent_class=agent_class, model=model)
+            results, duration_sec = run_single_game(client, game_contestants, num_traitors, game_log, finale_round,
+                                     agent_class=agent_class, model=model, enable_caching=enable_caching)
             games_data.append(results)
+            games_durations.append(duration_sec)
 
             # Save JSON
-            json_path = save_game_json(run_dir, i, results, game_log)
+            json_path = save_game_json(run_dir, i, results, game_log, duration_sec=duration_sec)
 
             # Generate individual game HTML (for backwards compatibility)
             game_html = generate_game_html(results, game_log, game_contestants,
@@ -980,11 +1014,13 @@ def main():
             with open(game_path, "w") as f:
                 f.write(game_html)
 
-            print(f"\nGame {i} complete: {results['winner'].upper()} win")
+            duration_min = duration_sec / 60
+            print(f"\nGame {i} complete: {results['winner'].upper()} win [{duration_min:.1f} min]")
             print(f"Saved to: {json_path}")
 
             # Update run progress after each game
-            save_run_json(run_dir, run_id, config, games_data, all_contestants, pool_size)
+            save_run_json(run_dir, run_id, config, games_data, all_contestants, pool_size,
+                          games_durations=games_durations)
             update_runs_index("runs", "data")
 
             # Git push if enabled
@@ -997,7 +1033,8 @@ def main():
     print("Generating final run summary...")
 
     # Save run JSON (will be updated again after analysis)
-    run_json_path = save_run_json(run_dir, run_id, config, games_data, all_contestants, pool_size)
+    run_json_path = save_run_json(run_dir, run_id, config, games_data, all_contestants, pool_size,
+                                   games_durations=games_durations)
     print(f"Saved: {run_json_path}")
 
     # Generate analysis (always uses Opus with extended thinking)

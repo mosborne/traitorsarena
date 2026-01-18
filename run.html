@@ -276,6 +276,19 @@
             });
         }
 
+        function formatDuration(seconds) {
+            if (!seconds || seconds === 0) return '-';
+            if (seconds < 60) return `${Math.round(seconds)}s`;
+            const mins = Math.floor(seconds / 60);
+            const secs = Math.round(seconds % 60);
+            return secs > 0 ? `${mins}m ${secs}s` : `${mins}m`;
+        }
+
+        function formatCost(cost) {
+            if (!cost || cost === 0) return '-';
+            return `$${cost.toFixed(4)}`;
+        }
+
         function renderStats(data) {
             const stats = data.stats || {};
             const traitorRate = stats.total_games > 0
@@ -296,6 +309,27 @@
                     <div class="stat-label">Contestants</div>
                 </div>
             `;
+
+            // Cost/duration cards (only if data exists)
+            const hasCostData = stats.total_cost_usd && stats.total_cost_usd > 0;
+            const costCards = hasCostData ? `
+                <div class="stat-card">
+                    <div class="stat-value" style="color: var(--accent-gold);">${formatCost(stats.total_cost_usd)}</div>
+                    <div class="stat-label">Total Cost</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value">${formatDuration(stats.total_duration_sec)}</div>
+                    <div class="stat-label">Total Duration</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" style="color: var(--accent-gold);">${formatCost(stats.avg_cost_usd)}</div>
+                    <div class="stat-label">Avg Cost/Game</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value">${formatDuration(stats.avg_duration_sec)}</div>
+                    <div class="stat-label">Avg Duration/Game</div>
+                </div>
+            ` : '';
 
             return `
                 <div class="stat-card">
@@ -323,6 +357,7 @@
                     <div class="stat-value">${data.num_traitors || 3}</div>
                     <div class="stat-label">Traitors per Game</div>
                 </div>
+                ${costCards}
             `;
         }
 
@@ -444,6 +479,8 @@
 
         function renderGames(data, runId) {
             const games = data.games || [];
+            const gamesCosts = data.games_costs || [];
+            const gamesDurations = data.games_durations || [];
 
             if (games.length === 0) {
                 return '<p style="color: var(--text-muted); font-style: italic;">No games found.</p>';
@@ -452,15 +489,26 @@
             // For legacy runs, link to HTML files. For JSON runs, link to game.html
             const isLegacy = data.legacy === true;
 
-            return games.map(gameNum => {
+            return games.map((gameNum, index) => {
                 const gameUrl = isLegacy
                     ? `runs/${runId}/game_${gameNum}.html`
                     : `game.html?run=${runId}&game=${gameNum}`;
+
+                const cost = gamesCosts[index];
+                const duration = gamesDurations[index];
+                const hasCostData = cost && cost > 0;
+
+                const costDurationHtml = hasCostData ? `
+                    <div class="game-meta" style="font-size: 0.8rem; color: var(--text-muted); margin-top: 0.5rem;">
+                        ${formatCost(cost)} · ${formatDuration(duration)}
+                    </div>
+                ` : '';
 
                 return `
                     <a href="${gameUrl}" class="game-card">
                         <div class="game-number">Game ${gameNum}</div>
                         <div class="game-winner">View transcript</div>
+                        ${costDurationHtml}
                     </a>
                 `;
             }).join('');

@@ -436,6 +436,19 @@
             return map[model] || model;
         }
 
+        function formatDuration(seconds) {
+            if (!seconds || seconds === 0) return '-';
+            if (seconds < 60) return `${Math.round(seconds)}s`;
+            const mins = Math.floor(seconds / 60);
+            const secs = Math.round(seconds % 60);
+            return secs > 0 ? `${mins}m ${secs}s` : `${mins}m`;
+        }
+
+        function formatCost(cost) {
+            if (!cost || cost === 0) return '-';
+            return `$${cost.toFixed(4)}`;
+        }
+
         function renderWinnerBanner(data) {
             const winnerClass = data.winner === 'traitors' ? 'traitor-win' : 'faithful-win';
             const winnerText = data.winner === 'traitors' ? 'THE TRAITORS WIN!' : 'THE FAITHFUL WIN!';
@@ -452,11 +465,18 @@
             const survivors = data.survivors || [];
             const prize = data.prize_pool || 100000;
 
+            // Cost/duration if available
+            const hasCostData = data.cost_usd && data.cost_usd > 0;
+            const costHtml = hasCostData ? `
+                <p><strong>Cost:</strong> <span style="color: var(--accent-gold);">${formatCost(data.cost_usd)}</span> · <strong>Duration:</strong> ${formatDuration(data.duration_sec)}</p>
+            ` : '';
+
             return `
                 <p><strong>Rounds played:</strong> ${data.rounds_played}</p>
                 <p><strong>Traitors:</strong> <span class="traitor-text">${traitors.join(', ')}</span></p>
                 <p><strong>Survivors:</strong> ${survivors.join(', ')}</p>
                 <p><strong>Prize pool:</strong> $${prize.toLocaleString()}</p>
+                ${costHtml}
             `;
         }
 

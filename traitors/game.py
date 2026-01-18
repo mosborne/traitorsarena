@@ -7,7 +7,7 @@ from typing import Callable, Optional, Type
 import anthropic
 
 from .types import Player, GameState, GamePhase, Role, PlayerStatus, Message, Vote, PouchVote, PrivateThought
-from .agent import Agent, TestAgent, OllamaAgent
+from .agent import Agent, TestAgent, OllamaAgent, GeminiAgent, OpenAICompatibleAgent
 from .cost import TokenUsage
 from . import events as ev
 
@@ -38,6 +38,7 @@ class TraitorsGame:
         agent_class: Optional[Type[Agent]] = None,
         model: Optional[str] = None,
         event_callback: Optional[Callable[[ev.GameEvent], None]] = None,
+        enable_caching: bool = True,
     ):
         """
         Initialize a new game.
@@ -52,18 +53,23 @@ class TraitorsGame:
             agent_class: Optional agent class to use (e.g., OllamaAgent). Overrides test_mode.
             model: Optional model name for OllamaAgent (e.g., "llama3.2")
             event_callback: Optional callback for game events (for CLI display)
+            enable_caching: Whether to enable prompt caching (default True, only affects Gemini)
         """
         self.test_mode = test_mode
         self.log = log_callback or print
         self.num_traitors = num_traitors
         self.model = model
         self.event_callback = event_callback
+        self.enable_caching = enable_caching
 
         # Determine which agent class to use
         if agent_class is not None:
             AgentClass = agent_class
-            # OllamaAgent doesn't use Anthropic client
-            self.client = None if AgentClass == OllamaAgent else (client or anthropic.Anthropic())
+            # OpenAI-compatible agents (Ollama, Gemini) don't use Anthropic client
+            if issubclass(AgentClass, OpenAICompatibleAgent):
+                self.client = None
+            else:
+                self.client = client or anthropic.Anthropic()
         elif test_mode:
             AgentClass = TestAgent
             self.client = None
@@ -105,7 +111,15 @@ class TraitorsGame:
         for player in self.state.players.values():
             if AgentClass == OllamaAgent:
                 # OllamaAgent takes model parameter
-                self.agents[player.name] = AgentClass(player, model=player.model or "llama3.2")
+                self.agents[player.name] = AgentClass(player, model=player.model or "llama3.2", api_callback=api_callback)
+            elif AgentClass == GeminiAgent:
+                # GeminiAgent takes model parameter and caching option
+                self.agents[player.name] = AgentClass(
+                    player,
+                    model=player.model or "gemini-2.0-flash-lite",
+                    api_callback=api_callback,
+                    enable_caching=self.enable_caching,
+                )
             elif AgentClass == TestAgent:
                 self.agents[player.name] = AgentClass(player)
             else:
@@ -314,6 +328,13 @@ class TraitorsGame:
                 choice=choice,
                 round_num=self.state.current_round
             ))
+            # Emit vote cast event for pouch vote
+            self._emit_event(ev.vote_cast_event(
+                round_num=self.state.current_round,
+                voter=player.name,
+                target=choice,
+                vote_type="pouch",
+            ))
 
         banish_count = sum(1 for c in choices.values() if c == "BANISH_AGAIN")
         end_count = len(choices) - banish_count
@@ -361,6 +382,14 @@ class TraitorsGame:
             self.state.votes.append(vote)
 
             self.log(f"  {player.name} votes for: {vote_target}")
+
+            # Emit vote cast event
+            self._emit_event(ev.vote_cast_event(
+                round_num=self.state.current_round,
+                voter=player.name,
+                target=vote_target,
+                vote_type="banish",
+            ))
 
         # Count votes
         vote_counts = Counter(votes.values())
@@ -477,6 +506,14 @@ class TraitorsGame:
                     if thoughts:
                         role_tag = "[TRAITOR]" if player.is_traitor else "[FAITHFUL]"
                         self.log(f"  {role_tag} (thinking: {thoughts})")
+                    # Emit event for PASS
+                    self._emit_event(ev.discussion_turn_event(
+                        round_num=self.state.current_round,
+                        player=player.name,
+                        statement="PASS",
+                        thoughts=thoughts,
+                        is_pass=True,
+                    ))
                     continue
 
                 # Store the message with turn number and thoughts
@@ -493,6 +530,15 @@ class TraitorsGame:
                 if thoughts:
                     role_tag = "[TRAITOR]" if player.is_traitor else "[FAITHFUL]"
                     self.log(f"  {role_tag} (thinking: {thoughts})")
+
+                # Emit discussion turn event
+                self._emit_event(ev.discussion_turn_event(
+                    round_num=self.state.current_round,
+                    player=player.name,
+                    statement=statement,
+                    thoughts=thoughts,
+                    is_pass=False,
+                ))
 
     def _run_private_thoughts_phase(self) -> None:
         """Run the private thoughts phase where each player thinks before voting."""
@@ -554,6 +600,14 @@ class TraitorsGame:
             self.state.votes.append(vote)
 
             self.log(f"  {player.name} votes for: {vote_target}")
+
+            # Emit vote cast event
+            self._emit_event(ev.vote_cast_event(
+                round_num=self.state.current_round,
+                voter=player.name,
+                target=vote_target,
+                vote_type="banish",
+            ))
 
         # Count votes
         vote_counts = Counter(votes.values())
@@ -689,6 +743,14 @@ class TraitorsGame:
             vote = agent.generate_murder_vote(self.state, cached_history)
             murder_votes[traitor.name] = vote
             self.log(f"[MURDER VOTE] {traitor.name} votes: {vote}")
+
+            # Emit vote cast event for murder
+            self._emit_event(ev.vote_cast_event(
+                round_num=self.state.current_round,
+                voter=traitor.name,
+                target=vote,
+                vote_type="murder",
+            ))
 
         # Count votes - most votes wins, ties broken randomly
         vote_counts = Counter(murder_votes.values())
@@ -836,6 +898,11 @@ class TraitorsGame:
             traitors=[p.name for p in self.state.players.values() if p.is_traitor],
             faithful=[p.name for p in self.state.players.values() if not p.is_traitor],
         ))
+
+        # Clean up agent resources (e.g., Gemini caches)
+        for agent in self.agents.values():
+            if hasattr(agent, 'cleanup'):
+                agent.cleanup()
 
         self._print_final_results()
 

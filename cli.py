@@ -24,7 +24,7 @@ from pathlib import Path
 from data_store import save_game_json, save_run_json, update_runs_index
 from typing import Optional
 
-from rich.console import Console
+from rich.console import Console, Group
 from rich.layout import Layout
 from rich.live import Live
 from rich.panel import Panel
@@ -33,8 +33,24 @@ from rich.table import Table
 from rich.text import Text
 
 from main import EXAMPLE_CONTESTANTS
-from traitors import TraitorsGame, TestAgent, Agent
+from traitors import TraitorsGame, TestAgent, Agent, OllamaAgent, GeminiAgent
 from traitors.cost import CostTracker, TokenUsage, MODEL_PRICING, fetch_admin_spending, get_admin_key
+
+# Map provider names to agent classes
+PROVIDER_MAP = {
+    "anthropic": Agent,
+    "ollama": OllamaAgent,
+    "gemini": GeminiAgent,
+    "test": TestAgent,
+}
+
+# Default models per provider
+DEFAULT_MODELS = {
+    "anthropic": "claude-3-5-haiku-20241022",
+    "ollama": "llama3.2",
+    "gemini": "gemini-2.0-flash-lite",
+    "test": None,
+}
 from traitors.events import EventType, GameEvent, APICallEvent
 
 console = Console()
@@ -151,56 +167,16 @@ class RichGameDisplay:
         self.api_call_times: list[float] = []
         self.estimated_calls_remaining = self._estimate_total_calls(num_players)
 
+        # Activity log for the feed
+        self.activity_log: list[dict] = []
+        self.max_activity_lines = 20  # Max entries to display
+
     def _estimate_total_calls(self, num_players: int, num_rounds: int = 8) -> int:
         """Estimate total API calls for a full game."""
         # Per round: ~3 discussion turns per player + 1 vote per player + traitor night activity
         # This is a rough estimate
         calls_per_round = 4 * num_players + 6
         return calls_per_round * num_rounds
-
-    def _render_players_table(self) -> Table:
-        """Render players in a compact 2-column grid."""
-        table = Table(show_header=False, box=None, padding=(0, 1))
-        table.add_column("Col1", width=22)
-        table.add_column("Col2", width=22)
-
-        # Build player entries: alive first (traitors, then faithful), then eliminated
-        alive_entries = []
-        eliminated_entries = []
-
-        for name in self.all_players:
-            is_traitor = name in self.traitor_names
-            is_current = name == self.current_player
-
-            if name in self.eliminated:
-                # Eliminated player
-                info = self.eliminated[name]
-                icon = "💀" if info["type"] == "murdered" else "⛔"
-                role = "T" if info["role"] == "traitor" else "F"
-                text = f"[dim]{icon} {name} ({role}) R{info['round']}[/]"
-                eliminated_entries.append((text, is_traitor))
-            else:
-                # Alive player
-                icon = "🔴" if is_traitor else "🟢"
-                marker = " ←" if is_current else ""
-                style = "red" if is_traitor else "green"
-                text = f"[{style}]{icon} {name}{marker}[/]"
-                alive_entries.append((text, is_traitor))
-
-        # Sort: traitors first, then faithful
-        alive_entries.sort(key=lambda x: (not x[1], x[0]))
-        eliminated_entries.sort(key=lambda x: (not x[1], x[0]))
-
-        # Combine entries
-        entries = [e[0] for e in alive_entries] + [e[0] for e in eliminated_entries]
-
-        # Add rows (2 per row)
-        for i in range(0, len(entries), 2):
-            col1 = entries[i]
-            col2 = entries[i + 1] if i + 1 < len(entries) else ""
-            table.add_row(col1, col2)
-
-        return table
 
     def handle_event(self, event: GameEvent) -> None:
         """Handle game events and update display state."""
@@ -233,6 +209,12 @@ class RichGameDisplay:
                 self.phase_progress_total = self.alive_count * 3
             else:
                 self.phase_progress_total = 0
+            # Add phase change to activity log
+            self.activity_log.append({
+                "type": "phase_change",
+                "player": "",
+                "content": f"--- {self.current_phase.upper()} PHASE ---",
+            })
 
         elif event.event_type == EventType.API_CALL:
             if isinstance(event, APICallEvent):
@@ -261,99 +243,126 @@ class RichGameDisplay:
                     "role": event.data.get("role", "faithful"),
                     "round": event.round_num,
                 }
+                # Add to activity log
+                elim_type = event.data.get("type", "banished")
+                role = event.data.get("role", "")
+                if event.data.get("role_revealed"):
+                    self.activity_log.append({
+                        "type": "elimination",
+                        "player": player_name,
+                        "content": f"was {elim_type.upper()} - revealed as {role.upper()}",
+                    })
+                else:
+                    self.activity_log.append({
+                        "type": "elimination",
+                        "player": player_name,
+                        "content": f"was {elim_type.upper()}",
+                    })
+
+        elif event.event_type == EventType.DISCUSSION_TURN:
+            self.activity_log.append({
+                "type": "discussion",
+                "player": event.data.get("player", ""),
+                "content": event.data.get("statement", ""),
+                "thoughts": event.data.get("thoughts", ""),
+                "is_pass": event.data.get("is_pass", False),
+            })
+
+        elif event.event_type == EventType.VOTE_CAST:
+            voter = event.data.get("voter", "")
+            target = event.data.get("target", "")
+            vote_type = event.data.get("vote_type", "banish")
+            if vote_type == "pouch":
+                self.activity_log.append({
+                    "type": "pouch",
+                    "player": voter,
+                    "content": f"threw {target}",
+                })
+            elif vote_type == "murder":
+                self.activity_log.append({
+                    "type": "murder_vote",
+                    "player": voter,
+                    "content": f"votes to murder {target}",
+                })
+            else:
+                self.activity_log.append({
+                    "type": "vote",
+                    "player": voter,
+                    "content": f"voted for {target}",
+                })
 
         elif event.event_type == EventType.GAME_END:
             self.game_ended = True
             self.winner = event.data.get("winner")
 
     def render(self) -> Layout:
-        """Render the current state as a Rich Layout."""
+        """Render the current state as a Rich Layout with compact header, player list, and activity feed."""
         layout = Layout()
 
-        # Top row: Game state and progress
         layout.split_column(
             Layout(name="header", size=3),
             Layout(name="main", ratio=1),
             Layout(name="footer", size=3),
         )
 
-        # Header
+        # Header: Compact status line with all key info
         if self.game_ended:
             winner_color = "red" if self.winner == "traitors" else "green"
-            header_text = Text(f"GAME OVER - {self.winner.upper()} WIN!", style=f"bold {winner_color}")
-        elif self.is_finale:
-            header_text = Text(f"FINALE - Round {self.current_round}", style="bold yellow")
+            status = Text(f"GAME OVER - {self.winner.upper()} WIN!", style=f"bold {winner_color}")
         else:
-            header_text = Text(f"Round {self.current_round} - {self.current_phase.upper()}", style="bold cyan")
+            status = Text()
+            # Round
+            if self.is_finale:
+                status.append(f"FINALE R{self.current_round}", style="bold yellow")
+            else:
+                status.append(f"Round {self.current_round}", style="bold cyan")
+            status.append(" │ ", style="dim")
+            # Phase with progress
+            status.append(self.current_phase.upper(), style="bold")
+            if self.phase_progress_total > 0:
+                progress_pct = min(100, int(100 * self.phase_progress_current / self.phase_progress_total))
+                status.append(f" {self.phase_progress_current}/{self.phase_progress_total}", style="dim")
+                # Mini progress bar
+                filled = int(progress_pct / 10)
+                bar = "▓" * filled + "░" * (10 - filled)
+                status.append(f" [{bar}]", style="dim")
+            status.append(" │ ", style="dim")
+            # Players alive
+            status.append(f"{self.alive_count}/{self.num_players} alive", style="green" if self.alive_count > self.num_players // 2 else "yellow")
+            status.append(" │ ", style="dim")
+            # Traitors
+            traitor_text = f"{self.alive_traitors} traitor{'s' if self.alive_traitors != 1 else ''}"
+            status.append(traitor_text, style="red")
+            status.append(" │ ", style="dim")
+            # Cost
+            status.append(f"${self.cost_tracker.total_cost:.4f} ({self.cost_tracker.api_calls})", style="dim")
 
-        layout["header"].update(Panel(header_text, title="The Traitors"))
+        layout["header"].update(Panel(status, title="The Traitors", border_style="blue"))
 
-        # Main area: Split into game info, players, and cost panels
+        # Main: Narrow players (left) + wide activity (right)
         layout["main"].split_row(
-            Layout(name="game_info", ratio=1),
-            Layout(name="players", ratio=2),
-            Layout(name="cost_info", ratio=1),
+            Layout(name="players", ratio=1, minimum_size=20),
+            Layout(name="activity", ratio=4),
         )
 
-        # Game info panel
-        game_table = Table(show_header=False, box=None, padding=(0, 1))
-        game_table.add_column("Label", style="dim")
-        game_table.add_column("Value")
+        layout["players"].update(self._render_players_panel())
+        layout["activity"].update(self._render_activity_panel())
 
-        game_table.add_row("Players", f"{self.alive_count}/{self.num_players}")
-        game_table.add_row("Traitors", f"{self.alive_traitors}" if self.alive_traitors > 0 else "0")
-        game_table.add_row("Phase", self.current_phase.title())
-        game_table.add_row("Round", str(self.current_round))
-
-        # Progress bar
-        if self.phase_progress_total > 0:
-            progress = min(1.0, self.phase_progress_current / self.phase_progress_total)
-            filled = int(progress * 10)
-            bar = "█" * filled + "░" * (10 - filled)
-            game_table.add_row("", "")  # spacer
-            game_table.add_row("", f"[dim][{bar}][/]")
-
-        layout["game_info"].update(Panel(game_table, title="Game State"))
-
-        # Players panel
-        players_table = self._render_players_table()
-        layout["players"].update(Panel(players_table, title="Players"))
-
-        # Cost info panel
-        cost_table = Table(show_header=False, box=None, padding=(0, 1))
-        cost_table.add_column("Label", style="dim")
-        cost_table.add_column("Value")
-
-        game_cost = self.cost_tracker.total_cost
-
-        # Show admin spending if available
-        if self.admin_spending and not self.admin_spending.get("error"):
-            cost_table.add_row("7 days", f"${self.admin_spending['total_cost_usd']:.2f}")
-            cost_table.add_row("Today", f"${self.admin_spending['today_cost_usd']:.2f}")
-            cost_table.add_row("Game", f"${game_cost:.4f}")
-        else:
-            cost_table.add_row("Game", f"${game_cost:.4f}")
-            cost_table.add_row("Calls", str(self.cost_tracker.api_calls))
-            cost_table.add_row("In", f"{self.cost_tracker.total_usage.input_tokens:,}")
-            cost_table.add_row("Out", f"{self.cost_tracker.total_usage.output_tokens:,}")
-
-            if self.cost_tracker.total_usage.cache_read_tokens > 0:
-                cost_table.add_row("Cache", f"{self.cost_tracker.total_usage.cache_read_tokens:,}")
-
-        # Show remaining balance if provided
-        if self.starting_balance is not None:
-            remaining = self.starting_balance - game_cost
-            cost_table.add_row("", "")  # Spacer
-            cost_table.add_row("Bal", f"${remaining:.2f}")
-
-        layout["cost_info"].update(Panel(cost_table, title="Cost"))
-
-        # Footer: Balance and ETA info
+        # Footer: Cache stats + ETA
         footer_parts = []
 
+        # Cache stats
+        cache_read = self.cost_tracker.total_usage.cache_read_tokens
+        if cache_read > 0:
+            if cache_read >= 1_000_000:
+                footer_parts.append(f"Cache: {cache_read / 1_000_000:.1f}M read")
+            else:
+                footer_parts.append(f"Cache: {cache_read / 1_000:.0f}K read")
+
+        # Balance if provided
         if self.starting_balance is not None:
-            remaining = self.starting_balance - game_cost
-            footer_parts.append(f"Balance: ${self.starting_balance:.2f} → ${remaining:.2f}")
+            remaining = self.starting_balance - self.cost_tracker.total_cost
+            footer_parts.append(f"Balance: ${remaining:.2f}")
 
         # ETA based on API call times
         if self.api_call_times and self.estimated_calls_remaining > 0:
@@ -364,10 +373,109 @@ class RichGameDisplay:
             else:
                 footer_parts.append(f"ETA: ~{eta_seconds:.0f} sec")
 
-        footer_text = " | ".join(footer_parts) if footer_parts else "Running..."
-        layout["footer"].update(Panel(Text(footer_text, style="dim"), title=""))
+        footer_text = " │ ".join(footer_parts) if footer_parts else "Running..."
+        layout["footer"].update(Panel(Text(footer_text, style="dim")))
 
         return layout
+
+    def _render_players_panel(self) -> Panel:
+        """Render players as a single-column list."""
+        table = Table(show_header=False, box=None, padding=(0, 0))
+        table.add_column("Player", width=18)
+
+        # Alive first (traitors highlighted), then eliminated
+        alive_entries = []
+        eliminated_entries = []
+
+        for name in self.all_players:
+            is_traitor = name in self.traitor_names
+            is_current = name == self.current_player
+
+            if name in self.eliminated:
+                # Eliminated player
+                info = self.eliminated[name]
+                icon = "💀" if info["type"] == "murdered" else "⛔"
+                role = "T" if info["role"] == "traitor" else "F"
+                text = f"[dim]{icon} {name} ({role})[/]"
+                eliminated_entries.append((text, is_traitor))
+            else:
+                # Alive player
+                icon = "🔴" if is_traitor else "🟢"
+                marker = " ←" if is_current else ""
+                style = "red" if is_traitor else "green"
+                text = f"[{style}]{icon} {name}{marker}[/]"
+                alive_entries.append((text, is_traitor))
+
+        # Sort: traitors first among alive
+        alive_entries.sort(key=lambda x: (not x[1], x[0]))
+
+        # Add all entries
+        for text, _ in alive_entries:
+            table.add_row(text)
+        for text, _ in eliminated_entries:
+            table.add_row(text)
+
+        return Panel(table, title="Players", border_style="green")
+
+    def _render_activity_panel(self) -> Panel:
+        """Render scrolling activity feed with latest highlighted."""
+        lines = []
+
+        # Show last N entries, newest first
+        recent = list(reversed(self.activity_log[-self.max_activity_lines:]))
+
+        for i, entry in enumerate(recent):
+            player = entry.get("player", "")
+            content = entry.get("content", "")
+            thoughts = entry.get("thoughts", "")
+            entry_type = entry.get("type", "")
+            is_pass = entry.get("is_pass", False)
+
+            if i == 0:  # Latest - highlighted
+                if entry_type == "phase_change":
+                    lines.append(Text(content, style="bold magenta"))
+                elif entry_type == "discussion":
+                    if is_pass:
+                        lines.append(Text(f"{player}: ", style="bold cyan") + Text("[PASS]", style="dim"))
+                    else:
+                        lines.append(Text(f"{player}: ", style="bold cyan") + Text(f'"{content}"'))
+                        if thoughts:
+                            # Truncate thoughts if too long
+                            thought_preview = thoughts[:100] + "..." if len(thoughts) > 100 else thoughts
+                            lines.append(Text(f"  💭 {thought_preview}", style="dim italic"))
+                elif entry_type == "vote":
+                    lines.append(Text(f"🗳️  {player} ", style="bold yellow") + Text(content))
+                elif entry_type == "murder_vote":
+                    lines.append(Text(f"🗡️  {player} ", style="bold red") + Text(content))
+                elif entry_type == "pouch":
+                    lines.append(Text(f"🎒 {player} ", style="bold magenta") + Text(content))
+                elif entry_type == "elimination":
+                    lines.append(Text(f"⚡ {player} {content}", style="bold red"))
+                else:
+                    lines.append(Text(f"{player}: {content}", style="bold"))
+            else:  # Older - dimmed
+                if entry_type == "phase_change":
+                    lines.append(Text(content, style="dim magenta"))
+                elif entry_type == "discussion":
+                    if is_pass:
+                        lines.append(Text(f"{player}: [PASS]", style="dim"))
+                    else:
+                        # Truncate content for older entries
+                        preview = content[:80] + "..." if len(content) > 80 else content
+                        lines.append(Text(f'{player}: "{preview}"', style="dim"))
+                elif entry_type == "vote":
+                    lines.append(Text(f"🗳️  {player} {content}", style="dim"))
+                elif entry_type == "murder_vote":
+                    lines.append(Text(f"🗡️  {player} {content}", style="dim"))
+                elif entry_type == "pouch":
+                    lines.append(Text(f"🎒 {player} {content}", style="dim"))
+                elif entry_type == "elimination":
+                    lines.append(Text(f"⚡ {player} {content}", style="dim"))
+
+        if not lines:
+            lines.append(Text("Waiting for game to start...", style="dim italic"))
+
+        return Panel(Group(*lines), title="Activity", border_style="blue")
 
     def __rich__(self) -> Layout:
         """Called by Rich Live on each refresh."""
@@ -392,8 +500,13 @@ def run_game_with_display(
     test_mode: bool = False,
     verbose: bool = False,
     admin_spending: Optional[dict] = None,
-) -> tuple[dict, float, list[str]]:
-    """Run a single game with Rich live display. Returns (results, game_cost, game_log)."""
+    agent_class=None,
+    model: Optional[str] = None,
+    enable_caching: bool = True,
+) -> tuple[dict, float, float, list[str]]:
+    """Run a single game with Rich live display. Returns (results, game_cost, game_duration_sec, game_log)."""
+    import time
+    game_start_time = time.time()
 
     # Create display
     display = RichGameDisplay(
@@ -401,6 +514,7 @@ def run_game_with_display(
         contestant_names=[c["name"] for c in contestants],
         starting_balance=starting_balance,
         admin_spending=admin_spending,
+        model=model or "claude-3-5-haiku-20241022",
     )
 
     # Game log for verbose mode
@@ -423,6 +537,9 @@ def run_game_with_display(
             log_callback=quiet_log,
             test_mode=test_mode,
             event_callback=display.handle_event,
+            agent_class=agent_class,
+            model=model,
+            enable_caching=enable_caching,
         )
         results = game.run()
 
@@ -448,7 +565,8 @@ def run_game_with_display(
         border_style="green" if results['winner'] == 'faithful' else "red",
     ))
 
-    return results, game_cost, game_log
+    game_duration_sec = time.time() - game_start_time
+    return results, game_cost, game_duration_sec, game_log
 
 
 def main():
@@ -507,27 +625,40 @@ def main():
     finale_round = config.get("finale_round", 8)
     players_per_game = min(len(contestant_pool), PLAYERS_PER_GAME)
 
+    # Determine provider and model from config
+    provider = config.get("provider", "anthropic")
+    agent_class = PROVIDER_MAP.get(provider, Agent)
+    model = config.get("default_model") or DEFAULT_MODELS.get(provider)
+    enable_caching = config.get("enable_caching", True)
+
     console.print(f"[bold]The Traitors - Game Simulator[/]")
     console.print(f"Config: {config.get('name', 'unnamed')}")
+    console.print(f"Provider: {provider} (model: {model})")
     console.print(f"Players: {len(contestant_pool)} in pool, {players_per_game} per game")
     console.print(f"Traitors: {num_traitors}")
     console.print(f"Finale: Round {finale_round + 1}+")
+    if provider == "gemini":
+        cache_status = "[green]enabled[/]" if enable_caching else "[yellow]disabled[/]"
+        console.print(f"Caching: {cache_status}")
     console.print()
 
-    # Fetch admin spending if key is available
+    # Fetch admin spending if key is available (Anthropic only)
     admin_spending = None
-    admin_key = get_admin_key()
-    if admin_key:
-        console.print("[dim]Fetching spending data...[/]", end="")
-        admin_spending = fetch_admin_spending(admin_key)
-        if admin_spending.get("error"):
-            console.print(f" [yellow]{admin_spending['error']}[/]")
-            admin_spending = None
+    if provider == "anthropic":
+        admin_key = get_admin_key()
+        if admin_key:
+            console.print("[dim]Fetching spending data...[/]", end="")
+            admin_spending = fetch_admin_spending(admin_key)
+            if admin_spending.get("error"):
+                console.print(f" [yellow]{admin_spending['error']}[/]")
+                admin_spending = None
+            else:
+                console.print(f" [green]OK[/]")
+                console.print(f"[dim]Last 7 days: ${admin_spending['total_cost_usd']:.2f} | Today: ${admin_spending['today_cost_usd']:.2f}[/]")
         else:
-            console.print(f" [green]OK[/]")
-            console.print(f"[dim]Last 7 days: ${admin_spending['total_cost_usd']:.2f} | Today: ${admin_spending['today_cost_usd']:.2f}[/]")
-    else:
-        console.print("[dim]Tip: Set ANTHROPIC_ADMIN_KEY to see spending data[/]")
+            console.print("[dim]Tip: Set ANTHROPIC_ADMIN_KEY to see spending data[/]")
+    elif provider == "gemini":
+        console.print("[dim]Tip: View Gemini usage at https://aistudio.google.com/usage[/]")
     console.print()
 
     # Check balance and warn if low
@@ -537,10 +668,16 @@ def main():
     # Track cumulative balance across games
     current_balance = args.balance
 
+    # Track run totals
+    run_total_cost = 0.0
+    run_total_duration = 0.0
+
     # Set up save directory if saving
     run_id = None
     run_dir = None
     games_data = []
+    games_costs = []  # Per-game cost tracking
+    games_durations = []  # Per-game duration tracking
     if args.save:
         run_id = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
         run_dir = Path("runs") / run_id
@@ -559,7 +696,7 @@ def main():
             contestants = contestant_pool.copy()
 
         # Run game
-        results, game_cost, game_log = run_game_with_display(
+        results, game_cost, game_duration, game_log = run_game_with_display(
             contestants=contestants,
             num_traitors=num_traitors,
             finale_round=finale_round,
@@ -567,7 +704,16 @@ def main():
             test_mode=args.test_mode,
             verbose=args.verbose,
             admin_spending=admin_spending,
+            agent_class=agent_class,
+            model=model,
+            enable_caching=enable_caching,
         )
+
+        # Track costs and durations
+        run_total_cost += game_cost
+        run_total_duration += game_duration
+        games_costs.append(game_cost)
+        games_durations.append(game_duration)
 
         # Update balance for next game
         if current_balance is not None:
@@ -576,9 +722,10 @@ def main():
         # Save game data if requested
         if args.save:
             games_data.append(results)
-            save_game_json(str(run_dir), game_num, results, game_log)
+            save_game_json(str(run_dir), game_num, results, game_log, game_cost, game_duration)
             pool_size = len(contestant_pool) if len(contestant_pool) > PLAYERS_PER_GAME else None
-            save_run_json(str(run_dir), run_id, config, games_data, contestant_pool, pool_size)
+            save_run_json(str(run_dir), run_id, config, games_data, contestant_pool, pool_size,
+                         games_costs, games_durations)
             update_runs_index("runs", "data")
             console.print(f"[dim]Saved game {game_num} to {run_dir}/[/]")
 

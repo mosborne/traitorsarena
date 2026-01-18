@@ -960,27 +960,32 @@ Respond with exactly one word: END_GAME or BANISH_AGAIN"""
         return "END_GAME"
 
 
-class OllamaAgent(Agent):
-    """Agent using local Ollama for LLM inference.
+class OpenAICompatibleAgent(Agent):
+    """Agent using any OpenAI-compatible API (Ollama, Gemini, etc.).
 
-    Uses Ollama's OpenAI-compatible API for free local inference.
-
-    Setup:
-        1. Install Ollama: brew install ollama
-        2. Pull a model: ollama pull llama3.2
-        3. Start server: ollama serve
+    This base class works with any API that follows the OpenAI chat completions format.
+    Subclasses just need to specify base_url and api_key.
     """
 
-    def __init__(self, player: Player, model: str = "llama3.2", base_url: str = "http://localhost:11434/v1"):
+    def __init__(
+        self,
+        player: Player,
+        model: str,
+        base_url: str,
+        api_key: str = "dummy",
+        api_callback: Optional[Callable] = None,
+    ):
         self.player = player
         self.model = model
         self.base_url = base_url
+        self.api_callback = api_callback
         # Import here to avoid requiring openai for anthropic-only users
         from openai import OpenAI
-        self.client = OpenAI(base_url=base_url, api_key="ollama")
+        self.client = OpenAI(base_url=base_url, api_key=api_key)
 
-    def _call_llm(self, system: str, user_message: str, max_tokens: int) -> str:
-        """Call the local Ollama LLM."""
+    def _call_llm(self, system: str, user_message: str, max_tokens: int) -> tuple[str, Optional[TokenUsage], float]:
+        """Call the OpenAI-compatible LLM API. Returns (text, usage, duration_ms)."""
+        start_time = time.time()
         response = self.client.chat.completions.create(
             model=self.model,
             max_tokens=max_tokens,
@@ -989,7 +994,26 @@ class OllamaAgent(Agent):
                 {"role": "user", "content": user_message}
             ]
         )
-        return response.choices[0].message.content.strip()
+        duration_ms = (time.time() - start_time) * 1000
+
+        # Extract usage from OpenAI format
+        usage = None
+        if response.usage:
+            usage = TokenUsage(
+                input_tokens=response.usage.prompt_tokens or 0,
+                output_tokens=response.usage.completion_tokens or 0,
+                cache_creation_tokens=0,
+                cache_read_tokens=0,
+            )
+
+        # Extract response text with safety checks
+        text = ""
+        if response.choices and len(response.choices) > 0:
+            content = response.choices[0].message.content
+            if content:
+                text = content.strip()
+
+        return text, usage, duration_ms
 
     def generate_discussion(self, game_state: GameState, instruction: str = "") -> str:
         """Generate a discussion statement from this agent."""
@@ -1007,8 +1031,8 @@ class OllamaAgent(Agent):
             instruction=instruction
         )
 
-        result = self._call_llm(system, user_message, 200)
-        self._log_interaction(game_state, "discussion", system, user_message, result, model=self.model)
+        result, usage, duration_ms = self._call_llm(system, user_message, 200)
+        self._log_interaction(game_state, "discussion", system, user_message, result, model=self.model, usage=usage, duration_ms=duration_ms)
         return result
 
     def generate_combined_discussion(
@@ -1039,8 +1063,8 @@ class OllamaAgent(Agent):
             instruction=instruction
         )
 
-        result = self._call_llm(system, user_message, 200)
-        self._log_interaction(game_state, "combined_discussion", system, user_message, result, model=self.model)
+        result, usage, duration_ms = self._call_llm(system, user_message, 200)
+        self._log_interaction(game_state, "combined_discussion", system, user_message, result, model=self.model, usage=usage, duration_ms=duration_ms)
 
         statement, thoughts = parse_combined_response(result)
         return statement, thoughts
@@ -1059,8 +1083,8 @@ class OllamaAgent(Agent):
             voteable=', '.join(voteable)
         )
 
-        result = self._call_llm(system, user_message, 100)
-        self._log_interaction(game_state, "private_thoughts", system, user_message, result, model=self.model)
+        result, usage, duration_ms = self._call_llm(system, user_message, 100)
+        self._log_interaction(game_state, "private_thoughts", system, user_message, result, model=self.model, usage=usage, duration_ms=duration_ms)
         return result
 
     def generate_vote(self, game_state: GameState, cached_history: Optional[str] = None) -> str:
@@ -1075,8 +1099,8 @@ class OllamaAgent(Agent):
             voteable=', '.join(voteable)
         )
 
-        vote = self._call_llm(system, user_message, 50)
-        self._log_interaction(game_state, "vote", system, user_message, vote, model=self.model)
+        vote, usage, duration_ms = self._call_llm(system, user_message, 50)
+        self._log_interaction(game_state, "vote", system, user_message, vote, model=self.model, usage=usage, duration_ms=duration_ms)
 
         # Validate the vote is a valid player name
         for name in voteable:
@@ -1100,8 +1124,8 @@ class OllamaAgent(Agent):
             targets=', '.join(targets)
         )
 
-        vote = self._call_llm(system, user_message, 50)
-        self._log_interaction(game_state, "murder_vote", system, user_message, vote, model=self.model)
+        vote, usage, duration_ms = self._call_llm(system, user_message, 50)
+        self._log_interaction(game_state, "murder_vote", system, user_message, vote, model=self.model, usage=usage, duration_ms=duration_ms)
 
         for name in targets:
             if name.lower() in vote.lower():
@@ -1133,8 +1157,8 @@ class OllamaAgent(Agent):
             targets=', '.join(targets)
         )
 
-        result = self._call_llm(system, user_message, 200)
-        self._log_interaction(game_state, "traitor_discussion", system, user_message, result, model=self.model)
+        result, usage, duration_ms = self._call_llm(system, user_message, 200)
+        self._log_interaction(game_state, "traitor_discussion", system, user_message, result, model=self.model, usage=usage, duration_ms=duration_ms)
         return result
 
     def generate_end_game_vote(self, game_state: GameState, cached_history: Optional[str] = None) -> bool:
@@ -1166,8 +1190,8 @@ class OllamaAgent(Agent):
             faithful_share=faithful_share
         )
 
-        vote_text = self._call_llm(system, user_message, 20)
-        self._log_interaction(game_state, "end_game_vote", system, user_message, vote_text, model=self.model)
+        vote_text, usage, duration_ms = self._call_llm(system, user_message, 20)
+        self._log_interaction(game_state, "end_game_vote", system, user_message, vote_text, model=self.model, usage=usage, duration_ms=duration_ms)
         return "END" in vote_text.upper()
 
     def generate_finale_pouch_choice(self, game_state: GameState, cached_history: Optional[str] = None) -> str:
@@ -1207,12 +1231,401 @@ If EVERYONE chooses END_GAME, the game ends and roles are revealed.
 
 Respond with exactly one word: END_GAME or BANISH_AGAIN"""
 
-        choice_text = self._call_llm(system, user_message, 20)
-        self._log_interaction(game_state, "finale_pouch_choice", system, user_message, choice_text, model=self.model)
+        choice_text, usage, duration_ms = self._call_llm(system, user_message, 20)
+        self._log_interaction(game_state, "finale_pouch_choice", system, user_message, choice_text, model=self.model, usage=usage, duration_ms=duration_ms)
 
         if "BANISH" in choice_text.upper():
             return "BANISH_AGAIN"
         return "END_GAME"
+
+
+class OllamaAgent(OpenAICompatibleAgent):
+    """Agent using local Ollama for LLM inference.
+
+    Uses Ollama's OpenAI-compatible API for free local inference.
+    Backward-compatible wrapper around OpenAICompatibleAgent.
+
+    Setup:
+        1. Install Ollama: brew install ollama
+        2. Pull a model: ollama pull llama3.2
+        3. Start server: ollama serve
+    """
+
+    def __init__(
+        self,
+        player: Player,
+        model: str = "llama3.2",
+        base_url: str = "http://localhost:11434/v1",
+        api_callback: Optional[Callable] = None,
+    ):
+        super().__init__(
+            player=player,
+            model=model,
+            base_url=base_url,
+            api_key="ollama",
+            api_callback=api_callback,
+        )
+
+
+class GeminiAgent(Agent):
+    """Agent using Google Gemini via native SDK with context caching.
+
+    Uses the native google-genai SDK for access to context caching,
+    which provides ~75% cost reduction on cached tokens.
+
+    Requirements:
+        - Python 3.10+ (google-genai has typing incompatibilities with 3.9)
+        - google-genai package: pip install google-genai
+
+    Setup:
+        1. Get API key from Google AI Studio: https://aistudio.google.com/
+        2. Set GEMINI_API_KEY environment variable
+    """
+
+    def __init__(
+        self,
+        player: Player,
+        model: str = "gemini-2.0-flash-lite",
+        api_key: Optional[str] = None,
+        api_callback: Optional[Callable] = None,
+        enable_caching: bool = True,
+    ):
+        import os
+        import sys
+
+        # Check Python version before importing google-genai
+        if sys.version_info < (3, 10):
+            raise RuntimeError(
+                f"GeminiAgent requires Python 3.10+ (you have {sys.version_info.major}.{sys.version_info.minor}). "
+                "The google-genai package has typing incompatibilities with Python 3.9. "
+                "Please use Python 3.10 or later, or use a different agent type."
+            )
+
+        try:
+            from google import genai
+            from .gemini_cache import GeminiCacheManager
+        except ImportError as e:
+            raise ImportError(
+                "google-genai package required for GeminiAgent. "
+                "Install with: pip install google-genai"
+            ) from e
+
+        self.player = player
+        self.model = model
+        self.api_callback = api_callback
+        self.enable_caching = enable_caching
+
+        key = api_key or os.environ.get("GEMINI_API_KEY")
+        if not key:
+            raise ValueError("GEMINI_API_KEY environment variable required")
+
+        self.client = genai.Client(api_key=key)
+        self._cache_manager = GeminiCacheManager(self.client, model) if enable_caching else None
+
+    def _extract_usage(self, response) -> TokenUsage:
+        """Extract token usage from a Gemini API response."""
+        usage = response.usage_metadata
+        return TokenUsage(
+            input_tokens=usage.prompt_token_count or 0,
+            output_tokens=usage.candidates_token_count or 0,
+            cache_creation_tokens=getattr(usage, 'cache_creation_input_token_count', 0) or 0,
+            cache_read_tokens=getattr(usage, 'cached_content_token_count', 0) or 0,
+        )
+
+    def _call_llm(
+        self,
+        system: str,
+        user_message: str,
+        max_tokens: int,
+        cached_history: Optional[str] = None
+    ) -> tuple[str, Optional[TokenUsage], float]:
+        """Call the Gemini LLM API with optional caching.
+
+        Args:
+            system: System prompt
+            user_message: The user message/prompt
+            max_tokens: Maximum tokens in response
+            cached_history: Optional pre-built history for caching
+
+        Returns:
+            (response_text, usage, duration_ms)
+        """
+        from google.genai import types
+
+        start_time = time.time()
+
+        # Try to use caching if enabled and history provided
+        cache_name = None
+        if cached_history and self._cache_manager:
+            cache_name = self._cache_manager.get_or_create_cache(system, cached_history)
+
+        if cache_name:
+            # Use cached content - only send the dynamic part
+            response = self.client.models.generate_content(
+                model=self.model,
+                contents=user_message,
+                config=types.GenerateContentConfig(
+                    cached_content=cache_name,
+                    max_output_tokens=max_tokens,
+                )
+            )
+        else:
+            # No caching - send full request
+            full_content = f"{cached_history}\n\n{user_message}" if cached_history else user_message
+            response = self.client.models.generate_content(
+                model=self.model,
+                contents=full_content,
+                config=types.GenerateContentConfig(
+                    system_instruction=system,
+                    max_output_tokens=max_tokens,
+                )
+            )
+
+        duration_ms = (time.time() - start_time) * 1000
+
+        # Extract response text
+        text = ""
+        if response.candidates and len(response.candidates) > 0:
+            candidate = response.candidates[0]
+            if candidate.content and candidate.content.parts:
+                text = candidate.content.parts[0].text or ""
+        text = text.strip()
+
+        # Extract usage
+        usage = None
+        if response.usage_metadata:
+            usage = self._extract_usage(response)
+
+        return text, usage, duration_ms
+
+    def generate_discussion(self, game_state: GameState, instruction: str = "") -> str:
+        """Generate a discussion statement from this agent."""
+        system = self._build_system_prompt(game_state)
+        history = self._format_conversation_history(game_state)
+        round_context = self._get_round_context(game_state)
+
+        alive_names = [p.name for p in game_state.alive_players]
+
+        user_message = prompts.DISCUSSION_PROMPT.format(
+            round_context=round_context,
+            history=history,
+            current_round=game_state.current_round,
+            alive_names=', '.join(alive_names),
+            instruction=instruction
+        )
+
+        result, usage, duration_ms = self._call_llm(system, user_message, 200)
+        self._log_interaction(game_state, "discussion", system, user_message, result, model=self.model, usage=usage, duration_ms=duration_ms)
+        return result
+
+    def generate_combined_discussion(
+        self,
+        game_state: GameState,
+        turn_number: int,
+        max_turns: int,
+        instruction: str = "",
+        cached_previous_rounds: Optional[str] = None
+    ) -> tuple[str, str]:
+        """Generate a discussion statement with private thoughts in one response."""
+        system = self._build_system_prompt(game_state)
+        history = self._format_conversation_history(game_state)
+        round_context = self._get_round_context(game_state)
+
+        alive_names = [p.name for p in game_state.alive_players]
+
+        user_message = prompts.COMBINED_DISCUSSION_PROMPT.format(
+            round_context=round_context,
+            history=history,
+            current_round=game_state.current_round,
+            alive_names=', '.join(alive_names),
+            turn_number=turn_number,
+            max_turns=max_turns,
+            instruction=instruction
+        )
+
+        # Use cached_previous_rounds for caching if provided
+        result, usage, duration_ms = self._call_llm(
+            system, user_message, 200,
+            cached_history=cached_previous_rounds
+        )
+        self._log_interaction(game_state, "combined_discussion", system, user_message, result, model=self.model, usage=usage, duration_ms=duration_ms)
+
+        statement, thoughts = parse_combined_response(result)
+        return statement, thoughts
+
+    def generate_private_thoughts(self, game_state: GameState, cached_history: Optional[str] = None) -> str:
+        """Generate private thoughts before voting."""
+        system = self._build_system_prompt(game_state)
+        history = cached_history if cached_history is not None else self._format_conversation_history(game_state)
+        round_context = self._get_round_context(game_state)
+
+        voteable = [p.name for p in game_state.alive_players if p.name != self.player.name]
+
+        user_message = prompts.PRIVATE_THOUGHTS_PROMPT.format(
+            round_context=round_context,
+            history=history,
+            voteable=', '.join(voteable)
+        )
+
+        result, usage, duration_ms = self._call_llm(system, user_message, 100, cached_history=cached_history)
+        self._log_interaction(game_state, "private_thoughts", system, user_message, result, model=self.model, usage=usage, duration_ms=duration_ms)
+        return result
+
+    def generate_vote(self, game_state: GameState, cached_history: Optional[str] = None) -> str:
+        """Generate a vote for who to banish."""
+        system = self._build_system_prompt(game_state)
+        history = cached_history if cached_history is not None else self._format_conversation_history(game_state)
+
+        voteable = [p.name for p in game_state.alive_players if p.name != self.player.name]
+
+        user_message = prompts.VOTE_PROMPT.format(
+            history=history,
+            voteable=', '.join(voteable)
+        )
+
+        vote, usage, duration_ms = self._call_llm(system, user_message, 50, cached_history=cached_history)
+        self._log_interaction(game_state, "vote", system, user_message, vote, model=self.model, usage=usage, duration_ms=duration_ms)
+
+        # Validate the vote is a valid player name
+        for name in voteable:
+            if name.lower() in vote.lower():
+                return name
+
+        return voteable[0] if voteable else ""
+
+    def generate_murder_vote(self, game_state: GameState, cached_history: Optional[str] = None) -> str:
+        """Generate a vote for who to murder (traitors only)."""
+        if not self.player.is_traitor:
+            raise ValueError("Only traitors can vote to murder")
+
+        system = self._build_system_prompt(game_state)
+        history = cached_history if cached_history is not None else self._format_conversation_history(game_state)
+
+        targets = [p.name for p in game_state.alive_faithful]
+
+        user_message = prompts.MURDER_VOTE_PROMPT.format(
+            history=history,
+            targets=', '.join(targets)
+        )
+
+        vote, usage, duration_ms = self._call_llm(system, user_message, 50, cached_history=cached_history)
+        self._log_interaction(game_state, "murder_vote", system, user_message, vote, model=self.model, usage=usage, duration_ms=duration_ms)
+
+        for name in targets:
+            if name.lower() in vote.lower():
+                return name
+
+        return targets[0] if targets else ""
+
+    def generate_traitor_discussion(self, game_state: GameState, cached_history: Optional[str] = None) -> str:
+        """Generate private traitor discussion (night phase)."""
+        if not self.player.is_traitor:
+            raise ValueError("Only traitors can participate in traitor discussion")
+
+        system = self._build_system_prompt(game_state)
+        history = cached_history if cached_history is not None else self._format_conversation_history(game_state)
+        round_context = self._get_round_context(game_state)
+
+        other_traitors = [
+            p.name for p in game_state.alive_traitors
+            if p.name != self.player.name
+        ]
+        targets = [p.name for p in game_state.alive_faithful]
+
+        other_traitor_text = f"Your fellow traitor(s): {', '.join(other_traitors)}" if other_traitors else "You are the only traitor left."
+
+        user_message = prompts.TRAITOR_DISCUSSION_PROMPT.format(
+            round_context=round_context,
+            history=history,
+            other_traitor_text=other_traitor_text,
+            targets=', '.join(targets)
+        )
+
+        result, usage, duration_ms = self._call_llm(system, user_message, 200, cached_history=cached_history)
+        self._log_interaction(game_state, "traitor_discussion", system, user_message, result, model=self.model, usage=usage, duration_ms=duration_ms)
+        return result
+
+    def generate_end_game_vote(self, game_state: GameState, cached_history: Optional[str] = None) -> bool:
+        """Generate a vote on whether to end the game or continue."""
+        system = self._build_system_prompt(game_state)
+        history = cached_history if cached_history is not None else self._format_conversation_history(game_state)
+        round_context = self._get_round_context(game_state)
+
+        alive_count = len(game_state.alive_players)
+
+        revealed_traitors = [p for p in game_state.players.values()
+                           if p.status == PlayerStatus.BANISHED and p.is_traitor
+                           and p.eliminated_round and p.eliminated_round <= game_state.finale_round]
+        revealed_faithful = [p for p in game_state.players.values()
+                            if p.status == PlayerStatus.BANISHED and not p.is_traitor
+                            and p.eliminated_round and p.eliminated_round <= game_state.finale_round]
+
+        prize_pool = game_state.prize_pool
+        alive_faithful_count = len(game_state.alive_faithful)
+        faithful_share = prize_pool // max(alive_faithful_count, 1) if alive_faithful_count > 0 else 0
+
+        user_message = prompts.END_GAME_VOTE_PROMPT.format(
+            round_context=round_context,
+            history=history,
+            prize_pool=prize_pool,
+            alive_count=alive_count,
+            revealed_traitors=len(revealed_traitors),
+            revealed_faithful=len(revealed_faithful),
+            faithful_share=faithful_share
+        )
+
+        vote_text, usage, duration_ms = self._call_llm(system, user_message, 20, cached_history=cached_history)
+        self._log_interaction(game_state, "end_game_vote", system, user_message, vote_text, model=self.model, usage=usage, duration_ms=duration_ms)
+        return "END" in vote_text.upper()
+
+    def generate_finale_pouch_choice(self, game_state: GameState, cached_history: Optional[str] = None) -> str:
+        """Generate a pouch choice for the UK-style finale fire pit vote."""
+        system = self._build_system_prompt(game_state)
+        history = cached_history if cached_history is not None else self._format_conversation_history(game_state)
+        round_context = self._get_round_context(game_state)
+
+        alive_count = len(game_state.alive_players)
+        prize_pool = game_state.prize_pool
+
+        revealed_traitors = [p for p in game_state.players.values()
+                           if p.status == PlayerStatus.BANISHED and p.is_traitor
+                           and p.eliminated_round and p.eliminated_round <= game_state.finale_round]
+
+        if self.player.is_traitor:
+            role_hint = "As a traitor, if you end the game now, you WIN and take all the money!"
+        else:
+            role_hint = f"As faithful, if you end the game with a traitor still hidden, they win everything. {len(revealed_traitors)} traitor(s) have been revealed so far."
+
+        user_message = f"""{round_context}
+
+The conversation so far:
+{history}
+
+=== FIRE PIT VOTE ===
+It's the finale. You must choose one pouch to throw into the fire:
+- END_GAME: End the game now. All roles will be revealed.
+- BANISH_AGAIN: Force another round of voting (no role revealed after banishment).
+
+{role_hint}
+
+There are {alive_count} players remaining. Prize pool: ${prize_pool:,}
+
+If ANYONE chooses BANISH_AGAIN, the group must vote again.
+If EVERYONE chooses END_GAME, the game ends and roles are revealed.
+
+Respond with exactly one word: END_GAME or BANISH_AGAIN"""
+
+        choice_text, usage, duration_ms = self._call_llm(system, user_message, 20, cached_history=cached_history)
+        self._log_interaction(game_state, "finale_pouch_choice", system, user_message, choice_text, model=self.model, usage=usage, duration_ms=duration_ms)
+
+        if "BANISH" in choice_text.upper():
+            return "BANISH_AGAIN"
+        return "END_GAME"
+
+    def cleanup(self) -> None:
+        """Clean up any active caches. Call at end of game."""
+        if self._cache_manager:
+            self._cache_manager.cleanup()
 
 
 class TestAgent(Agent):

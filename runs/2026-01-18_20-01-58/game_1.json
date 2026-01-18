@@ -1,0 +1,2642 @@
+{
+  "game_id": 1,
+  "winner": "traitors",
+  "rounds_played": 7,
+  "traitors": [
+    "Rashid",
+    "Olivia",
+    "Freya"
+  ],
+  "faithful": [
+    "Marcus",
+    "Sofia",
+    "Derek",
+    "Elena",
+    "Jaylen",
+    "Priya",
+    "Terrence",
+    "Aaliyah",
+    "Victor",
+    "Camille",
+    "Gloria",
+    "Nathan",
+    "Simone",
+    "Wesley",
+    "Dahlia",
+    "Carlos"
+  ],
+  "survivors": [
+    "Sofia",
+    "Priya",
+    "Rashid",
+    "Olivia",
+    "Carlos",
+    "Freya"
+  ],
+  "prize_pool": 100000,
+  "prize_distribution": {
+    "Marcus": 0,
+    "Sofia": 0,
+    "Derek": 0,
+    "Elena": 0,
+    "Jaylen": 0,
+    "Priya": 0,
+    "Terrence": 0,
+    "Aaliyah": 0,
+    "Victor": 0,
+    "Camille": 0,
+    "Rashid": 33333,
+    "Gloria": 0,
+    "Olivia": 33333,
+    "Nathan": 0,
+    "Simone": 0,
+    "Wesley": 0,
+    "Dahlia": 0,
+    "Carlos": 0,
+    "Freya": 33333
+  },
+  "finale_round": 8,
+  "cost_usd": 0.0,
+  "duration_sec": 0.0,
+  "players": {
+    "Marcus": {
+      "role": "faithful",
+      "status": "murdered",
+      "eliminated_round": 5,
+      "model": "gemini-2.0-flash-lite"
+    },
+    "Sofia": {
+      "role": "faithful",
+      "status": "alive",
+      "eliminated_round": null,
+      "model": "gemini-2.0-flash-lite"
+    },
+    "Derek": {
+      "role": "faithful",
+      "status": "banished",
+      "eliminated_round": 7,
+      "model": "gemini-2.0-flash-lite"
+    },
+    "Elena": {
+      "role": "faithful",
+      "status": "banished",
+      "eliminated_round": 5,
+      "model": "gemini-2.0-flash-lite"
+    },
+    "Jaylen": {
+      "role": "faithful",
+      "status": "banished",
+      "eliminated_round": 2,
+      "model": "gemini-2.0-flash-lite"
+    },
+    "Priya": {
+      "role": "faithful",
+      "status": "alive",
+      "eliminated_round": null,
+      "model": "gemini-2.0-flash-lite"
+    },
+    "Terrence": {
+      "role": "faithful",
+      "status": "murdered",
+      "eliminated_round": 2,
+      "model": "gemini-2.0-flash-lite"
+    },
+    "Aaliyah": {
+      "role": "faithful",
+      "status": "murdered",
+      "eliminated_round": 4,
+      "model": "gemini-2.0-flash-lite"
+    },
+    "Victor": {
+      "role": "faithful",
+      "status": "banished",
+      "eliminated_round": 1,
+      "model": "gemini-2.0-flash-lite"
+    },
+    "Camille": {
+      "role": "faithful",
+      "status": "banished",
+      "eliminated_round": 3,
+      "model": "gemini-2.0-flash-lite"
+    },
+    "Rashid": {
+      "role": "traitor",
+      "status": "alive",
+      "eliminated_round": null,
+      "model": "gemini-2.0-flash-lite"
+    },
+    "Gloria": {
+      "role": "faithful",
+      "status": "murdered",
+      "eliminated_round": 1,
+      "model": "gemini-2.0-flash-lite"
+    },
+    "Olivia": {
+      "role": "traitor",
+      "status": "alive",
+      "eliminated_round": null,
+      "model": "gemini-2.0-flash-lite"
+    },
+    "Nathan": {
+      "role": "faithful",
+      "status": "banished",
+      "eliminated_round": 6,
+      "model": "gemini-2.0-flash-lite"
+    },
+    "Simone": {
+      "role": "faithful",
+      "status": "murdered",
+      "eliminated_round": 6,
+      "model": "gemini-2.0-flash-lite"
+    },
+    "Wesley": {
+      "role": "faithful",
+      "status": "murdered",
+      "eliminated_round": 3,
+      "model": "gemini-2.0-flash-lite"
+    },
+    "Dahlia": {
+      "role": "faithful",
+      "status": "banished",
+      "eliminated_round": 4,
+      "model": "gemini-2.0-flash-lite"
+    },
+    "Carlos": {
+      "role": "faithful",
+      "status": "alive",
+      "eliminated_round": null,
+      "model": "gemini-2.0-flash-lite"
+    },
+    "Freya": {
+      "role": "traitor",
+      "status": "alive",
+      "eliminated_round": null,
+      "model": "gemini-2.0-flash-lite"
+    }
+  },
+  "rounds": [
+    {
+      "round_num": 1,
+      "messages": [
+        {
+          "speaker": "Priya",
+          "content": "",
+          "round_num": 1,
+          "is_private": false,
+          "turn_number": 1,
+          "thoughts": ""
+        },
+        {
+          "speaker": "Carlos",
+          "content": "",
+          "round_num": 1,
+          "is_private": false,
+          "turn_number": 1,
+          "thoughts": ""
+        },
+        {
+          "speaker": "Marcus",
+          "content": "",
+          "round_num": 1,
+          "is_private": false,
+          "turn_number": 1,
+          "thoughts": ""
+        },
+        {
+          "speaker": "Terrence",
+          "content": "",
+          "round_num": 1,
+          "is_private": false,
+          "turn_number": 1,
+          "thoughts": ""
+        },
+        {
+          "speaker": "Dahlia",
+          "content": "",
+          "round_num": 1,
+          "is_private": false,
+          "turn_number": 1,
+          "thoughts": ""
+        },
+        {
+          "speaker": "Elena",
+          "content": "",
+          "round_num": 1,
+          "is_private": false,
+          "turn_number": 1,
+          "thoughts": ""
+        },
+        {
+          "speaker": "Olivia",
+          "content": "",
+          "round_num": 1,
+          "is_private": false,
+          "turn_number": 1,
+          "thoughts": ""
+        },
+        {
+          "speaker": "Aaliyah",
+          "content": "",
+          "round_num": 1,
+          "is_private": false,
+          "turn_number": 1,
+          "thoughts": ""
+        },
+        {
+          "speaker": "Wesley",
+          "content": "",
+          "round_num": 1,
+          "is_private": false,
+          "turn_number": 1,
+          "thoughts": ""
+        },
+        {
+          "speaker": "Freya",
+          "content": "",
+          "round_num": 1,
+          "is_private": false,
+          "turn_number": 1,
+          "thoughts": ""
+        },
+        {
+          "speaker": "Rashid",
+          "content": "",
+          "round_num": 1,
+          "is_private": false,
+          "turn_number": 1,
+          "thoughts": ""
+        },
+        {
+          "speaker": "Camille",
+          "content": "",
+          "round_num": 1,
+          "is_private": false,
+          "turn_number": 1,
+          "thoughts": ""
+        },
+        {
+          "speaker": "Simone",
+          "content": "",
+          "round_num": 1,
+          "is_private": false,
+          "turn_number": 1,
+          "thoughts": ""
+        },
+        {
+          "speaker": "Gloria",
+          "content": "",
+          "round_num": 1,
+          "is_private": false,
+          "turn_number": 1,
+          "thoughts": ""
+        },
+        {
+          "speaker": "Derek",
+          "content": "",
+          "round_num": 1,
+          "is_private": false,
+          "turn_number": 1,
+          "thoughts": ""
+        },
+        {
+          "speaker": "Victor",
+          "content": "",
+          "round_num": 1,
+          "is_private": false,
+          "turn_number": 1,
+          "thoughts": ""
+        },
+        {
+          "speaker": "Sofia",
+          "content": "",
+          "round_num": 1,
+          "is_private": false,
+          "turn_number": 1,
+          "thoughts": ""
+        },
+        {
+          "speaker": "Nathan",
+          "content": "",
+          "round_num": 1,
+          "is_private": false,
+          "turn_number": 1,
+          "thoughts": ""
+        },
+        {
+          "speaker": "Jaylen",
+          "content": "",
+          "round_num": 1,
+          "is_private": false,
+          "turn_number": 1,
+          "thoughts": ""
+        },
+        {
+          "speaker": "Camille",
+          "content": "",
+          "round_num": 1,
+          "is_private": false,
+          "turn_number": 2,
+          "thoughts": ""
+        },
+        {
+          "speaker": "Wesley",
+          "content": "",
+          "round_num": 1,
+          "is_private": false,
+          "turn_number": 2,
+          "thoughts": ""
+        },
+        {
+          "speaker": "Marcus",
+          "content": "",
+          "round_num": 1,
+          "is_private": false,
+          "turn_number": 2,
+          "thoughts": ""
+        },
+        {
+          "speaker": "Victor",
+          "content": "",
+          "round_num": 1,
+          "is_private": false,
+          "turn_number": 2,
+          "thoughts": ""
+        },
+        {
+          "speaker": "Terrence",
+          "content": "",
+          "round_num": 1,
+          "is_private": false,
+          "turn_number": 2,
+          "thoughts": ""
+        },
+        {
+          "speaker": "Simone",
+          "content": "",
+          "round_num": 1,
+          "is_private": false,
+          "turn_number": 2,
+          "thoughts": ""
+        },
+        {
+          "speaker": "Marcus",
+          "content": "",
+          "round_num": 1,
+          "is_private": false,
+          "turn_number": 3,
+          "thoughts": ""
+        },
+        {
+          "speaker": "Rashid",
+          "content": "",
+          "round_num": 1,
+          "is_private": true,
+          "turn_number": 1,
+          "thoughts": ""
+        },
+        {
+          "speaker": "Olivia",
+          "content": "",
+          "round_num": 1,
+          "is_private": true,
+          "turn_number": 1,
+          "thoughts": ""
+        },
+        {
+          "speaker": "Freya",
+          "content": "",
+          "round_num": 1,
+          "is_private": true,
+          "turn_number": 1,
+          "thoughts": ""
+        }
+      ],
+      "votes": [
+        {
+          "voter": "Marcus",
+          "target": "Simone",
+          "round_num": 1
+        },
+        {
+          "voter": "Sofia",
+          "target": "Marcus",
+          "round_num": 1
+        },
+        {
+          "voter": "Derek",
+          "target": "Victor",
+          "round_num": 1
+        },
+        {
+          "voter": "Elena",
+          "target": "Nathan",
+          "round_num": 1
+        },
+        {
+          "voter": "Jaylen",
+          "target": "Rashid",
+          "round_num": 1
+        },
+        {
+          "voter": "Priya",
+          "target": "Derek",
+          "round_num": 1
+        },
+        {
+          "voter": "Terrence",
+          "target": "Nathan",
+          "round_num": 1
+        },
+        {
+          "voter": "Aaliyah",
+          "target": "Jaylen",
+          "round_num": 1
+        },
+        {
+          "voter": "Victor",
+          "target": "Freya",
+          "round_num": 1
+        },
+        {
+          "voter": "Camille",
+          "target": "Freya",
+          "round_num": 1
+        },
+        {
+          "voter": "Rashid",
+          "target": "Victor",
+          "round_num": 1
+        },
+        {
+          "voter": "Gloria",
+          "target": "Nathan",
+          "round_num": 1
+        },
+        {
+          "voter": "Olivia",
+          "target": "Aaliyah",
+          "round_num": 1
+        },
+        {
+          "voter": "Nathan",
+          "target": "Rashid",
+          "round_num": 1
+        },
+        {
+          "voter": "Simone",
+          "target": "Camille",
+          "round_num": 1
+        },
+        {
+          "voter": "Wesley",
+          "target": "Elena",
+          "round_num": 1
+        },
+        {
+          "voter": "Dahlia",
+          "target": "Victor",
+          "round_num": 1
+        },
+        {
+          "voter": "Carlos",
+          "target": "Dahlia",
+          "round_num": 1
+        },
+        {
+          "voter": "Freya",
+          "target": "Victor",
+          "round_num": 1
+        }
+      ],
+      "pouch_votes": [],
+      "private_thoughts": [],
+      "banished": {
+        "name": "Victor",
+        "role": "faithful"
+      },
+      "murdered": {
+        "name": "Gloria"
+      }
+    },
+    {
+      "round_num": 2,
+      "messages": [
+        {
+          "speaker": "Simone",
+          "content": "",
+          "round_num": 2,
+          "is_private": false,
+          "turn_number": 1,
+          "thoughts": ""
+        },
+        {
+          "speaker": "Sofia",
+          "content": "",
+          "round_num": 2,
+          "is_private": false,
+          "turn_number": 1,
+          "thoughts": ""
+        },
+        {
+          "speaker": "Aaliyah",
+          "content": "",
+          "round_num": 2,
+          "is_private": false,
+          "turn_number": 1,
+          "thoughts": ""
+        },
+        {
+          "speaker": "Jaylen",
+          "content": "",
+          "round_num": 2,
+          "is_private": false,
+          "turn_number": 1,
+          "thoughts": ""
+        },
+        {
+          "speaker": "Wesley",
+          "content": "",
+          "round_num": 2,
+          "is_private": false,
+          "turn_number": 1,
+          "thoughts": ""
+        },
+        {
+          "speaker": "Nathan",
+          "content": "",
+          "round_num": 2,
+          "is_private": false,
+          "turn_number": 1,
+          "thoughts": ""
+        },
+        {
+          "speaker": "Terrence",
+          "content": "",
+          "round_num": 2,
+          "is_private": false,
+          "turn_number": 1,
+          "thoughts": ""
+        },
+        {
+          "speaker": "Priya",
+          "content": "",
+          "round_num": 2,
+          "is_private": false,
+          "turn_number": 1,
+          "thoughts": ""
+        },
+        {
+          "speaker": "Camille",
+          "content": "",
+          "round_num": 2,
+          "is_private": false,
+          "turn_number": 1,
+          "thoughts": ""
+        },
+        {
+          "speaker": "Freya",
+          "content": "",
+          "round_num": 2,
+          "is_private": false,
+          "turn_number": 1,
+          "thoughts": ""
+        },
+        {
+          "speaker": "Dahlia",
+          "content": "",
+          "round_num": 2,
+          "is_private": false,
+          "turn_number": 1,
+          "thoughts": ""
+        },
+        {
+          "speaker": "Marcus",
+          "content": "",
+          "round_num": 2,
+          "is_private": false,
+          "turn_number": 1,
+          "thoughts": ""
+        },
+        {
+          "speaker": "Derek",
+          "content": "",
+          "round_num": 2,
+          "is_private": false,
+          "turn_number": 1,
+          "thoughts": ""
+        },
+        {
+          "speaker": "Olivia",
+          "content": "",
+          "round_num": 2,
+          "is_private": false,
+          "turn_number": 1,
+          "thoughts": ""
+        },
+        {
+          "speaker": "Elena",
+          "content": "",
+          "round_num": 2,
+          "is_private": false,
+          "turn_number": 1,
+          "thoughts": ""
+        },
+        {
+          "speaker": "Carlos",
+          "content": "",
+          "round_num": 2,
+          "is_private": false,
+          "turn_number": 1,
+          "thoughts": ""
+        },
+        {
+          "speaker": "Rashid",
+          "content": "",
+          "round_num": 2,
+          "is_private": false,
+          "turn_number": 1,
+          "thoughts": ""
+        },
+        {
+          "speaker": "Terrence",
+          "content": "",
+          "round_num": 2,
+          "is_private": false,
+          "turn_number": 2,
+          "thoughts": ""
+        },
+        {
+          "speaker": "Jaylen",
+          "content": "",
+          "round_num": 2,
+          "is_private": false,
+          "turn_number": 2,
+          "thoughts": ""
+        },
+        {
+          "speaker": "Derek",
+          "content": "",
+          "round_num": 2,
+          "is_private": false,
+          "turn_number": 2,
+          "thoughts": ""
+        },
+        {
+          "speaker": "Marcus",
+          "content": "",
+          "round_num": 2,
+          "is_private": false,
+          "turn_number": 2,
+          "thoughts": ""
+        },
+        {
+          "speaker": "Wesley",
+          "content": "",
+          "round_num": 2,
+          "is_private": false,
+          "turn_number": 2,
+          "thoughts": ""
+        },
+        {
+          "speaker": "Carlos",
+          "content": "",
+          "round_num": 2,
+          "is_private": false,
+          "turn_number": 2,
+          "thoughts": ""
+        },
+        {
+          "speaker": "Nathan",
+          "content": "",
+          "round_num": 2,
+          "is_private": false,
+          "turn_number": 2,
+          "thoughts": ""
+        },
+        {
+          "speaker": "Terrence",
+          "content": "",
+          "round_num": 2,
+          "is_private": false,
+          "turn_number": 3,
+          "thoughts": ""
+        },
+        {
+          "speaker": "Wesley",
+          "content": "",
+          "round_num": 2,
+          "is_private": false,
+          "turn_number": 3,
+          "thoughts": ""
+        },
+        {
+          "speaker": "Marcus",
+          "content": "",
+          "round_num": 2,
+          "is_private": false,
+          "turn_number": 3,
+          "thoughts": ""
+        },
+        {
+          "speaker": "Jaylen",
+          "content": "",
+          "round_num": 2,
+          "is_private": false,
+          "turn_number": 3,
+          "thoughts": ""
+        },
+        {
+          "speaker": "Carlos",
+          "content": "",
+          "round_num": 2,
+          "is_private": false,
+          "turn_number": 3,
+          "thoughts": ""
+        },
+        {
+          "speaker": "Rashid",
+          "content": "",
+          "round_num": 2,
+          "is_private": true,
+          "turn_number": 1,
+          "thoughts": ""
+        },
+        {
+          "speaker": "Olivia",
+          "content": "",
+          "round_num": 2,
+          "is_private": true,
+          "turn_number": 1,
+          "thoughts": ""
+        },
+        {
+          "speaker": "Freya",
+          "content": "",
+          "round_num": 2,
+          "is_private": true,
+          "turn_number": 1,
+          "thoughts": ""
+        }
+      ],
+      "votes": [
+        {
+          "voter": "Marcus",
+          "target": "Elena",
+          "round_num": 2
+        },
+        {
+          "voter": "Sofia",
+          "target": "Dahlia",
+          "round_num": 2
+        },
+        {
+          "voter": "Derek",
+          "target": "Olivia",
+          "round_num": 2
+        },
+        {
+          "voter": "Elena",
+          "target": "Wesley",
+          "round_num": 2
+        },
+        {
+          "voter": "Jaylen",
+          "target": "Nathan",
+          "round_num": 2
+        },
+        {
+          "voter": "Priya",
+          "target": "Jaylen",
+          "round_num": 2
+        },
+        {
+          "voter": "Terrence",
+          "target": "Marcus",
+          "round_num": 2
+        },
+        {
+          "voter": "Aaliyah",
+          "target": "Jaylen",
+          "round_num": 2
+        },
+        {
+          "voter": "Camille",
+          "target": "Jaylen",
+          "round_num": 2
+        },
+        {
+          "voter": "Rashid",
+          "target": "Simone",
+          "round_num": 2
+        },
+        {
+          "voter": "Olivia",
+          "target": "Jaylen",
+          "round_num": 2
+        },
+        {
+          "voter": "Nathan",
+          "target": "Jaylen",
+          "round_num": 2
+        },
+        {
+          "voter": "Simone",
+          "target": "Olivia",
+          "round_num": 2
+        },
+        {
+          "voter": "Wesley",
+          "target": "Terrence",
+          "round_num": 2
+        },
+        {
+          "voter": "Dahlia",
+          "target": "Wesley",
+          "round_num": 2
+        },
+        {
+          "voter": "Carlos",
+          "target": "Aaliyah",
+          "round_num": 2
+        },
+        {
+          "voter": "Freya",
+          "target": "Aaliyah",
+          "round_num": 2
+        }
+      ],
+      "pouch_votes": [],
+      "private_thoughts": [],
+      "banished": {
+        "name": "Jaylen",
+        "role": "faithful"
+      },
+      "murdered": {
+        "name": "Terrence"
+      }
+    },
+    {
+      "round_num": 3,
+      "messages": [
+        {
+          "speaker": "Carlos",
+          "content": "",
+          "round_num": 3,
+          "is_private": false,
+          "turn_number": 1,
+          "thoughts": ""
+        },
+        {
+          "speaker": "Sofia",
+          "content": "",
+          "round_num": 3,
+          "is_private": false,
+          "turn_number": 1,
+          "thoughts": ""
+        },
+        {
+          "speaker": "Priya",
+          "content": "",
+          "round_num": 3,
+          "is_private": false,
+          "turn_number": 1,
+          "thoughts": ""
+        },
+        {
+          "speaker": "Freya",
+          "content": "",
+          "round_num": 3,
+          "is_private": false,
+          "turn_number": 1,
+          "thoughts": ""
+        },
+        {
+          "speaker": "Rashid",
+          "content": "",
+          "round_num": 3,
+          "is_private": false,
+          "turn_number": 1,
+          "thoughts": ""
+        },
+        {
+          "speaker": "Simone",
+          "content": "",
+          "round_num": 3,
+          "is_private": false,
+          "turn_number": 1,
+          "thoughts": ""
+        },
+        {
+          "speaker": "Camille",
+          "content": "",
+          "round_num": 3,
+          "is_private": false,
+          "turn_number": 1,
+          "thoughts": ""
+        },
+        {
+          "speaker": "Marcus",
+          "content": "",
+          "round_num": 3,
+          "is_private": false,
+          "turn_number": 1,
+          "thoughts": ""
+        },
+        {
+          "speaker": "Elena",
+          "content": "",
+          "round_num": 3,
+          "is_private": false,
+          "turn_number": 1,
+          "thoughts": ""
+        },
+        {
+          "speaker": "Nathan",
+          "content": "",
+          "round_num": 3,
+          "is_private": false,
+          "turn_number": 1,
+          "thoughts": ""
+        },
+        {
+          "speaker": "Derek",
+          "content": "",
+          "round_num": 3,
+          "is_private": false,
+          "turn_number": 1,
+          "thoughts": ""
+        },
+        {
+          "speaker": "Dahlia",
+          "content": "",
+          "round_num": 3,
+          "is_private": false,
+          "turn_number": 1,
+          "thoughts": ""
+        },
+        {
+          "speaker": "Aaliyah",
+          "content": "",
+          "round_num": 3,
+          "is_private": false,
+          "turn_number": 1,
+          "thoughts": ""
+        },
+        {
+          "speaker": "Olivia",
+          "content": "",
+          "round_num": 3,
+          "is_private": false,
+          "turn_number": 1,
+          "thoughts": ""
+        },
+        {
+          "speaker": "Wesley",
+          "content": "",
+          "round_num": 3,
+          "is_private": false,
+          "turn_number": 1,
+          "thoughts": ""
+        },
+        {
+          "speaker": "Sofia",
+          "content": "",
+          "round_num": 3,
+          "is_private": false,
+          "turn_number": 2,
+          "thoughts": ""
+        },
+        {
+          "speaker": "Nathan",
+          "content": "",
+          "round_num": 3,
+          "is_private": false,
+          "turn_number": 2,
+          "thoughts": ""
+        },
+        {
+          "speaker": "Camille",
+          "content": "",
+          "round_num": 3,
+          "is_private": false,
+          "turn_number": 2,
+          "thoughts": ""
+        },
+        {
+          "speaker": "Simone",
+          "content": "",
+          "round_num": 3,
+          "is_private": false,
+          "turn_number": 2,
+          "thoughts": ""
+        },
+        {
+          "speaker": "Freya",
+          "content": "",
+          "round_num": 3,
+          "is_private": false,
+          "turn_number": 2,
+          "thoughts": ""
+        },
+        {
+          "speaker": "Rashid",
+          "content": "",
+          "round_num": 3,
+          "is_private": false,
+          "turn_number": 2,
+          "thoughts": ""
+        },
+        {
+          "speaker": "Nathan",
+          "content": "",
+          "round_num": 3,
+          "is_private": false,
+          "turn_number": 3,
+          "thoughts": ""
+        },
+        {
+          "speaker": "Rashid",
+          "content": "",
+          "round_num": 3,
+          "is_private": true,
+          "turn_number": 1,
+          "thoughts": ""
+        },
+        {
+          "speaker": "Olivia",
+          "content": "",
+          "round_num": 3,
+          "is_private": true,
+          "turn_number": 1,
+          "thoughts": ""
+        },
+        {
+          "speaker": "Freya",
+          "content": "",
+          "round_num": 3,
+          "is_private": true,
+          "turn_number": 1,
+          "thoughts": ""
+        }
+      ],
+      "votes": [
+        {
+          "voter": "Marcus",
+          "target": "Priya",
+          "round_num": 3
+        },
+        {
+          "voter": "Sofia",
+          "target": "Wesley",
+          "round_num": 3
+        },
+        {
+          "voter": "Derek",
+          "target": "Camille",
+          "round_num": 3
+        },
+        {
+          "voter": "Elena",
+          "target": "Camille",
+          "round_num": 3
+        },
+        {
+          "voter": "Priya",
+          "target": "Camille",
+          "round_num": 3
+        },
+        {
+          "voter": "Aaliyah",
+          "target": "Freya",
+          "round_num": 3
+        },
+        {
+          "voter": "Camille",
+          "target": "Derek",
+          "round_num": 3
+        },
+        {
+          "voter": "Rashid",
+          "target": "Aaliyah",
+          "round_num": 3
+        },
+        {
+          "voter": "Olivia",
+          "target": "Carlos",
+          "round_num": 3
+        },
+        {
+          "voter": "Nathan",
+          "target": "Sofia",
+          "round_num": 3
+        },
+        {
+          "voter": "Simone",
+          "target": "Freya",
+          "round_num": 3
+        },
+        {
+          "voter": "Wesley",
+          "target": "Simone",
+          "round_num": 3
+        },
+        {
+          "voter": "Dahlia",
+          "target": "Marcus",
+          "round_num": 3
+        },
+        {
+          "voter": "Carlos",
+          "target": "Priya",
+          "round_num": 3
+        },
+        {
+          "voter": "Freya",
+          "target": "Derek",
+          "round_num": 3
+        }
+      ],
+      "pouch_votes": [],
+      "private_thoughts": [],
+      "banished": {
+        "name": "Camille",
+        "role": "faithful"
+      },
+      "murdered": {
+        "name": "Wesley"
+      }
+    },
+    {
+      "round_num": 4,
+      "messages": [
+        {
+          "speaker": "Simone",
+          "content": "",
+          "round_num": 4,
+          "is_private": false,
+          "turn_number": 1,
+          "thoughts": ""
+        },
+        {
+          "speaker": "Sofia",
+          "content": "",
+          "round_num": 4,
+          "is_private": false,
+          "turn_number": 1,
+          "thoughts": ""
+        },
+        {
+          "speaker": "Dahlia",
+          "content": "",
+          "round_num": 4,
+          "is_private": false,
+          "turn_number": 1,
+          "thoughts": ""
+        },
+        {
+          "speaker": "Derek",
+          "content": "",
+          "round_num": 4,
+          "is_private": false,
+          "turn_number": 1,
+          "thoughts": ""
+        },
+        {
+          "speaker": "Freya",
+          "content": "",
+          "round_num": 4,
+          "is_private": false,
+          "turn_number": 1,
+          "thoughts": ""
+        },
+        {
+          "speaker": "Aaliyah",
+          "content": "",
+          "round_num": 4,
+          "is_private": false,
+          "turn_number": 1,
+          "thoughts": ""
+        },
+        {
+          "speaker": "Marcus",
+          "content": "",
+          "round_num": 4,
+          "is_private": false,
+          "turn_number": 1,
+          "thoughts": ""
+        },
+        {
+          "speaker": "Carlos",
+          "content": "",
+          "round_num": 4,
+          "is_private": false,
+          "turn_number": 1,
+          "thoughts": ""
+        },
+        {
+          "speaker": "Nathan",
+          "content": "",
+          "round_num": 4,
+          "is_private": false,
+          "turn_number": 1,
+          "thoughts": ""
+        },
+        {
+          "speaker": "Priya",
+          "content": "",
+          "round_num": 4,
+          "is_private": false,
+          "turn_number": 1,
+          "thoughts": ""
+        },
+        {
+          "speaker": "Olivia",
+          "content": "",
+          "round_num": 4,
+          "is_private": false,
+          "turn_number": 1,
+          "thoughts": ""
+        },
+        {
+          "speaker": "Elena",
+          "content": "",
+          "round_num": 4,
+          "is_private": false,
+          "turn_number": 1,
+          "thoughts": ""
+        },
+        {
+          "speaker": "Rashid",
+          "content": "",
+          "round_num": 4,
+          "is_private": false,
+          "turn_number": 1,
+          "thoughts": ""
+        },
+        {
+          "speaker": "Sofia",
+          "content": "",
+          "round_num": 4,
+          "is_private": false,
+          "turn_number": 2,
+          "thoughts": ""
+        },
+        {
+          "speaker": "Olivia",
+          "content": "",
+          "round_num": 4,
+          "is_private": false,
+          "turn_number": 2,
+          "thoughts": ""
+        },
+        {
+          "speaker": "Dahlia",
+          "content": "",
+          "round_num": 4,
+          "is_private": false,
+          "turn_number": 2,
+          "thoughts": ""
+        },
+        {
+          "speaker": "Freya",
+          "content": "",
+          "round_num": 4,
+          "is_private": false,
+          "turn_number": 2,
+          "thoughts": ""
+        },
+        {
+          "speaker": "Aaliyah",
+          "content": "",
+          "round_num": 4,
+          "is_private": false,
+          "turn_number": 2,
+          "thoughts": ""
+        },
+        {
+          "speaker": "Simone",
+          "content": "",
+          "round_num": 4,
+          "is_private": false,
+          "turn_number": 2,
+          "thoughts": ""
+        },
+        {
+          "speaker": "Nathan",
+          "content": "",
+          "round_num": 4,
+          "is_private": false,
+          "turn_number": 2,
+          "thoughts": ""
+        },
+        {
+          "speaker": "Sofia",
+          "content": "",
+          "round_num": 4,
+          "is_private": false,
+          "turn_number": 3,
+          "thoughts": ""
+        },
+        {
+          "speaker": "Dahlia",
+          "content": "",
+          "round_num": 4,
+          "is_private": false,
+          "turn_number": 3,
+          "thoughts": ""
+        },
+        {
+          "speaker": "Freya",
+          "content": "",
+          "round_num": 4,
+          "is_private": false,
+          "turn_number": 3,
+          "thoughts": ""
+        },
+        {
+          "speaker": "Aaliyah",
+          "content": "",
+          "round_num": 4,
+          "is_private": false,
+          "turn_number": 3,
+          "thoughts": ""
+        },
+        {
+          "speaker": "Rashid",
+          "content": "",
+          "round_num": 4,
+          "is_private": true,
+          "turn_number": 1,
+          "thoughts": ""
+        },
+        {
+          "speaker": "Olivia",
+          "content": "",
+          "round_num": 4,
+          "is_private": true,
+          "turn_number": 1,
+          "thoughts": ""
+        },
+        {
+          "speaker": "Freya",
+          "content": "",
+          "round_num": 4,
+          "is_private": true,
+          "turn_number": 1,
+          "thoughts": ""
+        }
+      ],
+      "votes": [
+        {
+          "voter": "Marcus",
+          "target": "Elena",
+          "round_num": 4
+        },
+        {
+          "voter": "Sofia",
+          "target": "Freya",
+          "round_num": 4
+        },
+        {
+          "voter": "Derek",
+          "target": "Dahlia",
+          "round_num": 4
+        },
+        {
+          "voter": "Elena",
+          "target": "Rashid",
+          "round_num": 4
+        },
+        {
+          "voter": "Priya",
+          "target": "Dahlia",
+          "round_num": 4
+        },
+        {
+          "voter": "Aaliyah",
+          "target": "Nathan",
+          "round_num": 4
+        },
+        {
+          "voter": "Rashid",
+          "target": "Aaliyah",
+          "round_num": 4
+        },
+        {
+          "voter": "Olivia",
+          "target": "Aaliyah",
+          "round_num": 4
+        },
+        {
+          "voter": "Nathan",
+          "target": "Dahlia",
+          "round_num": 4
+        },
+        {
+          "voter": "Simone",
+          "target": "Rashid",
+          "round_num": 4
+        },
+        {
+          "voter": "Dahlia",
+          "target": "Elena",
+          "round_num": 4
+        },
+        {
+          "voter": "Carlos",
+          "target": "Dahlia",
+          "round_num": 4
+        },
+        {
+          "voter": "Freya",
+          "target": "Aaliyah",
+          "round_num": 4
+        }
+      ],
+      "pouch_votes": [],
+      "private_thoughts": [],
+      "banished": {
+        "name": "Dahlia",
+        "role": "faithful"
+      },
+      "murdered": {
+        "name": "Aaliyah"
+      }
+    },
+    {
+      "round_num": 5,
+      "messages": [
+        {
+          "speaker": "Priya",
+          "content": "",
+          "round_num": 5,
+          "is_private": false,
+          "turn_number": 1,
+          "thoughts": ""
+        },
+        {
+          "speaker": "Derek",
+          "content": "",
+          "round_num": 5,
+          "is_private": false,
+          "turn_number": 1,
+          "thoughts": ""
+        },
+        {
+          "speaker": "Carlos",
+          "content": "",
+          "round_num": 5,
+          "is_private": false,
+          "turn_number": 1,
+          "thoughts": ""
+        },
+        {
+          "speaker": "Olivia",
+          "content": "",
+          "round_num": 5,
+          "is_private": false,
+          "turn_number": 1,
+          "thoughts": ""
+        },
+        {
+          "speaker": "Sofia",
+          "content": "",
+          "round_num": 5,
+          "is_private": false,
+          "turn_number": 1,
+          "thoughts": ""
+        },
+        {
+          "speaker": "Marcus",
+          "content": "",
+          "round_num": 5,
+          "is_private": false,
+          "turn_number": 1,
+          "thoughts": ""
+        },
+        {
+          "speaker": "Simone",
+          "content": "",
+          "round_num": 5,
+          "is_private": false,
+          "turn_number": 1,
+          "thoughts": ""
+        },
+        {
+          "speaker": "Elena",
+          "content": "",
+          "round_num": 5,
+          "is_private": false,
+          "turn_number": 1,
+          "thoughts": ""
+        },
+        {
+          "speaker": "Freya",
+          "content": "",
+          "round_num": 5,
+          "is_private": false,
+          "turn_number": 1,
+          "thoughts": ""
+        },
+        {
+          "speaker": "Rashid",
+          "content": "",
+          "round_num": 5,
+          "is_private": false,
+          "turn_number": 1,
+          "thoughts": ""
+        },
+        {
+          "speaker": "Nathan",
+          "content": "",
+          "round_num": 5,
+          "is_private": false,
+          "turn_number": 1,
+          "thoughts": ""
+        },
+        {
+          "speaker": "Marcus",
+          "content": "",
+          "round_num": 5,
+          "is_private": false,
+          "turn_number": 2,
+          "thoughts": ""
+        },
+        {
+          "speaker": "Olivia",
+          "content": "",
+          "round_num": 5,
+          "is_private": false,
+          "turn_number": 2,
+          "thoughts": ""
+        },
+        {
+          "speaker": "Elena",
+          "content": "",
+          "round_num": 5,
+          "is_private": false,
+          "turn_number": 2,
+          "thoughts": ""
+        },
+        {
+          "speaker": "Derek",
+          "content": "",
+          "round_num": 5,
+          "is_private": false,
+          "turn_number": 2,
+          "thoughts": ""
+        },
+        {
+          "speaker": "Simone",
+          "content": "",
+          "round_num": 5,
+          "is_private": false,
+          "turn_number": 2,
+          "thoughts": ""
+        },
+        {
+          "speaker": "Olivia",
+          "content": "",
+          "round_num": 5,
+          "is_private": false,
+          "turn_number": 3,
+          "thoughts": ""
+        },
+        {
+          "speaker": "Simone",
+          "content": "",
+          "round_num": 5,
+          "is_private": false,
+          "turn_number": 3,
+          "thoughts": ""
+        },
+        {
+          "speaker": "Derek",
+          "content": "",
+          "round_num": 5,
+          "is_private": false,
+          "turn_number": 3,
+          "thoughts": ""
+        },
+        {
+          "speaker": "Rashid",
+          "content": "",
+          "round_num": 5,
+          "is_private": true,
+          "turn_number": 1,
+          "thoughts": ""
+        },
+        {
+          "speaker": "Olivia",
+          "content": "",
+          "round_num": 5,
+          "is_private": true,
+          "turn_number": 1,
+          "thoughts": ""
+        },
+        {
+          "speaker": "Freya",
+          "content": "",
+          "round_num": 5,
+          "is_private": true,
+          "turn_number": 1,
+          "thoughts": ""
+        }
+      ],
+      "votes": [
+        {
+          "voter": "Marcus",
+          "target": "Olivia",
+          "round_num": 5
+        },
+        {
+          "voter": "Sofia",
+          "target": "Carlos",
+          "round_num": 5
+        },
+        {
+          "voter": "Derek",
+          "target": "Elena",
+          "round_num": 5
+        },
+        {
+          "voter": "Elena",
+          "target": "Priya",
+          "round_num": 5
+        },
+        {
+          "voter": "Priya",
+          "target": "Derek",
+          "round_num": 5
+        },
+        {
+          "voter": "Rashid",
+          "target": "Carlos",
+          "round_num": 5
+        },
+        {
+          "voter": "Olivia",
+          "target": "Elena",
+          "round_num": 5
+        },
+        {
+          "voter": "Nathan",
+          "target": "Marcus",
+          "round_num": 5
+        },
+        {
+          "voter": "Simone",
+          "target": "Elena",
+          "round_num": 5
+        },
+        {
+          "voter": "Carlos",
+          "target": "Marcus",
+          "round_num": 5
+        },
+        {
+          "voter": "Freya",
+          "target": "Priya",
+          "round_num": 5
+        }
+      ],
+      "pouch_votes": [],
+      "private_thoughts": [],
+      "banished": {
+        "name": "Elena",
+        "role": "faithful"
+      },
+      "murdered": {
+        "name": "Marcus"
+      }
+    },
+    {
+      "round_num": 6,
+      "messages": [
+        {
+          "speaker": "Carlos",
+          "content": "",
+          "round_num": 6,
+          "is_private": false,
+          "turn_number": 1,
+          "thoughts": ""
+        },
+        {
+          "speaker": "Derek",
+          "content": "",
+          "round_num": 6,
+          "is_private": false,
+          "turn_number": 1,
+          "thoughts": ""
+        },
+        {
+          "speaker": "Rashid",
+          "content": "",
+          "round_num": 6,
+          "is_private": false,
+          "turn_number": 1,
+          "thoughts": ""
+        },
+        {
+          "speaker": "Freya",
+          "content": "",
+          "round_num": 6,
+          "is_private": false,
+          "turn_number": 1,
+          "thoughts": ""
+        },
+        {
+          "speaker": "Simone",
+          "content": "",
+          "round_num": 6,
+          "is_private": false,
+          "turn_number": 1,
+          "thoughts": ""
+        },
+        {
+          "speaker": "Nathan",
+          "content": "",
+          "round_num": 6,
+          "is_private": false,
+          "turn_number": 1,
+          "thoughts": ""
+        },
+        {
+          "speaker": "Olivia",
+          "content": "",
+          "round_num": 6,
+          "is_private": false,
+          "turn_number": 1,
+          "thoughts": ""
+        },
+        {
+          "speaker": "Priya",
+          "content": "",
+          "round_num": 6,
+          "is_private": false,
+          "turn_number": 1,
+          "thoughts": ""
+        },
+        {
+          "speaker": "Sofia",
+          "content": "",
+          "round_num": 6,
+          "is_private": false,
+          "turn_number": 1,
+          "thoughts": ""
+        },
+        {
+          "speaker": "Derek",
+          "content": "",
+          "round_num": 6,
+          "is_private": false,
+          "turn_number": 2,
+          "thoughts": ""
+        },
+        {
+          "speaker": "Freya",
+          "content": "",
+          "round_num": 6,
+          "is_private": false,
+          "turn_number": 2,
+          "thoughts": ""
+        },
+        {
+          "speaker": "Priya",
+          "content": "",
+          "round_num": 6,
+          "is_private": false,
+          "turn_number": 2,
+          "thoughts": ""
+        },
+        {
+          "speaker": "Carlos",
+          "content": "",
+          "round_num": 6,
+          "is_private": false,
+          "turn_number": 2,
+          "thoughts": ""
+        },
+        {
+          "speaker": "Rashid",
+          "content": "",
+          "round_num": 6,
+          "is_private": true,
+          "turn_number": 1,
+          "thoughts": ""
+        },
+        {
+          "speaker": "Olivia",
+          "content": "",
+          "round_num": 6,
+          "is_private": true,
+          "turn_number": 1,
+          "thoughts": ""
+        },
+        {
+          "speaker": "Freya",
+          "content": "",
+          "round_num": 6,
+          "is_private": true,
+          "turn_number": 1,
+          "thoughts": ""
+        }
+      ],
+      "votes": [
+        {
+          "voter": "Sofia",
+          "target": "Olivia",
+          "round_num": 6
+        },
+        {
+          "voter": "Derek",
+          "target": "Nathan",
+          "round_num": 6
+        },
+        {
+          "voter": "Priya",
+          "target": "Sofia",
+          "round_num": 6
+        },
+        {
+          "voter": "Rashid",
+          "target": "Nathan",
+          "round_num": 6
+        },
+        {
+          "voter": "Olivia",
+          "target": "Sofia",
+          "round_num": 6
+        },
+        {
+          "voter": "Nathan",
+          "target": "Freya",
+          "round_num": 6
+        },
+        {
+          "voter": "Simone",
+          "target": "Derek",
+          "round_num": 6
+        },
+        {
+          "voter": "Carlos",
+          "target": "Olivia",
+          "round_num": 6
+        },
+        {
+          "voter": "Freya",
+          "target": "Nathan",
+          "round_num": 6
+        }
+      ],
+      "pouch_votes": [],
+      "private_thoughts": [],
+      "banished": {
+        "name": "Nathan",
+        "role": "faithful"
+      },
+      "murdered": {
+        "name": "Simone"
+      }
+    },
+    {
+      "round_num": 7,
+      "messages": [
+        {
+          "speaker": "Olivia",
+          "content": "",
+          "round_num": 7,
+          "is_private": false,
+          "turn_number": 1,
+          "thoughts": ""
+        },
+        {
+          "speaker": "Rashid",
+          "content": "",
+          "round_num": 7,
+          "is_private": false,
+          "turn_number": 1,
+          "thoughts": ""
+        },
+        {
+          "speaker": "Priya",
+          "content": "",
+          "round_num": 7,
+          "is_private": false,
+          "turn_number": 1,
+          "thoughts": ""
+        },
+        {
+          "speaker": "Carlos",
+          "content": "",
+          "round_num": 7,
+          "is_private": false,
+          "turn_number": 1,
+          "thoughts": ""
+        },
+        {
+          "speaker": "Derek",
+          "content": "",
+          "round_num": 7,
+          "is_private": false,
+          "turn_number": 1,
+          "thoughts": ""
+        },
+        {
+          "speaker": "Sofia",
+          "content": "",
+          "round_num": 7,
+          "is_private": false,
+          "turn_number": 1,
+          "thoughts": ""
+        },
+        {
+          "speaker": "Freya",
+          "content": "",
+          "round_num": 7,
+          "is_private": false,
+          "turn_number": 1,
+          "thoughts": ""
+        },
+        {
+          "speaker": "Freya",
+          "content": "",
+          "round_num": 7,
+          "is_private": false,
+          "turn_number": 2,
+          "thoughts": ""
+        },
+        {
+          "speaker": "Priya",
+          "content": "",
+          "round_num": 7,
+          "is_private": false,
+          "turn_number": 2,
+          "thoughts": ""
+        },
+        {
+          "speaker": "Olivia",
+          "content": "",
+          "round_num": 7,
+          "is_private": false,
+          "turn_number": 2,
+          "thoughts": ""
+        },
+        {
+          "speaker": "Rashid",
+          "content": "",
+          "round_num": 7,
+          "is_private": false,
+          "turn_number": 2,
+          "thoughts": ""
+        },
+        {
+          "speaker": "Sofia",
+          "content": "",
+          "round_num": 7,
+          "is_private": false,
+          "turn_number": 2,
+          "thoughts": ""
+        },
+        {
+          "speaker": "Freya",
+          "content": "",
+          "round_num": 7,
+          "is_private": false,
+          "turn_number": 3,
+          "thoughts": ""
+        },
+        {
+          "speaker": "Olivia",
+          "content": "",
+          "round_num": 7,
+          "is_private": false,
+          "turn_number": 3,
+          "thoughts": ""
+        }
+      ],
+      "votes": [
+        {
+          "voter": "Sofia",
+          "target": "Derek",
+          "round_num": 7
+        },
+        {
+          "voter": "Derek",
+          "target": "Olivia",
+          "round_num": 7
+        },
+        {
+          "voter": "Priya",
+          "target": "Rashid",
+          "round_num": 7
+        },
+        {
+          "voter": "Rashid",
+          "target": "Sofia",
+          "round_num": 7
+        },
+        {
+          "voter": "Olivia",
+          "target": "Carlos",
+          "round_num": 7
+        },
+        {
+          "voter": "Carlos",
+          "target": "Freya",
+          "round_num": 7
+        },
+        {
+          "voter": "Freya",
+          "target": "Derek",
+          "round_num": 7
+        }
+      ],
+      "pouch_votes": [],
+      "private_thoughts": [],
+      "banished": {
+        "name": "Derek",
+        "role": "faithful"
+      },
+      "murdered": null
+    }
+  ],
+  "game_log": [
+    "\n============================================================",
+    "THE TRAITORS - GAME SIMULATION",
+    "============================================================",
+    "Players: Marcus, Sofia, Derek, Elena, Jaylen, Priya, Terrence, Aaliyah, Victor, Camille, Rashid, Gloria, Olivia, Nathan, Simone, Wesley, Dahlia, Carlos, Freya",
+    "Finale begins after round 8",
+    "\n============================================================",
+    "ROLE ASSIGNMENT (Secret - players don't know each other's roles)",
+    "============================================================",
+    "  Marcus: FAITHFUL",
+    "  Sofia: FAITHFUL",
+    "  Derek: FAITHFUL",
+    "  Elena: FAITHFUL",
+    "  Jaylen: FAITHFUL",
+    "  Priya: FAITHFUL",
+    "  Terrence: FAITHFUL",
+    "  Aaliyah: FAITHFUL",
+    "  Victor: FAITHFUL",
+    "  Camille: FAITHFUL",
+    "  Rashid: TRAITOR",
+    "  Gloria: FAITHFUL",
+    "  Olivia: TRAITOR",
+    "  Nathan: FAITHFUL",
+    "  Simone: FAITHFUL",
+    "  Wesley: FAITHFUL",
+    "  Dahlia: FAITHFUL",
+    "  Carlos: FAITHFUL",
+    "  Freya: TRAITOR",
+    "\n############################################################",
+    "ROUND 1",
+    "############################################################",
+    "Alive: Marcus, Sofia, Derek, Elena, Jaylen, Priya, Terrence, Aaliyah, Victor, Camille, Rashid, Gloria, Olivia, Nathan, Simone, Wesley, Dahlia, Carlos, Freya",
+    "\n----------------------------------------",
+    "ROUND 1 - DISCUSSION PHASE",
+    "----------------------------------------",
+    "\n--- Turn 1 of 3 ---",
+    "\nPriya: ",
+    "\nCarlos: ",
+    "\nMarcus: ",
+    "\nTerrence: ",
+    "\nDahlia: ",
+    "\nElena: ",
+    "\nOlivia: ",
+    "\nAaliyah: ",
+    "\nWesley: ",
+    "\nFreya: ",
+    "\nRashid: ",
+    "\nCamille: ",
+    "\nSimone: ",
+    "\nGloria: ",
+    "\nDerek: ",
+    "\nVictor: ",
+    "\nSofia: ",
+    "\nNathan: ",
+    "\nJaylen: ",
+    "\n--- Turn 2 of 3 ---",
+    "\nSofia: [PASS]",
+    "\nElena: [PASS]",
+    "\nDahlia: [PASS]",
+    "\nDerek: [PASS]",
+    "\nNathan: [PASS]",
+    "\nGloria: [PASS]",
+    "\nCamille: ",
+    "\nWesley: ",
+    "\nPriya: [PASS]",
+    "\nMarcus: ",
+    "\nVictor: ",
+    "\nAaliyah: [PASS]",
+    "\nTerrence: ",
+    "\nFreya: [PASS]",
+    "\nCarlos: [PASS]",
+    "\nOlivia: [PASS]",
+    "\nRashid: [PASS]",
+    "\nJaylen: [PASS]",
+    "\nSimone: ",
+    "\n--- Turn 3 of 3 ---",
+    "\nCamille: [PASS]",
+    "\nSimone: [PASS]",
+    "\nTerrence: [PASS]",
+    "\nMarcus: ",
+    "\nWesley: [PASS]",
+    "\nVictor: [PASS]",
+    "\n----------------------------------------",
+    "VOTING PHASE - Who will be banished?",
+    "----------------------------------------",
+    "  Marcus votes for: Simone",
+    "  Sofia votes for: Marcus",
+    "  Derek votes for: Victor",
+    "  Elena votes for: Nathan",
+    "  Jaylen votes for: Rashid",
+    "  Priya votes for: Derek",
+    "  Terrence votes for: Nathan",
+    "  Aaliyah votes for: Jaylen",
+    "  Victor votes for: Freya",
+    "  Camille votes for: Freya",
+    "  Rashid votes for: Victor",
+    "  Gloria votes for: Nathan",
+    "  Olivia votes for: Aaliyah",
+    "  Nathan votes for: Rashid",
+    "  Simone votes for: Camille",
+    "  Wesley votes for: Elena",
+    "  Dahlia votes for: Victor",
+    "  Carlos votes for: Dahlia",
+    "  Freya votes for: Victor",
+    "\n========================================",
+    "BANISHED: Victor",
+    "They were a: FAITHFUL",
+    "========================================",
+    "\n----------------------------------------",
+    "NIGHT PHASE - Traitors meet in secret...",
+    "----------------------------------------",
+    "\n[Traitors discuss strategy...]",
+    "\n[TRAITOR] Rashid: ",
+    "\n[TRAITOR] Olivia: ",
+    "\n[TRAITOR] Freya: ",
+    "\n[Traitors vote on target...]",
+    "[MURDER VOTE] Rashid votes: Gloria",
+    "[MURDER VOTE] Olivia votes: Gloria",
+    "[MURDER VOTE] Freya votes: Priya",
+    "\n========================================",
+    "MURDERED: Gloria",
+    "The faithful mourn their loss...",
+    "========================================",
+    "\n############################################################",
+    "ROUND 2",
+    "############################################################",
+    "Alive: Marcus, Sofia, Derek, Elena, Jaylen, Priya, Terrence, Aaliyah, Camille, Rashid, Olivia, Nathan, Simone, Wesley, Dahlia, Carlos, Freya",
+    "\n----------------------------------------",
+    "ROUND 2 - DISCUSSION PHASE",
+    "----------------------------------------",
+    "\n--- Turn 1 of 3 ---",
+    "\nSimone: ",
+    "\nSofia: ",
+    "\nAaliyah: ",
+    "\nJaylen: ",
+    "\nWesley: ",
+    "\nNathan: ",
+    "\nTerrence: ",
+    "\nPriya: ",
+    "\nCamille: ",
+    "\nFreya: ",
+    "\nDahlia: ",
+    "\nMarcus: ",
+    "\nDerek: ",
+    "\nOlivia: ",
+    "\nElena: ",
+    "\nCarlos: ",
+    "\nRashid: ",
+    "\n--- Turn 2 of 3 ---",
+    "\nOlivia: [PASS]",
+    "\nDahlia: [PASS]",
+    "\nElena: [PASS]",
+    "\nFreya: [PASS]",
+    "\nCamille: [PASS]",
+    "\nTerrence: ",
+    "\nJaylen: ",
+    "\nDerek: ",
+    "\nMarcus: ",
+    "\nWesley: ",
+    "\nAaliyah: [PASS]",
+    "\nCarlos: ",
+    "\nSimone: [PASS]",
+    "\nSofia: [PASS]",
+    "\nNathan: ",
+    "\nPriya: [PASS]",
+    "\nRashid: [PASS]",
+    "\n--- Turn 3 of 3 ---",
+    "\nDerek: [PASS]",
+    "\nTerrence: ",
+    "\nWesley: ",
+    "\nNathan: [PASS]",
+    "\nMarcus: ",
+    "\nJaylen: ",
+    "\nCarlos: ",
+    "\n----------------------------------------",
+    "VOTING PHASE - Who will be banished?",
+    "----------------------------------------",
+    "  Marcus votes for: Elena",
+    "  Sofia votes for: Dahlia",
+    "  Derek votes for: Olivia",
+    "  Elena votes for: Wesley",
+    "  Jaylen votes for: Nathan",
+    "  Priya votes for: Jaylen",
+    "  Terrence votes for: Marcus",
+    "  Aaliyah votes for: Jaylen",
+    "  Camille votes for: Jaylen",
+    "  Rashid votes for: Simone",
+    "  Olivia votes for: Jaylen",
+    "  Nathan votes for: Jaylen",
+    "  Simone votes for: Olivia",
+    "  Wesley votes for: Terrence",
+    "  Dahlia votes for: Wesley",
+    "  Carlos votes for: Aaliyah",
+    "  Freya votes for: Aaliyah",
+    "\n========================================",
+    "BANISHED: Jaylen",
+    "They were a: FAITHFUL",
+    "========================================",
+    "\n----------------------------------------",
+    "NIGHT PHASE - Traitors meet in secret...",
+    "----------------------------------------",
+    "\n[Traitors discuss strategy...]",
+    "\n[TRAITOR] Rashid: ",
+    "\n[TRAITOR] Olivia: ",
+    "\n[TRAITOR] Freya: ",
+    "\n[Traitors vote on target...]",
+    "[MURDER VOTE] Rashid votes: Camille",
+    "[MURDER VOTE] Olivia votes: Terrence",
+    "[MURDER VOTE] Freya votes: Simone",
+    "\n========================================",
+    "MURDERED: Terrence",
+    "The faithful mourn their loss...",
+    "========================================",
+    "\n############################################################",
+    "ROUND 3",
+    "############################################################",
+    "Alive: Marcus, Sofia, Derek, Elena, Priya, Aaliyah, Camille, Rashid, Olivia, Nathan, Simone, Wesley, Dahlia, Carlos, Freya",
+    "\n----------------------------------------",
+    "ROUND 3 - DISCUSSION PHASE",
+    "----------------------------------------",
+    "\n--- Turn 1 of 3 ---",
+    "\nCarlos: ",
+    "\nSofia: ",
+    "\nPriya: ",
+    "\nFreya: ",
+    "\nRashid: ",
+    "\nSimone: ",
+    "\nCamille: ",
+    "\nMarcus: ",
+    "\nElena: ",
+    "\nNathan: ",
+    "\nDerek: ",
+    "\nDahlia: ",
+    "\nAaliyah: ",
+    "\nOlivia: ",
+    "\nWesley: ",
+    "\n--- Turn 2 of 3 ---",
+    "\nMarcus: [PASS]",
+    "\nDerek: [PASS]",
+    "\nSofia: ",
+    "\nNathan: ",
+    "\nDahlia: [PASS]",
+    "\nPriya: [PASS]",
+    "\nCamille: ",
+    "\nCarlos: [PASS]",
+    "\nSimone: ",
+    "\nOlivia: [PASS]",
+    "\nWesley: [PASS]",
+    "\nFreya: ",
+    "\nRashid: ",
+    "\nElena: [PASS]",
+    "\nAaliyah: [PASS]",
+    "\n--- Turn 3 of 3 ---",
+    "\nFreya: [PASS]",
+    "\nNathan: ",
+    "\nSimone: [PASS]",
+    "\nRashid: [PASS]",
+    "\nCamille: [PASS]",
+    "\nSofia: [PASS]",
+    "\n----------------------------------------",
+    "VOTING PHASE - Who will be banished?",
+    "----------------------------------------",
+    "  Marcus votes for: Priya",
+    "  Sofia votes for: Wesley",
+    "  Derek votes for: Camille",
+    "  Elena votes for: Camille",
+    "  Priya votes for: Camille",
+    "  Aaliyah votes for: Freya",
+    "  Camille votes for: Derek",
+    "  Rashid votes for: Aaliyah",
+    "  Olivia votes for: Carlos",
+    "  Nathan votes for: Sofia",
+    "  Simone votes for: Freya",
+    "  Wesley votes for: Simone",
+    "  Dahlia votes for: Marcus",
+    "  Carlos votes for: Priya",
+    "  Freya votes for: Derek",
+    "\n========================================",
+    "BANISHED: Camille",
+    "They were a: FAITHFUL",
+    "========================================",
+    "\n----------------------------------------",
+    "NIGHT PHASE - Traitors meet in secret...",
+    "----------------------------------------",
+    "\n[Traitors discuss strategy...]",
+    "\n[TRAITOR] Rashid: ",
+    "\n[TRAITOR] Olivia: ",
+    "\n[TRAITOR] Freya: ",
+    "\n[Traitors vote on target...]",
+    "[MURDER VOTE] Rashid votes: Wesley",
+    "[MURDER VOTE] Olivia votes: Wesley",
+    "[MURDER VOTE] Freya votes: Sofia",
+    "\n========================================",
+    "MURDERED: Wesley",
+    "The faithful mourn their loss...",
+    "========================================",
+    "\n############################################################",
+    "ROUND 4",
+    "############################################################",
+    "Alive: Marcus, Sofia, Derek, Elena, Priya, Aaliyah, Rashid, Olivia, Nathan, Simone, Dahlia, Carlos, Freya",
+    "\n----------------------------------------",
+    "ROUND 4 - DISCUSSION PHASE",
+    "----------------------------------------",
+    "\n--- Turn 1 of 3 ---",
+    "\nSimone: ",
+    "\nSofia: ",
+    "\nDahlia: ",
+    "\nDerek: ",
+    "\nFreya: ",
+    "\nAaliyah: ",
+    "\nMarcus: ",
+    "\nCarlos: ",
+    "\nNathan: ",
+    "\nPriya: ",
+    "\nOlivia: ",
+    "\nElena: ",
+    "\nRashid: ",
+    "\n--- Turn 2 of 3 ---",
+    "\nMarcus: [PASS]",
+    "\nSofia: ",
+    "\nElena: [PASS]",
+    "\nOlivia: ",
+    "\nDerek: [PASS]",
+    "\nPriya: [PASS]",
+    "\nDahlia: ",
+    "\nRashid: [PASS]",
+    "\nCarlos: [PASS]",
+    "\nFreya: ",
+    "\nAaliyah: ",
+    "\nSimone: ",
+    "\nNathan: ",
+    "\n--- Turn 3 of 3 ---",
+    "\nSofia: ",
+    "\nNathan: [PASS]",
+    "\nDahlia: ",
+    "\nFreya: ",
+    "\nOlivia: [PASS]",
+    "\nAaliyah: ",
+    "\nSimone: [PASS]",
+    "\n----------------------------------------",
+    "VOTING PHASE - Who will be banished?",
+    "----------------------------------------",
+    "  Marcus votes for: Elena",
+    "  Sofia votes for: Freya",
+    "  Derek votes for: Dahlia",
+    "  Elena votes for: Rashid",
+    "  Priya votes for: Dahlia",
+    "  Aaliyah votes for: Nathan",
+    "  Rashid votes for: Aaliyah",
+    "  Olivia votes for: Aaliyah",
+    "  Nathan votes for: Dahlia",
+    "  Simone votes for: Rashid",
+    "  Dahlia votes for: Elena",
+    "  Carlos votes for: Dahlia",
+    "  Freya votes for: Aaliyah",
+    "\n========================================",
+    "BANISHED: Dahlia",
+    "They were a: FAITHFUL",
+    "========================================",
+    "\n----------------------------------------",
+    "NIGHT PHASE - Traitors meet in secret...",
+    "----------------------------------------",
+    "\n[Traitors discuss strategy...]",
+    "\n[TRAITOR] Rashid: ",
+    "\n[TRAITOR] Olivia: ",
+    "\n[TRAITOR] Freya: ",
+    "\n[Traitors vote on target...]",
+    "[MURDER VOTE] Rashid votes: Nathan",
+    "[MURDER VOTE] Olivia votes: Aaliyah",
+    "[MURDER VOTE] Freya votes: Marcus",
+    "\n========================================",
+    "MURDERED: Aaliyah",
+    "The faithful mourn their loss...",
+    "========================================",
+    "\n############################################################",
+    "ROUND 5",
+    "############################################################",
+    "Alive: Marcus, Sofia, Derek, Elena, Priya, Rashid, Olivia, Nathan, Simone, Carlos, Freya",
+    "\n----------------------------------------",
+    "ROUND 5 - DISCUSSION PHASE",
+    "----------------------------------------",
+    "\n--- Turn 1 of 3 ---",
+    "\nPriya: ",
+    "\nDerek: ",
+    "\nCarlos: ",
+    "\nOlivia: ",
+    "\nSofia: ",
+    "\nMarcus: ",
+    "\nSimone: ",
+    "\nElena: ",
+    "\nFreya: ",
+    "\nRashid: ",
+    "\nNathan: ",
+    "\n--- Turn 2 of 3 ---",
+    "\nMarcus: ",
+    "\nRashid: [PASS]",
+    "\nNathan: [PASS]",
+    "\nCarlos: [PASS]",
+    "\nOlivia: ",
+    "\nElena: ",
+    "\nFreya: [PASS]",
+    "\nDerek: ",
+    "\nPriya: [PASS]",
+    "\nSimone: ",
+    "\nSofia: [PASS]",
+    "\n--- Turn 3 of 3 ---",
+    "\nOlivia: ",
+    "\nSimone: ",
+    "\nDerek: ",
+    "\nElena: [PASS]",
+    "\nMarcus: [PASS]",
+    "\n----------------------------------------",
+    "VOTING PHASE - Who will be banished?",
+    "----------------------------------------",
+    "  Marcus votes for: Olivia",
+    "  Sofia votes for: Carlos",
+    "  Derek votes for: Elena",
+    "  Elena votes for: Priya",
+    "  Priya votes for: Derek",
+    "  Rashid votes for: Carlos",
+    "  Olivia votes for: Elena",
+    "  Nathan votes for: Marcus",
+    "  Simone votes for: Elena",
+    "  Carlos votes for: Marcus",
+    "  Freya votes for: Priya",
+    "\n========================================",
+    "BANISHED: Elena",
+    "They were a: FAITHFUL",
+    "========================================",
+    "\n----------------------------------------",
+    "NIGHT PHASE - Traitors meet in secret...",
+    "----------------------------------------",
+    "\n[Traitors discuss strategy...]",
+    "\n[TRAITOR] Rashid: ",
+    "\n[TRAITOR] Olivia: ",
+    "\n[TRAITOR] Freya: ",
+    "\n[Traitors vote on target...]",
+    "[MURDER VOTE] Rashid votes: Marcus",
+    "[MURDER VOTE] Olivia votes: Marcus",
+    "[MURDER VOTE] Freya votes: Nathan",
+    "\n========================================",
+    "MURDERED: Marcus",
+    "The faithful mourn their loss...",
+    "========================================",
+    "\n############################################################",
+    "ROUND 6",
+    "############################################################",
+    "Alive: Sofia, Derek, Priya, Rashid, Olivia, Nathan, Simone, Carlos, Freya",
+    "\n----------------------------------------",
+    "ROUND 6 - DISCUSSION PHASE",
+    "----------------------------------------",
+    "\n--- Turn 1 of 3 ---",
+    "\nCarlos: ",
+    "\nDerek: ",
+    "\nRashid: ",
+    "\nFreya: ",
+    "\nSimone: ",
+    "\nNathan: ",
+    "\nOlivia: ",
+    "\nPriya: ",
+    "\nSofia: ",
+    "\n--- Turn 2 of 3 ---",
+    "\nOlivia: [PASS]",
+    "\nDerek: ",
+    "\nRashid: [PASS]",
+    "\nNathan: [PASS]",
+    "\nFreya: ",
+    "\nSofia: [PASS]",
+    "\nPriya: ",
+    "\nCarlos: ",
+    "\nSimone: [PASS]",
+    "\n--- Turn 3 of 3 ---",
+    "\nPriya: [PASS]",
+    "\nFreya: [PASS]",
+    "\nCarlos: [PASS]",
+    "\nDerek: [PASS]",
+    "\n----------------------------------------",
+    "VOTING PHASE - Who will be banished?",
+    "----------------------------------------",
+    "  Sofia votes for: Olivia",
+    "  Derek votes for: Nathan",
+    "  Priya votes for: Sofia",
+    "  Rashid votes for: Nathan",
+    "  Olivia votes for: Sofia",
+    "  Nathan votes for: Freya",
+    "  Simone votes for: Derek",
+    "  Carlos votes for: Olivia",
+    "  Freya votes for: Nathan",
+    "\n========================================",
+    "BANISHED: Nathan",
+    "They were a: FAITHFUL",
+    "========================================",
+    "\n----------------------------------------",
+    "NIGHT PHASE - Traitors meet in secret...",
+    "----------------------------------------",
+    "\n[Traitors discuss strategy...]",
+    "\n[TRAITOR] Rashid: ",
+    "\n[TRAITOR] Olivia: ",
+    "\n[TRAITOR] Freya: ",
+    "\n[Traitors vote on target...]",
+    "[MURDER VOTE] Rashid votes: Simone",
+    "[MURDER VOTE] Olivia votes: Carlos",
+    "[MURDER VOTE] Freya votes: Simone",
+    "\n========================================",
+    "MURDERED: Simone",
+    "The faithful mourn their loss...",
+    "========================================",
+    "\n############################################################",
+    "ROUND 7",
+    "############################################################",
+    "Alive: Sofia, Derek, Priya, Rashid, Olivia, Carlos, Freya",
+    "\n----------------------------------------",
+    "ROUND 7 - DISCUSSION PHASE",
+    "----------------------------------------",
+    "\n--- Turn 1 of 3 ---",
+    "\nOlivia: ",
+    "\nRashid: ",
+    "\nPriya: ",
+    "\nCarlos: ",
+    "\nDerek: ",
+    "\nSofia: ",
+    "\nFreya: ",
+    "\n--- Turn 2 of 3 ---",
+    "\nFreya: ",
+    "\nPriya: ",
+    "\nOlivia: ",
+    "\nRashid: ",
+    "\nSofia: ",
+    "\nDerek: [PASS]",
+    "\nCarlos: [PASS]",
+    "\n--- Turn 3 of 3 ---",
+    "\nSofia: [PASS]",
+    "\nFreya: ",
+    "\nPriya: [PASS]",
+    "\nRashid: [PASS]",
+    "\nOlivia: ",
+    "\n----------------------------------------",
+    "VOTING PHASE - Who will be banished?",
+    "----------------------------------------",
+    "  Sofia votes for: Derek",
+    "  Derek votes for: Olivia",
+    "  Priya votes for: Rashid",
+    "  Rashid votes for: Sofia",
+    "  Olivia votes for: Carlos",
+    "  Carlos votes for: Freya",
+    "  Freya votes for: Derek",
+    "\n========================================",
+    "BANISHED: Derek",
+    "They were a: FAITHFUL",
+    "========================================",
+    "\n============================================================",
+    "GAME OVER",
+    "============================================================",
+    "\nWINNER: THE TRAITORS!",
+    "\nPRIZE POOL: $100,000",
+    "\nFinal Player Status:",
+    "  Marcus: FAITHFUL - MURDERED - $0",
+    "  Sofia: FAITHFUL - SURVIVED - $0",
+    "  Derek: FAITHFUL - BANISHED - $0",
+    "  Elena: FAITHFUL - BANISHED - $0",
+    "  Jaylen: FAITHFUL - BANISHED - $0",
+    "  Priya: FAITHFUL - SURVIVED - $0",
+    "  Terrence: FAITHFUL - MURDERED - $0",
+    "  Aaliyah: FAITHFUL - MURDERED - $0",
+    "  Victor: FAITHFUL - BANISHED - $0",
+    "  Camille: FAITHFUL - BANISHED - $0",
+    "  Rashid: TRAITOR - SURVIVED - $33,333",
+    "  Gloria: FAITHFUL - MURDERED - $0",
+    "  Olivia: TRAITOR - SURVIVED - $33,333",
+    "  Nathan: FAITHFUL - BANISHED - $0",
+    "  Simone: FAITHFUL - MURDERED - $0",
+    "  Wesley: FAITHFUL - MURDERED - $0",
+    "  Dahlia: FAITHFUL - BANISHED - $0",
+    "  Carlos: FAITHFUL - SURVIVED - $0",
+    "  Freya: TRAITOR - SURVIVED - $33,333",
+    "\n============================================================"
+  ],
+  "llm_interactions": []
+}

@@ -145,3 +145,41 @@ def api_call_event(
         player=player,
         action_type=action_type,
     )
+
+
+def discussion_turn_event(
+    round_num: int,
+    player: str,
+    statement: str,
+    thoughts: str = "",
+    is_pass: bool = False,
+) -> GameEvent:
+    """Create a discussion turn event."""
+    return GameEvent(
+        event_type=EventType.DISCUSSION_TURN,
+        round_num=round_num,
+        data={
+            "player": player,
+            "statement": statement,
+            "thoughts": thoughts,
+            "is_pass": is_pass,
+        },
+    )
+
+
+def vote_cast_event(
+    round_num: int,
+    voter: str,
+    target: str,
+    vote_type: str = "banish",  # "banish", "murder", "pouch"
+) -> GameEvent:
+    """Create a vote cast event."""
+    return GameEvent(
+        event_type=EventType.VOTE_CAST,
+        round_num=round_num,
+        data={
+            "voter": voter,
+            "target": target,
+            "vote_type": vote_type,
+        },
+    )
