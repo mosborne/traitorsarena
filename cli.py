@@ -68,18 +68,71 @@ def load_config(config_path: str) -> dict:
         return json.load(f)
 
 
+def load_all_contestants(default_model: str = None) -> list:
+    """Load all contestants from the prompts directory."""
+    prompts_dir = Path(__file__).parent / "prompts"
+    contestants = []
+
+    for path in sorted(prompts_dir.glob("*.json")):
+        with open(path) as f:
+            data = json.load(f)
+
+        contestant = {
+            "name": data["name"],
+            "personality_prompt": data["personality_prompt"],
+        }
+        if default_model:
+            contestant["model"] = default_model
+        contestants.append(contestant)
+
+    return contestants
+
+
 def load_contestants_from_config(config: dict) -> list:
     """
     Load contestants based on config specification.
+
+    Supports:
+    - "player_pool": "all" - load all players from prompts directory
+    - "player_pool": [...] - load specific players from pool list
+    - "contestants": [...] - load specific contestants
 
     Each contestant entry can be:
     - {"source": "original", "name": "Marcus"} - use original contestant
     - {"source": "original", "name": "Marcus", "model": "llama3.2"} - with specific model
     - {"source": "prompt", "file": "improved_v1.json"} - use prompt file
+    - {"file": "player.json"} - shorthand for prompt file (run_games.py format)
     """
+    default_model = config.get("default_model")
+
+    # Support "player_pool": "all"
+    if config.get("player_pool") == "all":
+        return load_all_contestants(default_model)
+
+    # Support "player_pool": [...] with {"file": "..."} entries (run_games.py format)
+    if "player_pool" in config and isinstance(config["player_pool"], list):
+        prompts_dir = Path(__file__).parent / "prompts"
+        contestants = []
+        for entry in config["player_pool"]:
+            prompt_file = entry["file"]
+            path = prompts_dir / prompt_file
+            if not path.exists():
+                raise ValueError(f"Prompt file not found: {prompt_file}")
+            with open(path) as f:
+                data = json.load(f)
+            contestant = {
+                "name": data["name"],
+                "personality_prompt": data["personality_prompt"],
+            }
+            contestant_model = entry.get("model", default_model)
+            if contestant_model:
+                contestant["model"] = contestant_model
+            contestants.append(contestant)
+        return contestants
+
+    # Original format: "contestants": [...]
     prompts_dir = Path(__file__).parent / "prompts"
     contestants = []
-    default_model = config.get("default_model")
 
     for entry in config.get("contestants", []):
         source = entry.get("source", "original")
