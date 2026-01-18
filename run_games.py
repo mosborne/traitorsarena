@@ -171,6 +171,28 @@ def load_contestants_from_config(config: dict) -> list[dict]:
     return contestants
 
 
+def load_all_contestants(default_model: str = None) -> list[dict]:
+    """Load all contestants from the prompts directory."""
+    prompts_dir = Path(__file__).parent / "prompts"
+    contestants = []
+
+    for path in sorted(prompts_dir.glob("*.json")):
+        with open(path) as f:
+            data = json.load(f)
+
+        contestant = {
+            "name": data["name"],
+            "personality_prompt": data["personality_prompt"],
+            "_prompt_file": path.name,
+            "_version": data.get("version", "1.0"),
+        }
+        if default_model:
+            contestant["model"] = default_model
+        contestants.append(contestant)
+
+    return contestants
+
+
 def run_single_game(client, contestants, num_traitors, game_log, finale_round=8, verbose=True,
                     agent_class=None, model=None, enable_caching=True):
     """Run a single game and return (results, duration_sec)."""
@@ -843,8 +865,12 @@ def main():
     try:
         if use_pool:
             # Load all pool members
-            pool_config = {**config, "contestants": config["player_pool"]}
-            player_pool = load_contestants_from_config(pool_config)
+            if config["player_pool"] == "all":
+                # Load all players from prompts directory
+                player_pool = load_all_contestants(config.get("default_model"))
+            else:
+                pool_config = {**config, "contestants": config["player_pool"]}
+                player_pool = load_contestants_from_config(pool_config)
             if len(player_pool) < PLAYERS_PER_GAME:
                 print(f"Error: Pool has {len(player_pool)} players but need at least {PLAYERS_PER_GAME}")
                 return 1

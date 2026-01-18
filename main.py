@@ -50,6 +50,10 @@ def load_contestants(filenames: list[str] = None) -> list[dict]:
     return contestants
 
 
+# Backward compatibility: load default contestants at module level
+EXAMPLE_CONTESTANTS = load_contestants()
+
+
 def main():
     """Run a sample game of The Traitors."""
     print("=" * 60)
