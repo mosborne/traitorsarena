@@ -30,6 +30,7 @@ from traitors import TraitorsGame, OllamaAgent, GeminiAgent, TestAgent, Agent
 from traitors.types import PlayerStatus
 from generate_html import generate_game_html
 from data_store import save_game_json, save_run_json, update_runs_index
+from generate_players_json import main as generate_players_json
 
 
 def generate_run_analysis(stats: dict, contestant_stats: dict) -> dict:
@@ -1085,6 +1086,10 @@ def main():
     # Update global runs index (new JSON format)
     update_runs_index("runs", "data")
 
+    # Regenerate players.json with updated stats
+    print("Regenerating players.json...")
+    generate_players_json()
+
     # Final git push with analysis
     if args.auto_push:
         if git_push_progress(run_dir, run_id, num_games, num_games, final=True):
@@ -1093,6 +1098,7 @@ def main():
     print(f"\nRun complete!")
     print(f"Run summary: {summary_path}")
     print(f"Global index updated: data/runs.json")
+    print(f"Player stats updated: data/players.json")
     print(f"View results at: index.html")
 
     return 0
