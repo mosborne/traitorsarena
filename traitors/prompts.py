@@ -25,7 +25,7 @@ SETUP:
 - Total of {total_players} players
 - Prize pool: ${prize_pool:,}
 
-DAILY ROUND STRUCTURE:
+REGULAR ROUNDS (1-{last_revealed_round}):
 1. DISCUSSION PHASE
    - All players discuss openly
    - Anyone can accuse, defend, or share observations
@@ -34,18 +34,25 @@ DAILY ROUND STRUCTURE:
 2. VOTING PHASE (BANISHMENT)
    - Each player votes to banish one other player
    - Player with most votes is banished (ties broken randomly)
-   - Rounds 1-{last_revealed_round}: Banished player's role is REVEALED
-   - Round {endgame_round}+ (ENDGAME): Banished player's role is NOT revealed
+   - Banished player's role is REVEALED to all
 
-3. END GAME VOTE
-   - After banishment, players vote whether to END or CONTINUE
-   - If majority votes END: Game ends immediately
-   - If majority votes CONTINUE: Night phase begins
-
-4. NIGHT PHASE (TRAITOR MEETING)
-   - Only occurs if players voted to CONTINUE
+3. NIGHT PHASE (TRAITOR MEETING)
    - Traitors secretly choose one Faithful to murder
    - Murdered player is eliminated (role revealed to all)
+
+FINALE (Round {endgame_round}+):
+The finale works differently - there are NO MORE MURDERS.
+
+1. DISCUSSION PHASE - Same as regular rounds
+
+2. VOTING PHASE (BANISHMENT)
+   - Banished player's role is NOT revealed (uncertainty until game ends)
+
+3. POUCH VOTE (END GAME vs BANISH AGAIN)
+   - After each banishment, players vote on whether to end the game
+   - END_GAME: Game ends immediately, prizes awarded based on who remains
+   - BANISH_AGAIN: Continue to another vote (no night phase - traitors cannot murder)
+   - This repeats until players vote to end or only 2 players remain
 
 WIN CONDITIONS:
 - FAITHFUL WIN: All Traitors have been banished
@@ -54,11 +61,6 @@ WIN CONDITIONS:
 PRIZE DISTRIBUTION:
 - If Faithful win: Surviving Faithful split the ${prize_pool:,} equally
 - If Traitors win: Surviving Traitors take ALL the money; Faithful get $0
-
-ENDGAME RULE (Round {endgame_round}+):
-Starting round {endgame_round}, banished players' roles are NO LONGER revealed.
-This creates maximum uncertainty - you won't know if you caught a Traitor or
-wrongly banished a Faithful until the game ends.
 """
 
 # =============================================================================
@@ -93,11 +95,17 @@ Your goal: MAXIMIZE YOUR EXPECTED PRIZE MONEY.
 # Static game rules - cached first (same for all players, all games)
 SYSTEM_PROMPT_STATIC_RULES = """=== THE TRAITORS - GAME RULES ===
 
-EACH ROUND:
+REGULAR ROUNDS:
 1. DISCUSSION - All players discuss openly, share suspicions
-2. BANISHMENT VOTE - Vote to banish one player (most votes = banished)
-3. END/CONTINUE VOTE - Majority decides whether to end the game
-4. NIGHT (if continuing) - Traitors secretly murder one faithful
+2. BANISHMENT VOTE - Vote to banish one player (most votes = banished, role REVEALED)
+3. NIGHT - Traitors secretly murder one faithful
+
+FINALE (after role reveal stops):
+1. DISCUSSION - Same as regular rounds
+2. BANISHMENT VOTE - Role NOT revealed (uncertainty until game ends)
+3. POUCH VOTE - Players vote END_GAME or BANISH_AGAIN
+   - NO night phase in finale - traitors cannot murder
+   - Repeats until players end the game or 2 players remain
 
 WIN CONDITIONS:
 - FAITHFUL WIN: All traitors are banished
@@ -169,13 +177,17 @@ Personality: {personality}
 === GAME RULES ===
 SETUP: {num_traitors} traitors hidden among {total_players} players. Prize pool: $10,000.
 
-EACH ROUND:
+REGULAR ROUNDS (1-{last_revealed_round}):
 1. DISCUSSION - All players discuss openly, share suspicions
-2. BANISHMENT VOTE - Vote to banish one player (most votes = banished)
-   - Rounds 1-{last_revealed_round}: Banished player's role is REVEALED
-   - Round {endgame_round}+: ENDGAME - roles NOT revealed when banished
-3. END/CONTINUE VOTE - Majority decides whether to end the game
-4. NIGHT (if continuing) - Traitors secretly murder one faithful
+2. BANISHMENT VOTE - Vote to banish one player (most votes = banished, role REVEALED)
+3. NIGHT - Traitors secretly murder one faithful
+
+FINALE (Round {endgame_round}+):
+1. DISCUSSION - Same as regular rounds
+2. BANISHMENT VOTE - Role NOT revealed (uncertainty until game ends)
+3. POUCH VOTE - Players vote END_GAME or BANISH_AGAIN
+   - NO night phase in finale - traitors cannot murder
+   - Repeats until players end game or 2 players remain
 
 WIN CONDITIONS:
 - FAITHFUL WIN: All traitors are banished
