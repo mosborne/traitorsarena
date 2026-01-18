@@ -1,20 +1,20 @@
 {
   "name": "v1.6_strategist",
-  "description": "Testing v1.6.0 pure mechanics prompts with Strategist player who has embedded strategic knowledge. Tests whether player-level strategy knowledge helps when system prompts have none.",
+  "description": "Testing v1.6.0 pure mechanics prompts with Quinn (strategist) who has embedded strategic knowledge. Tests whether player-level strategy knowledge helps when system prompts have none.",
   "num_games": 10,
   "num_traitors": 3,
   "contestants": [
-    {"source": "original", "name": "Marcus"},
-    {"source": "original", "name": "Sofia"},
-    {"source": "original", "name": "Derek"},
-    {"source": "original", "name": "Elena"},
-    {"source": "original", "name": "Jaylen"},
-    {"source": "original", "name": "Priya"},
-    {"source": "original", "name": "Terrence"},
-    {"source": "original", "name": "Aaliyah"},
-    {"source": "original", "name": "Victor"},
-    {"source": "original", "name": "Camille"},
-    {"source": "original", "name": "Rashid"},
-    {"source": "prompt", "file": "strategist.json"}
+    {"file": "marcus.json"},
+    {"file": "sofia.json"},
+    {"file": "derek.json"},
+    {"file": "elena.json"},
+    {"file": "jaylen.json"},
+    {"file": "priya.json"},
+    {"file": "terrence.json"},
+    {"file": "aaliyah.json"},
+    {"file": "victor.json"},
+    {"file": "camille.json"},
+    {"file": "rashid.json"},
+    {"file": "quinn.json"}
   ]
 }

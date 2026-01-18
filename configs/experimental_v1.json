@@ -4,17 +4,17 @@
   "num_games": 10,
   "num_traitors": 3,
   "contestants": [
-    {"source": "original", "name": "Marcus"},
-    {"source": "original", "name": "Sofia"},
-    {"source": "prompt", "file": "experimental_aggressive.json"},
-    {"source": "original", "name": "Elena"},
-    {"source": "original", "name": "Jaylen"},
-    {"source": "original", "name": "Priya"},
-    {"source": "original", "name": "Terrence"},
-    {"source": "original", "name": "Aaliyah"},
-    {"source": "prompt", "file": "improved_v1.json"},
-    {"source": "prompt", "file": "experimental_social.json"},
-    {"source": "original", "name": "Rashid"},
-    {"source": "original", "name": "Gloria"}
+    {"file": "marcus.json"},
+    {"file": "sofia.json"},
+    {"file": "dominic.json"},
+    {"file": "elena.json"},
+    {"file": "jaylen.json"},
+    {"file": "priya.json"},
+    {"file": "terrence.json"},
+    {"file": "aaliyah.json"},
+    {"file": "morgan.json"},
+    {"file": "iris.json"},
+    {"file": "rashid.json"},
+    {"file": "gloria.json"}
   ]
 }

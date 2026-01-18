@@ -25,7 +25,6 @@ from pathlib import Path
 
 import anthropic
 
-from main import EXAMPLE_CONTESTANTS
 from traitors import TraitorsGame, OllamaAgent, GeminiAgent, TestAgent, Agent
 from traitors.types import PlayerStatus
 from generate_html import generate_game_html
@@ -128,10 +127,6 @@ def select_contestants_for_game(pool: list[dict]) -> list[dict]:
     return random.sample(pool, PLAYERS_PER_GAME)
 
 
-# Build lookup for original contestants
-ORIGINAL_CONTESTANTS = {c["name"]: c for c in EXAMPLE_CONTESTANTS}
-
-
 def load_config(config_path: str) -> dict:
     """Load a game configuration file."""
     with open(config_path) as f:
@@ -142,10 +137,8 @@ def load_contestants_from_config(config: dict) -> list[dict]:
     """
     Load contestants based on config specification.
 
-    Each contestant entry can be:
-    - {"source": "original", "name": "Marcus"} - use original contestant
-    - {"source": "original", "name": "Marcus", "model": "llama3.2"} - with specific model
-    - {"source": "prompt", "file": "improved_v1.json"} - use prompt file
+    Each contestant entry should have: {"file": "player.json"}
+    Optionally with a per-contestant model: {"file": "player.json", "model": "llama3.2"}
 
     The default_model from config is used if no per-contestant model is specified.
     """
@@ -154,39 +147,26 @@ def load_contestants_from_config(config: dict) -> list[dict]:
     default_model = config.get("default_model")
 
     for entry in config.get("contestants", []):
-        source = entry.get("source", "original")
+        prompt_file = entry["file"]
+        path = prompts_dir / prompt_file
+        if not path.exists():
+            raise ValueError(f"Prompt file not found: {prompt_file}")
+
+        with open(path) as f:
+            data = json.load(f)
+
         # Per-contestant model takes precedence, then default_model from config
         contestant_model = entry.get("model", default_model)
 
-        if source == "original":
-            name = entry["name"]
-            if name not in ORIGINAL_CONTESTANTS:
-                raise ValueError(f"Unknown original contestant: {name}")
-            contestant = ORIGINAL_CONTESTANTS[name].copy()
-            if contestant_model:
-                contestant["model"] = contestant_model
-            contestants.append(contestant)
-
-        elif source == "prompt":
-            prompt_file = entry["file"]
-            path = prompts_dir / prompt_file
-            if not path.exists():
-                raise ValueError(f"Prompt file not found: {prompt_file}")
-
-            with open(path) as f:
-                data = json.load(f)
-
-            contestant = {
-                "name": data["name"],
-                "personality_prompt": data["personality_prompt"],
-                "_prompt_file": prompt_file,
-                "_version": data.get("version", "1.0"),
-            }
-            if contestant_model:
-                contestant["model"] = contestant_model
-            contestants.append(contestant)
-        else:
-            raise ValueError(f"Unknown source type: {source}")
+        contestant = {
+            "name": data["name"],
+            "personality_prompt": data["personality_prompt"],
+            "_prompt_file": prompt_file,
+            "_version": data.get("version", "1.0"),
+        }
+        if contestant_model:
+            contestant["model"] = contestant_model
+        contestants.append(contestant)
 
     return contestants
 

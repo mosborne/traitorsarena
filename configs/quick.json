@@ -5,13 +5,13 @@
   "num_traitors": 2,
   "finale_round": 3,
   "contestants": [
-    {"source": "original", "name": "Marcus"},
-    {"source": "original", "name": "Sofia"},
-    {"source": "original", "name": "Derek"},
-    {"source": "original", "name": "Elena"},
-    {"source": "original", "name": "Victor"},
-    {"source": "original", "name": "Priya"},
-    {"source": "original", "name": "Rashid"},
-    {"source": "original", "name": "Gloria"}
+    {"file": "marcus.json"},
+    {"file": "sofia.json"},
+    {"file": "derek.json"},
+    {"file": "elena.json"},
+    {"file": "victor.json"},
+    {"file": "priya.json"},
+    {"file": "rashid.json"},
+    {"file": "gloria.json"}
   ]
 }

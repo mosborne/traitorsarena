@@ -1,10 +1,10 @@
 {
-  "name": "gemini-flash-lite-nocache",
-  "description": "Google Gemini 2.0 Flash Lite - caching disabled for comparison",
+  "name": "gemini-flash-lite-nocache-20",
+  "description": "Google Gemini 2.0 Flash Lite - 20 games without caching",
   "provider": "gemini",
   "default_model": "gemini-2.0-flash-lite",
   "enable_caching": false,
-  "num_games": 3,
+  "num_games": 20,
   "num_traitors": 3,
   "finale_round": 8,
   "contestants": [

@@ -1,0 +1,142 @@
+{
+  "run_id": "2026-01-18_22-07-50",
+  "timestamp": "2026-01-18T22:07:50.235666",
+  "config_name": "quick",
+  "config_description": "Quick test game - 8 players, 2 traitors, early finale",
+  "num_traitors": 2,
+  "finale_round": 3,
+  "contestants": [
+    "Marcus",
+    "Sofia",
+    "Derek",
+    "Elena",
+    "Victor",
+    "Priya",
+    "Rashid",
+    "Gloria"
+  ],
+  "games": [
+    1
+  ],
+  "stats": {
+    "total_games": 1,
+    "traitor_wins": 0,
+    "faithful_wins": 1,
+    "avg_rounds": 3.0,
+    "total_cost_usd": 0.0,
+    "total_duration_sec": 0.13467812538146973,
+    "avg_cost_usd": 0.0,
+    "avg_duration_sec": 0.13467812538146973,
+    "total_input_tokens": 0,
+    "total_output_tokens": 0,
+    "total_cache_creation_tokens": 0,
+    "total_cache_read_tokens": 0
+  },
+  "games_costs": [],
+  "games_durations": [
+    0.13467812538146973
+  ],
+  "contestant_stats": {
+    "Marcus": {
+      "name": "Marcus",
+      "model": null,
+      "games_played": 1,
+      "times_traitor": 0,
+      "times_faithful": 1,
+      "wins": 1,
+      "survived": 1,
+      "banished": 0,
+      "murdered": 0,
+      "total_prize": 33333
+    },
+    "Sofia": {
+      "name": "Sofia",
+      "model": null,
+      "games_played": 1,
+      "times_traitor": 1,
+      "times_faithful": 0,
+      "wins": 0,
+      "survived": 0,
+      "banished": 1,
+      "murdered": 0,
+      "total_prize": 0
+    },
+    "Derek": {
+      "name": "Derek",
+      "model": null,
+      "games_played": 1,
+      "times_traitor": 0,
+      "times_faithful": 1,
+      "wins": 0,
+      "survived": 0,
+      "banished": 0,
+      "murdered": 1,
+      "total_prize": 0
+    },
+    "Elena": {
+      "name": "Elena",
+      "model": null,
+      "games_played": 1,
+      "times_traitor": 1,
+      "times_faithful": 0,
+      "wins": 0,
+      "survived": 0,
+      "banished": 1,
+      "murdered": 0,
+      "total_prize": 0
+    },
+    "Victor": {
+      "name": "Victor",
+      "model": null,
+      "games_played": 1,
+      "times_traitor": 0,
+      "times_faithful": 1,
+      "wins": 1,
+      "survived": 1,
+      "banished": 0,
+      "murdered": 0,
+      "total_prize": 33333
+    },
+    "Priya": {
+      "name": "Priya",
+      "model": null,
+      "games_played": 1,
+      "times_traitor": 0,
+      "times_faithful": 1,
+      "wins": 1,
+      "survived": 1,
+      "banished": 0,
+      "murdered": 0,
+      "total_prize": 33333
+    },
+    "Rashid": {
+      "name": "Rashid",
+      "model": null,
+      "games_played": 1,
+      "times_traitor": 0,
+      "times_faithful": 1,
+      "wins": 0,
+      "survived": 0,
+      "banished": 0,
+      "murdered": 1,
+      "total_prize": 0
+    },
+    "Gloria": {
+      "name": "Gloria",
+      "model": null,
+      "games_played": 1,
+      "times_traitor": 0,
+      "times_faithful": 1,
+      "wins": 0,
+      "survived": 0,
+      "banished": 1,
+      "murdered": 0,
+      "total_prize": 0
+    }
+  },
+  "analysis": {
+    "generated_at": "2026-01-18T22:08:12.938035",
+    "model": "claude-opus-4-20250514",
+    "content": "**Game Balance Analysis**\n\nWith a 0% traitor win rate from this single-game simulation, the balance appears heavily skewed toward the Faithful. However, drawing definitive conclusions from just one game is premature. The 3-round average suggests a relatively quick game where the Faithful efficiently identified and eliminated the traitors. In well-balanced Traitors games, we'd typically expect traitor win rates between 30-50%, so this result indicates either exceptional Faithful play, poor traitor strategy, or potentially imbalanced game mechanics favoring the majority.\n\n**The Dominant Trio**\n\nMarcus, Victor, and Priya emerged as the clear victors, each boasting perfect records: 100% win rate, 100% survival rate, and 0% murder rate. Their success suggests they either flew under the radar as trusted Faithful or skillfully deflected suspicion during banishment discussions. The fact that none of them were targeted for murder indicates the traitors either considered them useful shields or were focused on eliminating more immediate threats. Their unified success points to possible alliance-building or exceptional social reading skills.\n\n**The Fallen Players**\n\nThe bottom performers reveal two distinct failure patterns. Sofia and Elena (0% survival, 0% murdered) were likely the traitors, banished through the voting process without ever being murder targets. Meanwhile, Derek and Rashid's 100% murder rate suggests they were perceived as strong Faithful players who posed significant threats to the traitor agenda. Gloria's statistics mirror Sofia and Elena's, indicating she was either a third traitor or a Faithful who got caught in the crossfire of suspicion.\n\n**Key Patterns and Insights**\n\nThe stark divide between survivors and casualties suggests this game had little middle ground - players either survived to victory or were eliminated entirely. The traitors' target selection (Derek and Rashid) appears strategic but ultimately insufficient, as they couldn't survive the banishment rounds. With such a small sample size, these patterns could be coincidental, but the complete Faithful sweep hints at either superior deduction skills or perhaps inadequate tools for the traitors to manipulate suspicion effectively."
+  }
+}

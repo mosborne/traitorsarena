@@ -1,0 +1,194 @@
+{
+  "run_id": "2026-01-18_22-14-33",
+  "timestamp": "2026-01-18T22:14:34.076075",
+  "config_name": "experimental_v2",
+  "config_description": "Testing 6 faithful-optimized strategies: Iris (social), Blake (vote tracker), Harper (devil's advocate), Rowan (murder analyst), Sage (vote coordinator), Finley (quiet observer)",
+  "num_traitors": 3,
+  "finale_round": 8,
+  "contestants": [
+    "Marcus",
+    "Sofia",
+    "Elena",
+    "Jaylen",
+    "Priya",
+    "Gloria",
+    "Iris",
+    "Blake",
+    "Harper",
+    "Rowan",
+    "Sage",
+    "Finley"
+  ],
+  "games": [
+    1
+  ],
+  "stats": {
+    "total_games": 1,
+    "traitor_wins": 0,
+    "faithful_wins": 1,
+    "avg_rounds": 5.0,
+    "total_cost_usd": 0.0,
+    "total_duration_sec": 0.07392096519470215,
+    "avg_cost_usd": 0.0,
+    "avg_duration_sec": 0.07392096519470215,
+    "total_input_tokens": 0,
+    "total_output_tokens": 0,
+    "total_cache_creation_tokens": 0,
+    "total_cache_read_tokens": 0
+  },
+  "games_costs": [],
+  "games_durations": [
+    0.07392096519470215
+  ],
+  "contestant_stats": {
+    "Marcus": {
+      "name": "Marcus",
+      "model": null,
+      "games_played": 1,
+      "times_traitor": 1,
+      "times_faithful": 0,
+      "wins": 0,
+      "survived": 0,
+      "banished": 1,
+      "murdered": 0,
+      "total_prize": 0
+    },
+    "Sofia": {
+      "name": "Sofia",
+      "model": null,
+      "games_played": 1,
+      "times_traitor": 0,
+      "times_faithful": 1,
+      "wins": 1,
+      "survived": 1,
+      "banished": 0,
+      "murdered": 0,
+      "total_prize": 33333
+    },
+    "Elena": {
+      "name": "Elena",
+      "model": null,
+      "games_played": 1,
+      "times_traitor": 0,
+      "times_faithful": 1,
+      "wins": 0,
+      "survived": 0,
+      "banished": 1,
+      "murdered": 0,
+      "total_prize": 0
+    },
+    "Jaylen": {
+      "name": "Jaylen",
+      "model": null,
+      "games_played": 1,
+      "times_traitor": 0,
+      "times_faithful": 1,
+      "wins": 0,
+      "survived": 0,
+      "banished": 0,
+      "murdered": 1,
+      "total_prize": 0
+    },
+    "Priya": {
+      "name": "Priya",
+      "model": null,
+      "games_played": 1,
+      "times_traitor": 0,
+      "times_faithful": 1,
+      "wins": 0,
+      "survived": 0,
+      "banished": 0,
+      "murdered": 1,
+      "total_prize": 0
+    },
+    "Gloria": {
+      "name": "Gloria",
+      "model": null,
+      "games_played": 1,
+      "times_traitor": 1,
+      "times_faithful": 0,
+      "wins": 0,
+      "survived": 0,
+      "banished": 1,
+      "murdered": 0,
+      "total_prize": 0
+    },
+    "Iris": {
+      "name": "Iris",
+      "model": null,
+      "games_played": 1,
+      "times_traitor": 0,
+      "times_faithful": 1,
+      "wins": 0,
+      "survived": 0,
+      "banished": 0,
+      "murdered": 1,
+      "total_prize": 0
+    },
+    "Blake": {
+      "name": "Blake",
+      "model": null,
+      "games_played": 1,
+      "times_traitor": 1,
+      "times_faithful": 0,
+      "wins": 0,
+      "survived": 0,
+      "banished": 1,
+      "murdered": 0,
+      "total_prize": 0
+    },
+    "Harper": {
+      "name": "Harper",
+      "model": null,
+      "games_played": 1,
+      "times_traitor": 0,
+      "times_faithful": 1,
+      "wins": 1,
+      "survived": 1,
+      "banished": 0,
+      "murdered": 0,
+      "total_prize": 33333
+    },
+    "Rowan": {
+      "name": "Rowan",
+      "model": null,
+      "games_played": 1,
+      "times_traitor": 0,
+      "times_faithful": 1,
+      "wins": 0,
+      "survived": 0,
+      "banished": 0,
+      "murdered": 1,
+      "total_prize": 0
+    },
+    "Sage": {
+      "name": "Sage",
+      "model": null,
+      "games_played": 1,
+      "times_traitor": 0,
+      "times_faithful": 1,
+      "wins": 1,
+      "survived": 1,
+      "banished": 0,
+      "murdered": 0,
+      "total_prize": 33333
+    },
+    "Finley": {
+      "name": "Finley",
+      "model": null,
+      "games_played": 1,
+      "times_traitor": 0,
+      "times_faithful": 1,
+      "wins": 0,
+      "survived": 0,
+      "banished": 1,
+      "murdered": 0,
+      "total_prize": 0
+    }
+  },
+  "analysis": {
+    "generated_at": "2026-01-18T22:14:55.667000",
+    "model": "claude-opus-4-20250514",
+    "content": "This single-game simulation reveals a complete shutout for the Traitors, with the Faithful achieving a decisive victory in just 5 rounds. While a 0% Traitor win rate appears heavily unbalanced, drawing conclusions from a sample size of one game is premature \u2013 this could simply be an outlier where the Faithful got lucky with their voting patterns or the Traitors made critical errors.\n\nThe winning trio of Sofia, Harper, and Sage demonstrated perfect gameplay, each achieving 100% survival rates while completely avoiding the Traitors' crosshairs. Their clean sweep suggests they either flew under the radar effectively or formed a powerful voting bloc that protected them from banishment. In contrast, Marcus and Elena's 0% performance despite avoiding murder indicates they were likely the Traitors who got caught and banished by the Faithful majority.\n\nThe bottom performers tell a tale of two fates: Iris and Rowan's 100% murder rate confirms they were almost certainly Faithful players who posed enough of a threat to warrant nighttime elimination, while Gloria, Blake, and Finley's 0% murder rate suggests they were banished during voting rounds \u2013 possibly as suspected Traitors or simply unfortunate Faithful caught in the crossfire of accusations.\n\nThe swift 5-round conclusion and complete Faithful victory hints at either exceptional deductive work by the Faithful or poor strategic play by the Traitors. With such a small dataset, these results could be completely reversed in the next game, making this more of a snapshot of one particularly dominant Faithful performance rather than evidence of systemic game imbalance."
+  }
+}

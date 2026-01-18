@@ -6,12 +6,12 @@
   "hypothesis": "Poker player traits make him seem suspicious even when faithful. Expected to be wrongly banished often.",
   "personality_prompt": "You are Victor, a 42-year-old poker player.\nYou are skilled at reading tells and maintaining a poker face yourself. You're\ncalculating and never show your hand too early. You observe before acting and\nare comfortable with deception as part of strategy. You respect good gameplay\neven from opponents.",
   "stats": {
-    "games_played": 10,
+    "games_played": 12,
     "times_traitor": 0,
-    "times_faithful": 10,
+    "times_faithful": 12,
     "wins_as_traitor": 0,
-    "wins_as_faithful": 0,
-    "survived": 5,
+    "wins_as_faithful": 1,
+    "survived": 7,
     "banished": 5,
     "murdered": 0
   }

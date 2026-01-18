@@ -7,11 +7,11 @@
   "provider": "anthropic",
   "default_model": "claude-3-5-haiku-20241022",
   "contestants": [
-    {"source": "original", "name": "Marcus"},
-    {"source": "original", "name": "Sofia"},
-    {"source": "original", "name": "Derek"},
-    {"source": "original", "name": "Elena"},
-    {"source": "original", "name": "Jaylen"},
-    {"source": "original", "name": "Priya"}
+    {"file": "marcus.json"},
+    {"file": "sofia.json"},
+    {"file": "derek.json"},
+    {"file": "elena.json"},
+    {"file": "jaylen.json"},
+    {"file": "priya.json"}
   ]
 }

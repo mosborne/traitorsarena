@@ -1,0 +1,616 @@
+{
+  "game_id": 1,
+  "winner": "faithful",
+  "rounds_played": 3,
+  "traitors": [
+    "Sofia",
+    "Elena"
+  ],
+  "faithful": [
+    "Marcus",
+    "Derek",
+    "Victor",
+    "Priya",
+    "Rashid",
+    "Gloria"
+  ],
+  "survivors": [
+    "Marcus",
+    "Victor",
+    "Priya"
+  ],
+  "prize_pool": 100000,
+  "prize_distribution": {
+    "Marcus": 33333,
+    "Sofia": 0,
+    "Derek": 0,
+    "Elena": 0,
+    "Victor": 33333,
+    "Priya": 33333,
+    "Rashid": 0,
+    "Gloria": 0
+  },
+  "finale_round": 3,
+  "cost_usd": 0.0,
+  "duration_sec": 0.13467812538146973,
+  "players": {
+    "Marcus": {
+      "role": "faithful",
+      "status": "alive",
+      "eliminated_round": null,
+      "model": null
+    },
+    "Sofia": {
+      "role": "traitor",
+      "status": "banished",
+      "eliminated_round": 2,
+      "model": null
+    },
+    "Derek": {
+      "role": "faithful",
+      "status": "murdered",
+      "eliminated_round": 2,
+      "model": null
+    },
+    "Elena": {
+      "role": "traitor",
+      "status": "banished",
+      "eliminated_round": 3,
+      "model": null
+    },
+    "Victor": {
+      "role": "faithful",
+      "status": "alive",
+      "eliminated_round": null,
+      "model": null
+    },
+    "Priya": {
+      "role": "faithful",
+      "status": "alive",
+      "eliminated_round": null,
+      "model": null
+    },
+    "Rashid": {
+      "role": "faithful",
+      "status": "murdered",
+      "eliminated_round": 1,
+      "model": null
+    },
+    "Gloria": {
+      "role": "faithful",
+      "status": "banished",
+      "eliminated_round": 1,
+      "model": null
+    }
+  },
+  "rounds": [
+    {
+      "round_num": 1,
+      "messages": [
+        {
+          "speaker": "Elena",
+          "content": "",
+          "round_num": 1,
+          "is_private": false,
+          "turn_number": 1,
+          "thoughts": ""
+        },
+        {
+          "speaker": "Victor",
+          "content": "",
+          "round_num": 1,
+          "is_private": false,
+          "turn_number": 1,
+          "thoughts": ""
+        },
+        {
+          "speaker": "Marcus",
+          "content": "",
+          "round_num": 1,
+          "is_private": false,
+          "turn_number": 1,
+          "thoughts": ""
+        },
+        {
+          "speaker": "Gloria",
+          "content": "",
+          "round_num": 1,
+          "is_private": false,
+          "turn_number": 1,
+          "thoughts": ""
+        },
+        {
+          "speaker": "Derek",
+          "content": "",
+          "round_num": 1,
+          "is_private": false,
+          "turn_number": 1,
+          "thoughts": ""
+        },
+        {
+          "speaker": "Priya",
+          "content": "",
+          "round_num": 1,
+          "is_private": false,
+          "turn_number": 1,
+          "thoughts": ""
+        },
+        {
+          "speaker": "Rashid",
+          "content": "",
+          "round_num": 1,
+          "is_private": false,
+          "turn_number": 1,
+          "thoughts": ""
+        },
+        {
+          "speaker": "Sofia",
+          "content": "",
+          "round_num": 1,
+          "is_private": false,
+          "turn_number": 1,
+          "thoughts": ""
+        },
+        {
+          "speaker": "Sofia",
+          "content": "",
+          "round_num": 1,
+          "is_private": false,
+          "turn_number": 2,
+          "thoughts": ""
+        },
+        {
+          "speaker": "Rashid",
+          "content": "",
+          "round_num": 1,
+          "is_private": false,
+          "turn_number": 2,
+          "thoughts": ""
+        },
+        {
+          "speaker": "Gloria",
+          "content": "",
+          "round_num": 1,
+          "is_private": false,
+          "turn_number": 2,
+          "thoughts": ""
+        },
+        {
+          "speaker": "Gloria",
+          "content": "",
+          "round_num": 1,
+          "is_private": false,
+          "turn_number": 3,
+          "thoughts": ""
+        },
+        {
+          "speaker": "Sofia",
+          "content": "",
+          "round_num": 1,
+          "is_private": true,
+          "turn_number": 1,
+          "thoughts": ""
+        },
+        {
+          "speaker": "Elena",
+          "content": "",
+          "round_num": 1,
+          "is_private": true,
+          "turn_number": 1,
+          "thoughts": ""
+        },
+        {
+          "speaker": "Sofia",
+          "content": "",
+          "round_num": 1,
+          "is_private": true,
+          "turn_number": 1,
+          "thoughts": ""
+        }
+      ],
+      "votes": [
+        {
+          "voter": "Marcus",
+          "target": "Gloria",
+          "round_num": 1
+        },
+        {
+          "voter": "Sofia",
+          "target": "Rashid",
+          "round_num": 1
+        },
+        {
+          "voter": "Derek",
+          "target": "Gloria",
+          "round_num": 1
+        },
+        {
+          "voter": "Elena",
+          "target": "Victor",
+          "round_num": 1
+        },
+        {
+          "voter": "Victor",
+          "target": "Priya",
+          "round_num": 1
+        },
+        {
+          "voter": "Priya",
+          "target": "Derek",
+          "round_num": 1
+        },
+        {
+          "voter": "Rashid",
+          "target": "Victor",
+          "round_num": 1
+        },
+        {
+          "voter": "Gloria",
+          "target": "Marcus",
+          "round_num": 1
+        }
+      ],
+      "pouch_votes": [],
+      "private_thoughts": [],
+      "banished": {
+        "name": "Gloria",
+        "role": "faithful"
+      },
+      "murdered": {
+        "name": "Rashid"
+      }
+    },
+    {
+      "round_num": 2,
+      "messages": [
+        {
+          "speaker": "Derek",
+          "content": "",
+          "round_num": 2,
+          "is_private": false,
+          "turn_number": 1,
+          "thoughts": ""
+        },
+        {
+          "speaker": "Sofia",
+          "content": "",
+          "round_num": 2,
+          "is_private": false,
+          "turn_number": 1,
+          "thoughts": ""
+        },
+        {
+          "speaker": "Elena",
+          "content": "",
+          "round_num": 2,
+          "is_private": false,
+          "turn_number": 1,
+          "thoughts": ""
+        },
+        {
+          "speaker": "Marcus",
+          "content": "",
+          "round_num": 2,
+          "is_private": false,
+          "turn_number": 1,
+          "thoughts": ""
+        },
+        {
+          "speaker": "Priya",
+          "content": "",
+          "round_num": 2,
+          "is_private": false,
+          "turn_number": 1,
+          "thoughts": ""
+        },
+        {
+          "speaker": "Victor",
+          "content": "",
+          "round_num": 2,
+          "is_private": false,
+          "turn_number": 1,
+          "thoughts": ""
+        },
+        {
+          "speaker": "Sofia",
+          "content": "",
+          "round_num": 2,
+          "is_private": false,
+          "turn_number": 2,
+          "thoughts": ""
+        },
+        {
+          "speaker": "Elena",
+          "content": "I choose to kill Derek.",
+          "round_num": 2,
+          "is_private": true,
+          "turn_number": 1,
+          "thoughts": ""
+        }
+      ],
+      "votes": [
+        {
+          "voter": "Marcus",
+          "target": "Elena",
+          "round_num": 2
+        },
+        {
+          "voter": "Sofia",
+          "target": "Victor",
+          "round_num": 2
+        },
+        {
+          "voter": "Derek",
+          "target": "Priya",
+          "round_num": 2
+        },
+        {
+          "voter": "Elena",
+          "target": "Victor",
+          "round_num": 2
+        },
+        {
+          "voter": "Victor",
+          "target": "Sofia",
+          "round_num": 2
+        },
+        {
+          "voter": "Priya",
+          "target": "Sofia",
+          "round_num": 2
+        }
+      ],
+      "pouch_votes": [],
+      "private_thoughts": [],
+      "banished": {
+        "name": "Sofia",
+        "role": "traitor"
+      },
+      "murdered": {
+        "name": "Derek"
+      }
+    },
+    {
+      "round_num": 3,
+      "messages": [
+        {
+          "speaker": "Elena",
+          "content": "",
+          "round_num": 3,
+          "is_private": false,
+          "turn_number": 1,
+          "thoughts": ""
+        },
+        {
+          "speaker": "Priya",
+          "content": "",
+          "round_num": 3,
+          "is_private": false,
+          "turn_number": 1,
+          "thoughts": ""
+        },
+        {
+          "speaker": "Victor",
+          "content": "",
+          "round_num": 3,
+          "is_private": false,
+          "turn_number": 1,
+          "thoughts": ""
+        },
+        {
+          "speaker": "Marcus",
+          "content": "",
+          "round_num": 3,
+          "is_private": false,
+          "turn_number": 1,
+          "thoughts": ""
+        },
+        {
+          "speaker": "Elena",
+          "content": "",
+          "round_num": 3,
+          "is_private": false,
+          "turn_number": 2,
+          "thoughts": ""
+        }
+      ],
+      "votes": [
+        {
+          "voter": "Marcus",
+          "target": "Victor",
+          "round_num": 3
+        },
+        {
+          "voter": "Elena",
+          "target": "Marcus",
+          "round_num": 3
+        },
+        {
+          "voter": "Victor",
+          "target": "Elena",
+          "round_num": 3
+        },
+        {
+          "voter": "Priya",
+          "target": "Elena",
+          "round_num": 3
+        }
+      ],
+      "pouch_votes": [],
+      "private_thoughts": [],
+      "banished": {
+        "name": "Elena",
+        "role": "traitor"
+      },
+      "murdered": null
+    }
+  ],
+  "game_log": [
+    "\n============================================================",
+    "THE TRAITORS - GAME SIMULATION",
+    "============================================================",
+    "Players: Marcus, Sofia, Derek, Elena, Victor, Priya, Rashid, Gloria",
+    "Finale begins after round 3",
+    "\n============================================================",
+    "ROLE ASSIGNMENT (Secret - players don't know each other's roles)",
+    "============================================================",
+    "  Marcus: FAITHFUL",
+    "  Sofia: TRAITOR",
+    "  Derek: FAITHFUL",
+    "  Elena: TRAITOR",
+    "  Victor: FAITHFUL",
+    "  Priya: FAITHFUL",
+    "  Rashid: FAITHFUL",
+    "  Gloria: FAITHFUL",
+    "\n############################################################",
+    "ROUND 1",
+    "############################################################",
+    "Alive: Marcus, Sofia, Derek, Elena, Victor, Priya, Rashid, Gloria",
+    "\n----------------------------------------",
+    "ROUND 1 - DISCUSSION PHASE",
+    "----------------------------------------",
+    "\n--- Turn 1 of 3 ---",
+    "\nElena: ",
+    "\nVictor: ",
+    "\nMarcus: ",
+    "\nGloria: ",
+    "\nDerek: ",
+    "\nPriya: ",
+    "\nRashid: ",
+    "\nSofia: ",
+    "\n--- Turn 2 of 3 ---",
+    "\nElena: [PASS]",
+    "\nVictor: [PASS]",
+    "\nPriya: [PASS]",
+    "\nDerek: [PASS]",
+    "\nSofia: ",
+    "\nRashid: ",
+    "\nGloria: ",
+    "\nMarcus: [PASS]",
+    "\n--- Turn 3 of 3 ---",
+    "\nGloria: ",
+    "\nRashid: [PASS]",
+    "\nSofia: [PASS]",
+    "\n----------------------------------------",
+    "VOTING PHASE - Who will be banished?",
+    "----------------------------------------",
+    "  Marcus votes for: Gloria",
+    "  Sofia votes for: Rashid",
+    "  Derek votes for: Gloria",
+    "  Elena votes for: Victor",
+    "  Victor votes for: Priya",
+    "  Priya votes for: Derek",
+    "  Rashid votes for: Victor",
+    "  Gloria votes for: Marcus",
+    "\nTIE! Random selection from: Gloria, Victor",
+    "\n========================================",
+    "BANISHED: Gloria",
+    "They were a: FAITHFUL",
+    "========================================",
+    "\n----------------------------------------",
+    "NIGHT PHASE - Traitors meet in secret...",
+    "----------------------------------------",
+    "\n[Traitors discuss strategy...]",
+    "\n[TRAITOR] Sofia: ",
+    "\n[TRAITOR] Elena: ",
+    "\n[TRAITOR] Sofia: ",
+    "\n[Traitors vote on target...]",
+    "[MURDER VOTE] Sofia votes: Derek",
+    "[MURDER VOTE] Elena votes: Rashid",
+    "\n========================================",
+    "MURDERED: Rashid",
+    "The faithful mourn their loss...",
+    "========================================",
+    "\n############################################################",
+    "ROUND 2",
+    "############################################################",
+    "Alive: Marcus, Sofia, Derek, Elena, Victor, Priya",
+    "\n----------------------------------------",
+    "ROUND 2 - DISCUSSION PHASE",
+    "----------------------------------------",
+    "\n--- Turn 1 of 3 ---",
+    "\nDerek: ",
+    "\nSofia: ",
+    "\nElena: ",
+    "\nMarcus: ",
+    "\nPriya: ",
+    "\nVictor: ",
+    "\n--- Turn 2 of 3 ---",
+    "\nPriya: [PASS]",
+    "\nSofia: ",
+    "\nMarcus: [PASS]",
+    "\nVictor: [PASS]",
+    "\nDerek: [PASS]",
+    "\nElena: [PASS]",
+    "\n--- Turn 3 of 3 ---",
+    "\nSofia: [PASS]",
+    "\n----------------------------------------",
+    "VOTING PHASE - Who will be banished?",
+    "----------------------------------------",
+    "  Marcus votes for: Elena",
+    "  Sofia votes for: Victor",
+    "  Derek votes for: Priya",
+    "  Elena votes for: Victor",
+    "  Victor votes for: Sofia",
+    "  Priya votes for: Sofia",
+    "\nTIE! Random selection from: Victor, Sofia",
+    "\n========================================",
+    "BANISHED: Sofia",
+    "They were a: TRAITOR",
+    "========================================",
+    "\n----------------------------------------",
+    "NIGHT PHASE - Traitors meet in secret...",
+    "----------------------------------------",
+    "\n[TRAITOR] Elena (alone): I choose to kill Derek.",
+    "\n========================================",
+    "MURDERED: Derek",
+    "The faithful mourn their loss...",
+    "========================================",
+    "\n############################################################",
+    "ROUND 3",
+    "############################################################",
+    "Alive: Marcus, Elena, Victor, Priya",
+    "\n----------------------------------------",
+    "ROUND 3 - DISCUSSION PHASE",
+    "----------------------------------------",
+    "\n--- Turn 1 of 3 ---",
+    "\nElena: ",
+    "\nPriya: ",
+    "\nVictor: ",
+    "\nMarcus: ",
+    "\n--- Turn 2 of 3 ---",
+    "\nElena: ",
+    "\nVictor: [PASS]",
+    "\nPriya: [PASS]",
+    "\nMarcus: [PASS]",
+    "\n--- Turn 3 of 3 ---",
+    "\nElena: [PASS]",
+    "\n----------------------------------------",
+    "VOTING PHASE - Who will be banished?",
+    "----------------------------------------",
+    "  Marcus votes for: Victor",
+    "  Elena votes for: Marcus",
+    "  Victor votes for: Elena",
+    "  Priya votes for: Elena",
+    "\n========================================",
+    "BANISHED: Elena",
+    "They were a: TRAITOR",
+    "========================================",
+    "\n============================================================",
+    "GAME OVER",
+    "============================================================",
+    "\nWINNER: THE FAITHFUL!",
+    "\nPRIZE POOL: $100,000",
+    "\nFinal Player Status:",
+    "  Marcus: FAITHFUL - SURVIVED - $33,333",
+    "  Sofia: TRAITOR - BANISHED - $0",
+    "  Derek: FAITHFUL - MURDERED - $0",
+    "  Elena: TRAITOR - BANISHED - $0",
+    "  Victor: FAITHFUL - SURVIVED - $33,333",
+    "  Priya: FAITHFUL - SURVIVED - $33,333",
+    "  Rashid: FAITHFUL - MURDERED - $0",
+    "  Gloria: FAITHFUL - BANISHED - $0",
+    "\n============================================================"
+  ],
+  "llm_interactions": []
+}

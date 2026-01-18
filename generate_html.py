@@ -7,7 +7,7 @@ import os
 from pathlib import Path
 from traitors import TraitorsGame
 from traitors.types import PlayerStatus
-from main import EXAMPLE_CONTESTANTS
+from main import load_contestants
 
 
 def build_game_summary(results: dict) -> str:
@@ -327,12 +327,12 @@ def generate_game_html(results: dict, game_log: list[str], contestants: list = N
     Args:
         results: Game results dictionary
         game_log: List of log messages
-        contestants: List of contestant dicts (defaults to EXAMPLE_CONTESTANTS)
+        contestants: List of contestant dicts (defaults to loaded contestants)
         back_link: Optional link to navigate back (e.g., "index.html")
         title: Optional title for the page (e.g., "Game 1")
     """
     if contestants is None:
-        contestants = EXAMPLE_CONTESTANTS
+        contestants = load_contestants()
 
     page_title = f"Game: {title}" if title else "The Traitors - LLM Game Simulator"
 
@@ -1953,9 +1953,10 @@ def main():
     import anthropic
     client = anthropic.Anthropic(api_key=api_key)
 
+    contestants = load_contestants()
     game = TraitorsGame(
-        contestants=EXAMPLE_CONTESTANTS,
-        num_traitors=3,  # 3 traitors among 12 players
+        contestants=contestants,
+        num_traitors=3,  # 3 traitors among 19 players
         client=client,
         log_callback=log_capture,
     )
@@ -1970,7 +1971,7 @@ def main():
     results["llm_interactions"] = getattr(game.state, 'llm_interactions', [])
 
     # Generate HTML
-    html_content = generate_game_html(results, game_log, EXAMPLE_CONTESTANTS)
+    html_content = generate_game_html(results, game_log, contestants)
 
     # Write to file
     with open("index.html", "w") as f:

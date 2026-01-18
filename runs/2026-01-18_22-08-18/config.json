@@ -1,0 +1,33 @@
+{
+  "name": "quick",
+  "description": "Quick test game - 8 players, 2 traitors, early finale",
+  "num_games": 1,
+  "num_traitors": 2,
+  "finale_round": 3,
+  "contestants": [
+    {
+      "file": "marcus.json"
+    },
+    {
+      "file": "sofia.json"
+    },
+    {
+      "file": "derek.json"
+    },
+    {
+      "file": "elena.json"
+    },
+    {
+      "file": "victor.json"
+    },
+    {
+      "file": "priya.json"
+    },
+    {
+      "file": "rashid.json"
+    },
+    {
+      "file": "gloria.json"
+    }
+  ]
+}

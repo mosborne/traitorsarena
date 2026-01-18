@@ -1,0 +1,32 @@
+{
+  "run_id": "2026-01-18_22-08-18",
+  "timestamp": "2026-01-18T22:08:46.852521",
+  "config_name": "quick",
+  "config_description": "Quick test game - 8 players, 2 traitors, early finale",
+  "num_games": 1,
+  "num_contestants": 8,
+  "num_traitors": 2,
+  "traitor_wins": 1,
+  "faithful_wins": 0,
+  "contestants": [
+    "Marcus",
+    "Sofia",
+    "Derek",
+    "Elena",
+    "Victor",
+    "Priya",
+    "Rashid",
+    "Gloria"
+  ],
+  "prompt_versions": {
+    "Marcus": "original",
+    "Sofia": "1.0",
+    "Derek": "1.0",
+    "Elena": "1.0",
+    "Victor": "original",
+    "Priya": "1.0",
+    "Rashid": "1.0",
+    "Gloria": "1.0"
+  },
+  "avg_rounds": 2.0
+}

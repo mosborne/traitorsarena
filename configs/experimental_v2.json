@@ -1,20 +1,20 @@
 {
   "name": "experimental_v2",
-  "description": "Testing 6 faithful-optimized strategies: Iris (social), Quinn (vote tracker), Harper (devil's advocate), Rowan (murder analyst), Sage (vote coordinator), Finley (quiet observer)",
+  "description": "Testing 6 faithful-optimized strategies: Iris (social), Blake (vote tracker), Harper (devil's advocate), Rowan (murder analyst), Sage (vote coordinator), Finley (quiet observer)",
   "num_games": 10,
   "num_traitors": 3,
   "contestants": [
-    {"source": "original", "name": "Marcus"},
-    {"source": "original", "name": "Sofia"},
-    {"source": "original", "name": "Elena"},
-    {"source": "original", "name": "Jaylen"},
-    {"source": "original", "name": "Priya"},
-    {"source": "original", "name": "Gloria"},
-    {"source": "prompt", "file": "experimental_social.json"},
-    {"source": "prompt", "file": "vote_tracker.json"},
-    {"source": "prompt", "file": "devils_advocate.json"},
-    {"source": "prompt", "file": "murder_analyst.json"},
-    {"source": "prompt", "file": "vote_coordinator.json"},
-    {"source": "prompt", "file": "quiet_observer.json"}
+    {"file": "marcus.json"},
+    {"file": "sofia.json"},
+    {"file": "elena.json"},
+    {"file": "jaylen.json"},
+    {"file": "priya.json"},
+    {"file": "gloria.json"},
+    {"file": "iris.json"},
+    {"file": "blake.json"},
+    {"file": "harper.json"},
+    {"file": "rowan.json"},
+    {"file": "sage.json"},
+    {"file": "finley.json"}
   ]
 }

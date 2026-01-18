@@ -1,0 +1,1353 @@
+{
+  "game_id": 1,
+  "winner": "faithful",
+  "rounds_played": 5,
+  "traitors": [
+    "Marcus",
+    "Gloria",
+    "Blake"
+  ],
+  "faithful": [
+    "Sofia",
+    "Elena",
+    "Jaylen",
+    "Priya",
+    "Iris",
+    "Harper",
+    "Rowan",
+    "Sage",
+    "Finley"
+  ],
+  "survivors": [
+    "Sofia",
+    "Harper",
+    "Sage"
+  ],
+  "prize_pool": 100000,
+  "prize_distribution": {
+    "Marcus": 0,
+    "Sofia": 33333,
+    "Elena": 0,
+    "Jaylen": 0,
+    "Priya": 0,
+    "Gloria": 0,
+    "Iris": 0,
+    "Blake": 0,
+    "Harper": 33333,
+    "Rowan": 0,
+    "Sage": 33333,
+    "Finley": 0
+  },
+  "finale_round": 8,
+  "cost_usd": 0.0,
+  "duration_sec": 0.07392096519470215,
+  "players": {
+    "Marcus": {
+      "role": "traitor",
+      "status": "banished",
+      "eliminated_round": 5,
+      "model": null
+    },
+    "Sofia": {
+      "role": "faithful",
+      "status": "alive",
+      "eliminated_round": null,
+      "model": null
+    },
+    "Elena": {
+      "role": "faithful",
+      "status": "banished",
+      "eliminated_round": 4,
+      "model": null
+    },
+    "Jaylen": {
+      "role": "faithful",
+      "status": "murdered",
+      "eliminated_round": 3,
+      "model": null
+    },
+    "Priya": {
+      "role": "faithful",
+      "status": "murdered",
+      "eliminated_round": 1,
+      "model": null
+    },
+    "Gloria": {
+      "role": "traitor",
+      "status": "banished",
+      "eliminated_round": 3,
+      "model": null
+    },
+    "Iris": {
+      "role": "faithful",
+      "status": "murdered",
+      "eliminated_round": 2,
+      "model": null
+    },
+    "Blake": {
+      "role": "traitor",
+      "status": "banished",
+      "eliminated_round": 2,
+      "model": null
+    },
+    "Harper": {
+      "role": "faithful",
+      "status": "alive",
+      "eliminated_round": null,
+      "model": null
+    },
+    "Rowan": {
+      "role": "faithful",
+      "status": "murdered",
+      "eliminated_round": 4,
+      "model": null
+    },
+    "Sage": {
+      "role": "faithful",
+      "status": "alive",
+      "eliminated_round": null,
+      "model": null
+    },
+    "Finley": {
+      "role": "faithful",
+      "status": "banished",
+      "eliminated_round": 1,
+      "model": null
+    }
+  },
+  "rounds": [
+    {
+      "round_num": 1,
+      "messages": [
+        {
+          "speaker": "Sofia",
+          "content": "",
+          "round_num": 1,
+          "is_private": false,
+          "turn_number": 1,
+          "thoughts": ""
+        },
+        {
+          "speaker": "Marcus",
+          "content": "",
+          "round_num": 1,
+          "is_private": false,
+          "turn_number": 1,
+          "thoughts": ""
+        },
+        {
+          "speaker": "Sage",
+          "content": "",
+          "round_num": 1,
+          "is_private": false,
+          "turn_number": 1,
+          "thoughts": ""
+        },
+        {
+          "speaker": "Jaylen",
+          "content": "",
+          "round_num": 1,
+          "is_private": false,
+          "turn_number": 1,
+          "thoughts": ""
+        },
+        {
+          "speaker": "Elena",
+          "content": "",
+          "round_num": 1,
+          "is_private": false,
+          "turn_number": 1,
+          "thoughts": ""
+        },
+        {
+          "speaker": "Blake",
+          "content": "",
+          "round_num": 1,
+          "is_private": false,
+          "turn_number": 1,
+          "thoughts": ""
+        },
+        {
+          "speaker": "Gloria",
+          "content": "",
+          "round_num": 1,
+          "is_private": false,
+          "turn_number": 1,
+          "thoughts": ""
+        },
+        {
+          "speaker": "Harper",
+          "content": "",
+          "round_num": 1,
+          "is_private": false,
+          "turn_number": 1,
+          "thoughts": ""
+        },
+        {
+          "speaker": "Finley",
+          "content": "",
+          "round_num": 1,
+          "is_private": false,
+          "turn_number": 1,
+          "thoughts": ""
+        },
+        {
+          "speaker": "Iris",
+          "content": "",
+          "round_num": 1,
+          "is_private": false,
+          "turn_number": 1,
+          "thoughts": ""
+        },
+        {
+          "speaker": "Rowan",
+          "content": "",
+          "round_num": 1,
+          "is_private": false,
+          "turn_number": 1,
+          "thoughts": ""
+        },
+        {
+          "speaker": "Priya",
+          "content": "",
+          "round_num": 1,
+          "is_private": false,
+          "turn_number": 1,
+          "thoughts": ""
+        },
+        {
+          "speaker": "Rowan",
+          "content": "",
+          "round_num": 1,
+          "is_private": false,
+          "turn_number": 2,
+          "thoughts": ""
+        },
+        {
+          "speaker": "Sage",
+          "content": "",
+          "round_num": 1,
+          "is_private": false,
+          "turn_number": 2,
+          "thoughts": ""
+        },
+        {
+          "speaker": "Harper",
+          "content": "",
+          "round_num": 1,
+          "is_private": false,
+          "turn_number": 2,
+          "thoughts": ""
+        },
+        {
+          "speaker": "Sofia",
+          "content": "",
+          "round_num": 1,
+          "is_private": false,
+          "turn_number": 2,
+          "thoughts": ""
+        },
+        {
+          "speaker": "Gloria",
+          "content": "",
+          "round_num": 1,
+          "is_private": false,
+          "turn_number": 2,
+          "thoughts": ""
+        },
+        {
+          "speaker": "Marcus",
+          "content": "",
+          "round_num": 1,
+          "is_private": false,
+          "turn_number": 2,
+          "thoughts": ""
+        },
+        {
+          "speaker": "Blake",
+          "content": "",
+          "round_num": 1,
+          "is_private": false,
+          "turn_number": 2,
+          "thoughts": ""
+        },
+        {
+          "speaker": "Priya",
+          "content": "",
+          "round_num": 1,
+          "is_private": false,
+          "turn_number": 2,
+          "thoughts": ""
+        },
+        {
+          "speaker": "Elena",
+          "content": "",
+          "round_num": 1,
+          "is_private": false,
+          "turn_number": 2,
+          "thoughts": ""
+        },
+        {
+          "speaker": "Rowan",
+          "content": "",
+          "round_num": 1,
+          "is_private": false,
+          "turn_number": 3,
+          "thoughts": ""
+        },
+        {
+          "speaker": "Sage",
+          "content": "",
+          "round_num": 1,
+          "is_private": false,
+          "turn_number": 3,
+          "thoughts": ""
+        },
+        {
+          "speaker": "Marcus",
+          "content": "",
+          "round_num": 1,
+          "is_private": false,
+          "turn_number": 3,
+          "thoughts": ""
+        },
+        {
+          "speaker": "Elena",
+          "content": "",
+          "round_num": 1,
+          "is_private": false,
+          "turn_number": 3,
+          "thoughts": ""
+        },
+        {
+          "speaker": "Blake",
+          "content": "",
+          "round_num": 1,
+          "is_private": false,
+          "turn_number": 3,
+          "thoughts": ""
+        },
+        {
+          "speaker": "Gloria",
+          "content": "",
+          "round_num": 1,
+          "is_private": false,
+          "turn_number": 3,
+          "thoughts": ""
+        },
+        {
+          "speaker": "Sofia",
+          "content": "",
+          "round_num": 1,
+          "is_private": false,
+          "turn_number": 3,
+          "thoughts": ""
+        },
+        {
+          "speaker": "Priya",
+          "content": "",
+          "round_num": 1,
+          "is_private": false,
+          "turn_number": 3,
+          "thoughts": ""
+        },
+        {
+          "speaker": "Marcus",
+          "content": "",
+          "round_num": 1,
+          "is_private": true,
+          "turn_number": 1,
+          "thoughts": ""
+        },
+        {
+          "speaker": "Gloria",
+          "content": "",
+          "round_num": 1,
+          "is_private": true,
+          "turn_number": 1,
+          "thoughts": ""
+        },
+        {
+          "speaker": "Blake",
+          "content": "",
+          "round_num": 1,
+          "is_private": true,
+          "turn_number": 1,
+          "thoughts": ""
+        }
+      ],
+      "votes": [
+        {
+          "voter": "Marcus",
+          "target": "Finley",
+          "round_num": 1
+        },
+        {
+          "voter": "Sofia",
+          "target": "Blake",
+          "round_num": 1
+        },
+        {
+          "voter": "Elena",
+          "target": "Blake",
+          "round_num": 1
+        },
+        {
+          "voter": "Jaylen",
+          "target": "Finley",
+          "round_num": 1
+        },
+        {
+          "voter": "Priya",
+          "target": "Finley",
+          "round_num": 1
+        },
+        {
+          "voter": "Gloria",
+          "target": "Iris",
+          "round_num": 1
+        },
+        {
+          "voter": "Iris",
+          "target": "Rowan",
+          "round_num": 1
+        },
+        {
+          "voter": "Blake",
+          "target": "Sage",
+          "round_num": 1
+        },
+        {
+          "voter": "Harper",
+          "target": "Sage",
+          "round_num": 1
+        },
+        {
+          "voter": "Rowan",
+          "target": "Iris",
+          "round_num": 1
+        },
+        {
+          "voter": "Sage",
+          "target": "Priya",
+          "round_num": 1
+        },
+        {
+          "voter": "Finley",
+          "target": "Harper",
+          "round_num": 1
+        }
+      ],
+      "pouch_votes": [],
+      "private_thoughts": [],
+      "banished": {
+        "name": "Finley",
+        "role": "faithful"
+      },
+      "murdered": {
+        "name": "Priya"
+      }
+    },
+    {
+      "round_num": 2,
+      "messages": [
+        {
+          "speaker": "Elena",
+          "content": "",
+          "round_num": 2,
+          "is_private": false,
+          "turn_number": 1,
+          "thoughts": ""
+        },
+        {
+          "speaker": "Sage",
+          "content": "",
+          "round_num": 2,
+          "is_private": false,
+          "turn_number": 1,
+          "thoughts": ""
+        },
+        {
+          "speaker": "Gloria",
+          "content": "",
+          "round_num": 2,
+          "is_private": false,
+          "turn_number": 1,
+          "thoughts": ""
+        },
+        {
+          "speaker": "Jaylen",
+          "content": "",
+          "round_num": 2,
+          "is_private": false,
+          "turn_number": 1,
+          "thoughts": ""
+        },
+        {
+          "speaker": "Harper",
+          "content": "",
+          "round_num": 2,
+          "is_private": false,
+          "turn_number": 1,
+          "thoughts": ""
+        },
+        {
+          "speaker": "Marcus",
+          "content": "",
+          "round_num": 2,
+          "is_private": false,
+          "turn_number": 1,
+          "thoughts": ""
+        },
+        {
+          "speaker": "Sofia",
+          "content": "",
+          "round_num": 2,
+          "is_private": false,
+          "turn_number": 1,
+          "thoughts": ""
+        },
+        {
+          "speaker": "Rowan",
+          "content": "",
+          "round_num": 2,
+          "is_private": false,
+          "turn_number": 1,
+          "thoughts": ""
+        },
+        {
+          "speaker": "Iris",
+          "content": "",
+          "round_num": 2,
+          "is_private": false,
+          "turn_number": 1,
+          "thoughts": ""
+        },
+        {
+          "speaker": "Blake",
+          "content": "",
+          "round_num": 2,
+          "is_private": false,
+          "turn_number": 1,
+          "thoughts": ""
+        },
+        {
+          "speaker": "Jaylen",
+          "content": "",
+          "round_num": 2,
+          "is_private": false,
+          "turn_number": 2,
+          "thoughts": ""
+        },
+        {
+          "speaker": "Rowan",
+          "content": "",
+          "round_num": 2,
+          "is_private": false,
+          "turn_number": 2,
+          "thoughts": ""
+        },
+        {
+          "speaker": "Marcus",
+          "content": "",
+          "round_num": 2,
+          "is_private": true,
+          "turn_number": 1,
+          "thoughts": ""
+        },
+        {
+          "speaker": "Gloria",
+          "content": "",
+          "round_num": 2,
+          "is_private": true,
+          "turn_number": 1,
+          "thoughts": ""
+        },
+        {
+          "speaker": "Marcus",
+          "content": "",
+          "round_num": 2,
+          "is_private": true,
+          "turn_number": 1,
+          "thoughts": ""
+        }
+      ],
+      "votes": [
+        {
+          "voter": "Marcus",
+          "target": "Harper",
+          "round_num": 2
+        },
+        {
+          "voter": "Sofia",
+          "target": "Marcus",
+          "round_num": 2
+        },
+        {
+          "voter": "Elena",
+          "target": "Rowan",
+          "round_num": 2
+        },
+        {
+          "voter": "Jaylen",
+          "target": "Blake",
+          "round_num": 2
+        },
+        {
+          "voter": "Gloria",
+          "target": "Rowan",
+          "round_num": 2
+        },
+        {
+          "voter": "Iris",
+          "target": "Blake",
+          "round_num": 2
+        },
+        {
+          "voter": "Blake",
+          "target": "Marcus",
+          "round_num": 2
+        },
+        {
+          "voter": "Harper",
+          "target": "Sage",
+          "round_num": 2
+        },
+        {
+          "voter": "Rowan",
+          "target": "Sofia",
+          "round_num": 2
+        },
+        {
+          "voter": "Sage",
+          "target": "Elena",
+          "round_num": 2
+        }
+      ],
+      "pouch_votes": [],
+      "private_thoughts": [],
+      "banished": {
+        "name": "Blake",
+        "role": "traitor"
+      },
+      "murdered": {
+        "name": "Iris"
+      }
+    },
+    {
+      "round_num": 3,
+      "messages": [
+        {
+          "speaker": "Rowan",
+          "content": "",
+          "round_num": 3,
+          "is_private": false,
+          "turn_number": 1,
+          "thoughts": ""
+        },
+        {
+          "speaker": "Sage",
+          "content": "",
+          "round_num": 3,
+          "is_private": false,
+          "turn_number": 1,
+          "thoughts": ""
+        },
+        {
+          "speaker": "Sofia",
+          "content": "",
+          "round_num": 3,
+          "is_private": false,
+          "turn_number": 1,
+          "thoughts": ""
+        },
+        {
+          "speaker": "Marcus",
+          "content": "",
+          "round_num": 3,
+          "is_private": false,
+          "turn_number": 1,
+          "thoughts": ""
+        },
+        {
+          "speaker": "Gloria",
+          "content": "",
+          "round_num": 3,
+          "is_private": false,
+          "turn_number": 1,
+          "thoughts": ""
+        },
+        {
+          "speaker": "Harper",
+          "content": "",
+          "round_num": 3,
+          "is_private": false,
+          "turn_number": 1,
+          "thoughts": ""
+        },
+        {
+          "speaker": "Elena",
+          "content": "",
+          "round_num": 3,
+          "is_private": false,
+          "turn_number": 1,
+          "thoughts": ""
+        },
+        {
+          "speaker": "Jaylen",
+          "content": "",
+          "round_num": 3,
+          "is_private": false,
+          "turn_number": 1,
+          "thoughts": ""
+        },
+        {
+          "speaker": "Rowan",
+          "content": "",
+          "round_num": 3,
+          "is_private": false,
+          "turn_number": 2,
+          "thoughts": ""
+        },
+        {
+          "speaker": "Sage",
+          "content": "",
+          "round_num": 3,
+          "is_private": false,
+          "turn_number": 2,
+          "thoughts": ""
+        },
+        {
+          "speaker": "Harper",
+          "content": "",
+          "round_num": 3,
+          "is_private": false,
+          "turn_number": 2,
+          "thoughts": ""
+        },
+        {
+          "speaker": "Sofia",
+          "content": "",
+          "round_num": 3,
+          "is_private": false,
+          "turn_number": 2,
+          "thoughts": ""
+        },
+        {
+          "speaker": "Elena",
+          "content": "",
+          "round_num": 3,
+          "is_private": false,
+          "turn_number": 2,
+          "thoughts": ""
+        },
+        {
+          "speaker": "Sage",
+          "content": "",
+          "round_num": 3,
+          "is_private": false,
+          "turn_number": 3,
+          "thoughts": ""
+        },
+        {
+          "speaker": "Marcus",
+          "content": "I choose to kill Jaylen.",
+          "round_num": 3,
+          "is_private": true,
+          "turn_number": 1,
+          "thoughts": ""
+        }
+      ],
+      "votes": [
+        {
+          "voter": "Marcus",
+          "target": "Sofia",
+          "round_num": 3
+        },
+        {
+          "voter": "Sofia",
+          "target": "Sage",
+          "round_num": 3
+        },
+        {
+          "voter": "Elena",
+          "target": "Jaylen",
+          "round_num": 3
+        },
+        {
+          "voter": "Jaylen",
+          "target": "Gloria",
+          "round_num": 3
+        },
+        {
+          "voter": "Gloria",
+          "target": "Sage",
+          "round_num": 3
+        },
+        {
+          "voter": "Harper",
+          "target": "Gloria",
+          "round_num": 3
+        },
+        {
+          "voter": "Rowan",
+          "target": "Gloria",
+          "round_num": 3
+        },
+        {
+          "voter": "Sage",
+          "target": "Jaylen",
+          "round_num": 3
+        }
+      ],
+      "pouch_votes": [],
+      "private_thoughts": [],
+      "banished": {
+        "name": "Gloria",
+        "role": "traitor"
+      },
+      "murdered": {
+        "name": "Jaylen"
+      }
+    },
+    {
+      "round_num": 4,
+      "messages": [
+        {
+          "speaker": "Rowan",
+          "content": "",
+          "round_num": 4,
+          "is_private": false,
+          "turn_number": 1,
+          "thoughts": ""
+        },
+        {
+          "speaker": "Elena",
+          "content": "",
+          "round_num": 4,
+          "is_private": false,
+          "turn_number": 1,
+          "thoughts": ""
+        },
+        {
+          "speaker": "Sofia",
+          "content": "",
+          "round_num": 4,
+          "is_private": false,
+          "turn_number": 1,
+          "thoughts": ""
+        },
+        {
+          "speaker": "Marcus",
+          "content": "",
+          "round_num": 4,
+          "is_private": false,
+          "turn_number": 1,
+          "thoughts": ""
+        },
+        {
+          "speaker": "Sage",
+          "content": "",
+          "round_num": 4,
+          "is_private": false,
+          "turn_number": 1,
+          "thoughts": ""
+        },
+        {
+          "speaker": "Harper",
+          "content": "",
+          "round_num": 4,
+          "is_private": false,
+          "turn_number": 1,
+          "thoughts": ""
+        },
+        {
+          "speaker": "Marcus",
+          "content": "",
+          "round_num": 4,
+          "is_private": false,
+          "turn_number": 2,
+          "thoughts": ""
+        },
+        {
+          "speaker": "Rowan",
+          "content": "",
+          "round_num": 4,
+          "is_private": false,
+          "turn_number": 2,
+          "thoughts": ""
+        },
+        {
+          "speaker": "Sage",
+          "content": "",
+          "round_num": 4,
+          "is_private": false,
+          "turn_number": 2,
+          "thoughts": ""
+        },
+        {
+          "speaker": "Harper",
+          "content": "",
+          "round_num": 4,
+          "is_private": false,
+          "turn_number": 2,
+          "thoughts": ""
+        },
+        {
+          "speaker": "Sage",
+          "content": "",
+          "round_num": 4,
+          "is_private": false,
+          "turn_number": 3,
+          "thoughts": ""
+        },
+        {
+          "speaker": "Marcus",
+          "content": "I choose to kill Rowan.",
+          "round_num": 4,
+          "is_private": true,
+          "turn_number": 1,
+          "thoughts": ""
+        }
+      ],
+      "votes": [
+        {
+          "voter": "Marcus",
+          "target": "Elena",
+          "round_num": 4
+        },
+        {
+          "voter": "Sofia",
+          "target": "Elena",
+          "round_num": 4
+        },
+        {
+          "voter": "Elena",
+          "target": "Sofia",
+          "round_num": 4
+        },
+        {
+          "voter": "Harper",
+          "target": "Sage",
+          "round_num": 4
+        },
+        {
+          "voter": "Rowan",
+          "target": "Sage",
+          "round_num": 4
+        },
+        {
+          "voter": "Sage",
+          "target": "Sofia",
+          "round_num": 4
+        }
+      ],
+      "pouch_votes": [],
+      "private_thoughts": [],
+      "banished": {
+        "name": "Elena",
+        "role": "faithful"
+      },
+      "murdered": {
+        "name": "Rowan"
+      }
+    },
+    {
+      "round_num": 5,
+      "messages": [
+        {
+          "speaker": "Marcus",
+          "content": "",
+          "round_num": 5,
+          "is_private": false,
+          "turn_number": 1,
+          "thoughts": ""
+        },
+        {
+          "speaker": "Harper",
+          "content": "",
+          "round_num": 5,
+          "is_private": false,
+          "turn_number": 1,
+          "thoughts": ""
+        },
+        {
+          "speaker": "Sofia",
+          "content": "",
+          "round_num": 5,
+          "is_private": false,
+          "turn_number": 1,
+          "thoughts": ""
+        },
+        {
+          "speaker": "Sage",
+          "content": "",
+          "round_num": 5,
+          "is_private": false,
+          "turn_number": 1,
+          "thoughts": ""
+        },
+        {
+          "speaker": "Sage",
+          "content": "",
+          "round_num": 5,
+          "is_private": false,
+          "turn_number": 2,
+          "thoughts": ""
+        },
+        {
+          "speaker": "Sage",
+          "content": "",
+          "round_num": 5,
+          "is_private": false,
+          "turn_number": 3,
+          "thoughts": ""
+        }
+      ],
+      "votes": [
+        {
+          "voter": "Marcus",
+          "target": "Harper",
+          "round_num": 5
+        },
+        {
+          "voter": "Sofia",
+          "target": "Marcus",
+          "round_num": 5
+        },
+        {
+          "voter": "Harper",
+          "target": "Sofia",
+          "round_num": 5
+        },
+        {
+          "voter": "Sage",
+          "target": "Marcus",
+          "round_num": 5
+        }
+      ],
+      "pouch_votes": [],
+      "private_thoughts": [],
+      "banished": {
+        "name": "Marcus",
+        "role": "traitor"
+      },
+      "murdered": null
+    }
+  ],
+  "game_log": [
+    "\n============================================================",
+    "THE TRAITORS - GAME SIMULATION",
+    "============================================================",
+    "Players: Marcus, Sofia, Elena, Jaylen, Priya, Gloria, Iris, Blake, Harper, Rowan, Sage, Finley",
+    "Finale begins after round 8",
+    "\n============================================================",
+    "ROLE ASSIGNMENT (Secret - players don't know each other's roles)",
+    "============================================================",
+    "  Marcus: TRAITOR",
+    "  Sofia: FAITHFUL",
+    "  Elena: FAITHFUL",
+    "  Jaylen: FAITHFUL",
+    "  Priya: FAITHFUL",
+    "  Gloria: TRAITOR",
+    "  Iris: FAITHFUL",
+    "  Blake: TRAITOR",
+    "  Harper: FAITHFUL",
+    "  Rowan: FAITHFUL",
+    "  Sage: FAITHFUL",
+    "  Finley: FAITHFUL",
+    "\n############################################################",
+    "ROUND 1",
+    "############################################################",
+    "Alive: Marcus, Sofia, Elena, Jaylen, Priya, Gloria, Iris, Blake, Harper, Rowan, Sage, Finley",
+    "\n----------------------------------------",
+    "ROUND 1 - DISCUSSION PHASE",
+    "----------------------------------------",
+    "\n--- Turn 1 of 3 ---",
+    "\nSofia: ",
+    "\nMarcus: ",
+    "\nSage: ",
+    "\nJaylen: ",
+    "\nElena: ",
+    "\nBlake: ",
+    "\nGloria: ",
+    "\nHarper: ",
+    "\nFinley: ",
+    "\nIris: ",
+    "\nRowan: ",
+    "\nPriya: ",
+    "\n--- Turn 2 of 3 ---",
+    "\nRowan: ",
+    "\nSage: ",
+    "\nHarper: ",
+    "\nSofia: ",
+    "\nIris: [PASS]",
+    "\nGloria: ",
+    "\nMarcus: ",
+    "\nBlake: ",
+    "\nPriya: ",
+    "\nFinley: [PASS]",
+    "\nJaylen: [PASS]",
+    "\nElena: ",
+    "\n--- Turn 3 of 3 ---",
+    "\nRowan: ",
+    "\nSage: ",
+    "\nMarcus: ",
+    "\nElena: ",
+    "\nBlake: ",
+    "\nGloria: ",
+    "\nHarper: [PASS]",
+    "\nSofia: ",
+    "\nPriya: ",
+    "\n----------------------------------------",
+    "VOTING PHASE - Who will be banished?",
+    "----------------------------------------",
+    "  Marcus votes for: Finley",
+    "  Sofia votes for: Blake",
+    "  Elena votes for: Blake",
+    "  Jaylen votes for: Finley",
+    "  Priya votes for: Finley",
+    "  Gloria votes for: Iris",
+    "  Iris votes for: Rowan",
+    "  Blake votes for: Sage",
+    "  Harper votes for: Sage",
+    "  Rowan votes for: Iris",
+    "  Sage votes for: Priya",
+    "  Finley votes for: Harper",
+    "\n========================================",
+    "BANISHED: Finley",
+    "They were a: FAITHFUL",
+    "========================================",
+    "\n----------------------------------------",
+    "NIGHT PHASE - Traitors meet in secret...",
+    "----------------------------------------",
+    "\n[Traitors discuss strategy...]",
+    "\n[TRAITOR] Marcus: ",
+    "\n[TRAITOR] Gloria: ",
+    "\n[TRAITOR] Blake: ",
+    "\n[Traitors vote on target...]",
+    "[MURDER VOTE] Marcus votes: Rowan",
+    "[MURDER VOTE] Gloria votes: Sofia",
+    "[MURDER VOTE] Blake votes: Priya",
+    "\n========================================",
+    "MURDERED: Priya",
+    "The faithful mourn their loss...",
+    "========================================",
+    "\n############################################################",
+    "ROUND 2",
+    "############################################################",
+    "Alive: Marcus, Sofia, Elena, Jaylen, Gloria, Iris, Blake, Harper, Rowan, Sage",
+    "\n----------------------------------------",
+    "ROUND 2 - DISCUSSION PHASE",
+    "----------------------------------------",
+    "\n--- Turn 1 of 3 ---",
+    "\nElena: ",
+    "\nSage: ",
+    "\nGloria: ",
+    "\nJaylen: ",
+    "\nHarper: ",
+    "\nMarcus: ",
+    "\nSofia: ",
+    "\nRowan: ",
+    "\nIris: ",
+    "\nBlake: ",
+    "\n--- Turn 2 of 3 ---",
+    "\nSage: [PASS]",
+    "\nBlake: [PASS]",
+    "\nGloria: [PASS]",
+    "\nElena: [PASS]",
+    "\nIris: [PASS]",
+    "\nJaylen: ",
+    "\nHarper: [PASS]",
+    "\nMarcus: [PASS]",
+    "\nSofia: [PASS]",
+    "\nRowan: ",
+    "\n--- Turn 3 of 3 ---",
+    "\nJaylen: [PASS]",
+    "\nRowan: [PASS]",
+    "\n----------------------------------------",
+    "VOTING PHASE - Who will be banished?",
+    "----------------------------------------",
+    "  Marcus votes for: Harper",
+    "  Sofia votes for: Marcus",
+    "  Elena votes for: Rowan",
+    "  Jaylen votes for: Blake",
+    "  Gloria votes for: Rowan",
+    "  Iris votes for: Blake",
+    "  Blake votes for: Marcus",
+    "  Harper votes for: Sage",
+    "  Rowan votes for: Sofia",
+    "  Sage votes for: Elena",
+    "\nTIE! Random selection from: Marcus, Rowan, Blake",
+    "\n========================================",
+    "BANISHED: Blake",
+    "They were a: TRAITOR",
+    "========================================",
+    "\n----------------------------------------",
+    "NIGHT PHASE - Traitors meet in secret...",
+    "----------------------------------------",
+    "\n[Traitors discuss strategy...]",
+    "\n[TRAITOR] Marcus: ",
+    "\n[TRAITOR] Gloria: ",
+    "\n[TRAITOR] Marcus: ",
+    "\n[Traitors vote on target...]",
+    "[MURDER VOTE] Marcus votes: Rowan",
+    "[MURDER VOTE] Gloria votes: Iris",
+    "\n========================================",
+    "MURDERED: Iris",
+    "The faithful mourn their loss...",
+    "========================================",
+    "\n############################################################",
+    "ROUND 3",
+    "############################################################",
+    "Alive: Marcus, Sofia, Elena, Jaylen, Gloria, Harper, Rowan, Sage",
+    "\n----------------------------------------",
+    "ROUND 3 - DISCUSSION PHASE",
+    "----------------------------------------",
+    "\n--- Turn 1 of 3 ---",
+    "\nRowan: ",
+    "\nSage: ",
+    "\nSofia: ",
+    "\nMarcus: ",
+    "\nGloria: ",
+    "\nHarper: ",
+    "\nElena: ",
+    "\nJaylen: ",
+    "\n--- Turn 2 of 3 ---",
+    "\nJaylen: [PASS]",
+    "\nRowan: ",
+    "\nMarcus: [PASS]",
+    "\nSage: ",
+    "\nGloria: [PASS]",
+    "\nHarper: ",
+    "\nSofia: ",
+    "\nElena: ",
+    "\n--- Turn 3 of 3 ---",
+    "\nSofia: [PASS]",
+    "\nSage: ",
+    "\nElena: [PASS]",
+    "\nHarper: [PASS]",
+    "\nRowan: [PASS]",
+    "\n----------------------------------------",
+    "VOTING PHASE - Who will be banished?",
+    "----------------------------------------",
+    "  Marcus votes for: Sofia",
+    "  Sofia votes for: Sage",
+    "  Elena votes for: Jaylen",
+    "  Jaylen votes for: Gloria",
+    "  Gloria votes for: Sage",
+    "  Harper votes for: Gloria",
+    "  Rowan votes for: Gloria",
+    "  Sage votes for: Jaylen",
+    "\n========================================",
+    "BANISHED: Gloria",
+    "They were a: TRAITOR",
+    "========================================",
+    "\n----------------------------------------",
+    "NIGHT PHASE - Traitors meet in secret...",
+    "----------------------------------------",
+    "\n[TRAITOR] Marcus (alone): I choose to kill Jaylen.",
+    "\n========================================",
+    "MURDERED: Jaylen",
+    "The faithful mourn their loss...",
+    "========================================",
+    "\n############################################################",
+    "ROUND 4",
+    "############################################################",
+    "Alive: Marcus, Sofia, Elena, Harper, Rowan, Sage",
+    "\n----------------------------------------",
+    "ROUND 4 - DISCUSSION PHASE",
+    "----------------------------------------",
+    "\n--- Turn 1 of 3 ---",
+    "\nRowan: ",
+    "\nElena: ",
+    "\nSofia: ",
+    "\nMarcus: ",
+    "\nSage: ",
+    "\nHarper: ",
+    "\n--- Turn 2 of 3 ---",
+    "\nMarcus: ",
+    "\nRowan: ",
+    "\nSofia: [PASS]",
+    "\nSage: ",
+    "\nHarper: ",
+    "\nElena: [PASS]",
+    "\n--- Turn 3 of 3 ---",
+    "\nHarper: [PASS]",
+    "\nRowan: [PASS]",
+    "\nSage: ",
+    "\nMarcus: [PASS]",
+    "\n----------------------------------------",
+    "VOTING PHASE - Who will be banished?",
+    "----------------------------------------",
+    "  Marcus votes for: Elena",
+    "  Sofia votes for: Elena",
+    "  Elena votes for: Sofia",
+    "  Harper votes for: Sage",
+    "  Rowan votes for: Sage",
+    "  Sage votes for: Sofia",
+    "\nTIE! Random selection from: Elena, Sofia, Sage",
+    "\n========================================",
+    "BANISHED: Elena",
+    "They were a: FAITHFUL",
+    "========================================",
+    "\n----------------------------------------",
+    "NIGHT PHASE - Traitors meet in secret...",
+    "----------------------------------------",
+    "\n[TRAITOR] Marcus (alone): I choose to kill Rowan.",
+    "\n========================================",
+    "MURDERED: Rowan",
+    "The faithful mourn their loss...",
+    "========================================",
+    "\n############################################################",
+    "ROUND 5",
+    "############################################################",
+    "Alive: Marcus, Sofia, Harper, Sage",
+    "\n----------------------------------------",
+    "ROUND 5 - DISCUSSION PHASE",
+    "----------------------------------------",
+    "\n--- Turn 1 of 3 ---",
+    "\nMarcus: ",
+    "\nHarper: ",
+    "\nSofia: ",
+    "\nSage: ",
+    "\n--- Turn 2 of 3 ---",
+    "\nMarcus: [PASS]",
+    "\nHarper: [PASS]",
+    "\nSage: ",
+    "\nSofia: [PASS]",
+    "\n--- Turn 3 of 3 ---",
+    "\nSage: ",
+    "\n----------------------------------------",
+    "VOTING PHASE - Who will be banished?",
+    "----------------------------------------",
+    "  Marcus votes for: Harper",
+    "  Sofia votes for: Marcus",
+    "  Harper votes for: Sofia",
+    "  Sage votes for: Marcus",
+    "\n========================================",
+    "BANISHED: Marcus",
+    "They were a: TRAITOR",
+    "========================================",
+    "\n============================================================",
+    "GAME OVER",
+    "============================================================",
+    "\nWINNER: THE FAITHFUL!",
+    "\nPRIZE POOL: $100,000",
+    "\nFinal Player Status:",
+    "  Marcus: TRAITOR - BANISHED - $0",
+    "  Sofia: FAITHFUL - SURVIVED - $33,333",
+    "  Elena: FAITHFUL - BANISHED - $0",
+    "  Jaylen: FAITHFUL - MURDERED - $0",
+    "  Priya: FAITHFUL - MURDERED - $0",
+    "  Gloria: TRAITOR - BANISHED - $0",
+    "  Iris: FAITHFUL - MURDERED - $0",
+    "  Blake: TRAITOR - BANISHED - $0",
+    "  Harper: FAITHFUL - SURVIVED - $33,333",
+    "  Rowan: FAITHFUL - MURDERED - $0",
+    "  Sage: FAITHFUL - SURVIVED - $33,333",
+    "  Finley: FAITHFUL - BANISHED - $0",
+    "\n============================================================"
+  ],
+  "llm_interactions": []
+}

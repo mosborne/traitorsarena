@@ -1,0 +1,44 @@
+{
+  "name": "experimental_v2",
+  "description": "Testing 6 faithful-optimized strategies: Iris (social), Blake (vote tracker), Harper (devil's advocate), Rowan (murder analyst), Sage (vote coordinator), Finley (quiet observer)",
+  "num_games": 10,
+  "num_traitors": 3,
+  "contestants": [
+    {
+      "file": "marcus.json"
+    },
+    {
+      "file": "sofia.json"
+    },
+    {
+      "file": "elena.json"
+    },
+    {
+      "file": "jaylen.json"
+    },
+    {
+      "file": "priya.json"
+    },
+    {
+      "file": "gloria.json"
+    },
+    {
+      "file": "iris.json"
+    },
+    {
+      "file": "blake.json"
+    },
+    {
+      "file": "harper.json"
+    },
+    {
+      "file": "rowan.json"
+    },
+    {
+      "file": "sage.json"
+    },
+    {
+      "file": "finley.json"
+    }
+  ]
+}
