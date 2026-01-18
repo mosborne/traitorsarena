@@ -11,6 +11,7 @@ Usage:
 """
 
 import argparse
+from datetime import datetime
 from dotenv import load_dotenv
 
 # Load .env file from project directory
@@ -19,6 +20,8 @@ import json
 import random
 import sys
 from pathlib import Path
+
+from data_store import save_game_json, save_run_json, update_runs_index
 from typing import Optional
 
 from rich.console import Console
@@ -110,6 +113,7 @@ class RichGameDisplay:
     def __init__(
         self,
         num_players: int,
+        contestant_names: list[str],
         starting_balance: Optional[float] = None,
         model: str = "claude-3-5-haiku-20241022",
         admin_spending: Optional[dict] = None,
@@ -130,6 +134,10 @@ class RichGameDisplay:
         self.winner = None
         self.traitor_names: list[str] = []
 
+        # Player tracking
+        self.all_players: list[str] = contestant_names.copy()
+        self.eliminated: dict[str, dict] = {}  # {name: {"type": str, "role": str, "round": int}}
+
         # Live progress tracking
         self.current_player = ""
         self.current_action = ""
@@ -149,6 +157,50 @@ class RichGameDisplay:
         # This is a rough estimate
         calls_per_round = 4 * num_players + 6
         return calls_per_round * num_rounds
+
+    def _render_players_table(self) -> Table:
+        """Render players in a compact 2-column grid."""
+        table = Table(show_header=False, box=None, padding=(0, 1))
+        table.add_column("Col1", width=22)
+        table.add_column("Col2", width=22)
+
+        # Build player entries: alive first (traitors, then faithful), then eliminated
+        alive_entries = []
+        eliminated_entries = []
+
+        for name in self.all_players:
+            is_traitor = name in self.traitor_names
+            is_current = name == self.current_player
+
+            if name in self.eliminated:
+                # Eliminated player
+                info = self.eliminated[name]
+                icon = "💀" if info["type"] == "murdered" else "⛔"
+                role = "T" if info["role"] == "traitor" else "F"
+                text = f"[dim]{icon} {name} ({role}) R{info['round']}[/]"
+                eliminated_entries.append((text, is_traitor))
+            else:
+                # Alive player
+                icon = "🔴" if is_traitor else "🟢"
+                marker = " ←" if is_current else ""
+                style = "red" if is_traitor else "green"
+                text = f"[{style}]{icon} {name}{marker}[/]"
+                alive_entries.append((text, is_traitor))
+
+        # Sort: traitors first, then faithful
+        alive_entries.sort(key=lambda x: (not x[1], x[0]))
+        eliminated_entries.sort(key=lambda x: (not x[1], x[0]))
+
+        # Combine entries
+        entries = [e[0] for e in alive_entries] + [e[0] for e in eliminated_entries]
+
+        # Add rows (2 per row)
+        for i in range(0, len(entries), 2):
+            col1 = entries[i]
+            col2 = entries[i + 1] if i + 1 < len(entries) else ""
+            table.add_row(col1, col2)
+
+        return table
 
     def handle_event(self, event: GameEvent) -> None:
         """Handle game events and update display state."""
@@ -201,6 +253,14 @@ class RichGameDisplay:
             self.alive_count = max(0, self.alive_count - 1)
             if event.data.get("role") == "traitor" and event.data.get("role_revealed", False):
                 self.alive_traitors = max(0, self.alive_traitors - 1)
+            # Track elimination details for player display
+            player_name = event.data.get("player", "")
+            if player_name:
+                self.eliminated[player_name] = {
+                    "type": event.data.get("type", "banished"),
+                    "role": event.data.get("role", "faithful"),
+                    "round": event.round_num,
+                }
 
         elif event.event_type == EventType.GAME_END:
             self.game_ended = True
@@ -228,9 +288,10 @@ class RichGameDisplay:
 
         layout["header"].update(Panel(header_text, title="The Traitors"))
 
-        # Main area: Split into game info and cost panels
+        # Main area: Split into game info, players, and cost panels
         layout["main"].split_row(
             Layout(name="game_info", ratio=1),
+            Layout(name="players", ratio=2),
             Layout(name="cost_info", ratio=1),
         )
 
@@ -239,30 +300,24 @@ class RichGameDisplay:
         game_table.add_column("Label", style="dim")
         game_table.add_column("Value")
 
-        game_table.add_row("Players", f"{self.alive_count}/{self.num_players} alive")
-        game_table.add_row("Traitors", f"{self.alive_traitors} remaining" if self.alive_traitors > 0 else "All eliminated")
+        game_table.add_row("Players", f"{self.alive_count}/{self.num_players}")
+        game_table.add_row("Traitors", f"{self.alive_traitors}" if self.alive_traitors > 0 else "0")
         game_table.add_row("Phase", self.current_phase.title())
         game_table.add_row("Round", str(self.current_round))
-
-        # Live progress: current player and action
-        if self.current_player:
-            action_text = {
-                "discussion": "speaking",
-                "vote": "voting",
-                "murder_vote": "choosing target",
-                "pouch_vote": "voting",
-            }.get(self.current_action, "thinking")
-            game_table.add_row("", "")  # spacer
-            game_table.add_row("[bold cyan]▶[/]", f"[cyan]{self.current_player} {action_text}...[/]")
 
         # Progress bar
         if self.phase_progress_total > 0:
             progress = min(1.0, self.phase_progress_current / self.phase_progress_total)
             filled = int(progress * 10)
             bar = "█" * filled + "░" * (10 - filled)
-            game_table.add_row("", f"[dim][{bar}] {self.phase_progress_current}/{self.phase_progress_total}[/]")
+            game_table.add_row("", "")  # spacer
+            game_table.add_row("", f"[dim][{bar}][/]")
 
         layout["game_info"].update(Panel(game_table, title="Game State"))
+
+        # Players panel
+        players_table = self._render_players_table()
+        layout["players"].update(Panel(players_table, title="Players"))
 
         # Cost info panel
         cost_table = Table(show_header=False, box=None, padding=(0, 1))
@@ -273,25 +328,25 @@ class RichGameDisplay:
 
         # Show admin spending if available
         if self.admin_spending and not self.admin_spending.get("error"):
-            cost_table.add_row("Last 7 days", f"${self.admin_spending['total_cost_usd']:.2f}")
+            cost_table.add_row("7 days", f"${self.admin_spending['total_cost_usd']:.2f}")
             cost_table.add_row("Today", f"${self.admin_spending['today_cost_usd']:.2f}")
-            cost_table.add_row("This game", f"${game_cost:.4f}")
+            cost_table.add_row("Game", f"${game_cost:.4f}")
         else:
-            cost_table.add_row("This game", f"${game_cost:.4f}")
-            cost_table.add_row("API Calls", str(self.cost_tracker.api_calls))
-            cost_table.add_row("Input Tokens", f"{self.cost_tracker.total_usage.input_tokens:,}")
-            cost_table.add_row("Output Tokens", f"{self.cost_tracker.total_usage.output_tokens:,}")
+            cost_table.add_row("Game", f"${game_cost:.4f}")
+            cost_table.add_row("Calls", str(self.cost_tracker.api_calls))
+            cost_table.add_row("In", f"{self.cost_tracker.total_usage.input_tokens:,}")
+            cost_table.add_row("Out", f"{self.cost_tracker.total_usage.output_tokens:,}")
 
             if self.cost_tracker.total_usage.cache_read_tokens > 0:
-                cost_table.add_row("Cache Hits", f"{self.cost_tracker.total_usage.cache_read_tokens:,} tokens")
+                cost_table.add_row("Cache", f"{self.cost_tracker.total_usage.cache_read_tokens:,}")
 
         # Show remaining balance if provided
         if self.starting_balance is not None:
             remaining = self.starting_balance - game_cost
             cost_table.add_row("", "")  # Spacer
-            cost_table.add_row("Remaining", f"${remaining:.2f}")
+            cost_table.add_row("Bal", f"${remaining:.2f}")
 
-        layout["cost_info"].update(Panel(cost_table, title="Cost Tracking"))
+        layout["cost_info"].update(Panel(cost_table, title="Cost"))
 
         # Footer: Balance and ETA info
         footer_parts = []
@@ -337,12 +392,13 @@ def run_game_with_display(
     test_mode: bool = False,
     verbose: bool = False,
     admin_spending: Optional[dict] = None,
-) -> tuple[dict, float]:
-    """Run a single game with Rich live display. Returns (results, game_cost)."""
+) -> tuple[dict, float, list[str]]:
+    """Run a single game with Rich live display. Returns (results, game_cost, game_log)."""
 
     # Create display
     display = RichGameDisplay(
         num_players=len(contestants),
+        contestant_names=[c["name"] for c in contestants],
         starting_balance=starting_balance,
         admin_spending=admin_spending,
     )
@@ -392,7 +448,7 @@ def run_game_with_display(
         border_style="green" if results['winner'] == 'faithful' else "red",
     ))
 
-    return results, game_cost
+    return results, game_cost, game_log
 
 
 def main():
@@ -424,6 +480,11 @@ def main():
         "--verbose", "-v",
         action="store_true",
         help="Show full game log output"
+    )
+    parser.add_argument(
+        "--save", "-s",
+        action="store_true",
+        help="Save game results to runs/ directory"
     )
 
     args = parser.parse_args()
@@ -476,6 +537,17 @@ def main():
     # Track cumulative balance across games
     current_balance = args.balance
 
+    # Set up save directory if saving
+    run_id = None
+    run_dir = None
+    games_data = []
+    if args.save:
+        run_id = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+        run_dir = Path("runs") / run_id
+        run_dir.mkdir(parents=True, exist_ok=True)
+        console.print(f"[dim]Saving to {run_dir}/[/]")
+        console.print()
+
     for game_num in range(1, args.num_games + 1):
         if args.num_games > 1:
             console.print(f"\n[bold cyan]Game {game_num}/{args.num_games}[/]")
@@ -487,7 +559,7 @@ def main():
             contestants = contestant_pool.copy()
 
         # Run game
-        results, game_cost = run_game_with_display(
+        results, game_cost, game_log = run_game_with_display(
             contestants=contestants,
             num_traitors=num_traitors,
             finale_round=finale_round,
@@ -501,7 +573,20 @@ def main():
         if current_balance is not None:
             current_balance -= game_cost
 
+        # Save game data if requested
+        if args.save:
+            games_data.append(results)
+            save_game_json(str(run_dir), game_num, results, game_log)
+            pool_size = len(contestant_pool) if len(contestant_pool) > PLAYERS_PER_GAME else None
+            save_run_json(str(run_dir), run_id, config, games_data, contestant_pool, pool_size)
+            update_runs_index("runs", "data")
+            console.print(f"[dim]Saved game {game_num} to {run_dir}/[/]")
+
         console.print()
+
+    # Print final URL if saved
+    if args.save:
+        console.print(f"[bold]View results:[/] run.html?run={run_id}")
 
 
 if __name__ == "__main__":

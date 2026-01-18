@@ -1,0 +1,17 @@
+{
+  "name": "quick",
+  "description": "Quick test game - 8 players, 2 traitors, early finale",
+  "num_games": 1,
+  "num_traitors": 2,
+  "finale_round": 3,
+  "contestants": [
+    {"source": "original", "name": "Marcus"},
+    {"source": "original", "name": "Sofia"},
+    {"source": "original", "name": "Derek"},
+    {"source": "original", "name": "Elena"},
+    {"source": "original", "name": "Victor"},
+    {"source": "original", "name": "Priya"},
+    {"source": "original", "name": "Rashid"},
+    {"source": "original", "name": "Gloria"}
+  ]
+}

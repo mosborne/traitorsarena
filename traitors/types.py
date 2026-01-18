@@ -53,6 +53,8 @@ class Message:
     content: str
     round_num: int
     is_private: bool = False  # True for traitor-only messages
+    turn_number: int = 1  # Speaking turn within the round (1-3 for extended discussion)
+    thoughts: str = ""  # Private thoughts/reasoning (only shown in logs/viewer)
 
 
 @dataclass
@@ -90,6 +92,11 @@ class LLMInteraction:
     response: str
     model: str = "claude-3-5-haiku-20241022"
     timestamp: str = ""  # ISO format timestamp
+    # Token tracking for cost calculation
+    input_tokens: int = 0
+    output_tokens: int = 0
+    cache_creation_tokens: int = 0
+    cache_read_tokens: int = 0
 
 
 @dataclass

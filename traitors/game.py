@@ -8,6 +8,8 @@ import anthropic
 
 from .types import Player, GameState, GamePhase, Role, PlayerStatus, Message, Vote, PouchVote, PrivateThought
 from .agent import Agent, TestAgent, OllamaAgent
+from .cost import TokenUsage
+from . import events as ev
 
 
 class TraitorsGame:
@@ -35,6 +37,7 @@ class TraitorsGame:
         test_mode: bool = False,
         agent_class: Optional[Type[Agent]] = None,
         model: Optional[str] = None,
+        event_callback: Optional[Callable[[ev.GameEvent], None]] = None,
     ):
         """
         Initialize a new game.
@@ -48,11 +51,13 @@ class TraitorsGame:
             test_mode: If True, use TestAgent (random decisions, no LLM calls) for fast testing
             agent_class: Optional agent class to use (e.g., OllamaAgent). Overrides test_mode.
             model: Optional model name for OllamaAgent (e.g., "llama3.2")
+            event_callback: Optional callback for game events (for CLI display)
         """
         self.test_mode = test_mode
         self.log = log_callback or print
         self.num_traitors = num_traitors
         self.model = model
+        self.event_callback = event_callback
 
         # Determine which agent class to use
         if agent_class is not None:
@@ -82,6 +87,19 @@ class TraitorsGame:
             )
             self.state.players[player.name] = player
 
+        # Create API callback to emit events
+        def api_callback(player: str, action_type: str, usage: TokenUsage, duration_ms: float, model: str):
+            if self.event_callback:
+                event = ev.api_call_event(
+                    round_num=self.state.current_round,
+                    player=player,
+                    action_type=action_type,
+                    model=model,
+                    usage=usage,
+                    duration_ms=duration_ms,
+                )
+                self.event_callback(event)
+
         # Create agents based on the selected class
         self.agents: dict[str, Agent] = {}
         for player in self.state.players.values():
@@ -92,7 +110,12 @@ class TraitorsGame:
                 self.agents[player.name] = AgentClass(player)
             else:
                 # Standard Agent with Anthropic client and per-player model
-                self.agents[player.name] = AgentClass(player, self.client, model=player.model)
+                self.agents[player.name] = AgentClass(player, self.client, model=player.model, api_callback=api_callback)
+
+    def _emit_event(self, event: ev.GameEvent) -> None:
+        """Emit an event to the callback if set."""
+        if self.event_callback:
+            self.event_callback(event)
 
     def _assign_roles(self) -> None:
         """Randomly assign traitor roles."""
@@ -107,6 +130,14 @@ class TraitorsGame:
         self.log("=" * 60)
         for player in self.state.players.values():
             self.log(f"  {player.name}: {player.role.value.upper()}")
+
+        # Emit game start event
+        self._emit_event(ev.game_start_event(
+            num_players=len(self.state.players),
+            num_traitors=self.num_traitors,
+            finale_round=self.state.finale_round,
+            traitor_names=traitor_names,
+        ))
 
     def _build_cached_public_history(self) -> str:
         """Build conversation history for caching (public messages only).
@@ -124,6 +155,24 @@ class TraitorsGame:
         This is built once and passed to all traitor agents for prompt caching efficiency.
         """
         messages = self.state.get_traitor_messages()
+        return self._format_history_with_events(messages)
+
+    def _build_cached_previous_rounds_history(self, is_traitor: bool) -> str:
+        """Build cacheable history for rounds 1 to (current_round - 1).
+
+        Used during discussion phases where the previous rounds' history is
+        identical for all players of the same role (faithful vs traitor).
+        This enables caching of the majority of conversation history while
+        the current round's messages remain dynamic.
+        """
+        if self.state.current_round <= 1:
+            return ""
+
+        if is_traitor:
+            messages = self.state.get_traitor_messages(up_to_round=self.state.current_round - 1)
+        else:
+            messages = self.state.get_public_messages(up_to_round=self.state.current_round - 1)
+
         return self._format_history_with_events(messages)
 
     def _format_history_with_events(self, messages: list) -> str:
@@ -339,6 +388,15 @@ class TraitorsGame:
             self.log("(Role not revealed - this is the finale)")
             self.log(f"{'=' * 40}")
 
+            # Emit player eliminated event (role not revealed in finale)
+            self._emit_event(ev.player_eliminated_event(
+                round_num=self.state.current_round,
+                player_name=banished_name,
+                elimination_type="banished",
+                role=banished.role.value,
+                role_revealed=False,
+            ))
+
             return banished_name
 
         return None
@@ -355,7 +413,17 @@ class TraitorsGame:
             self.log(f"  {player.name}: {role} ({status})")
 
     def _run_discussion_phase(self) -> None:
-        """Run the discussion phase where players talk."""
+        """Run the extended discussion phase where players have multiple speaking opportunities.
+
+        Each player gets up to MAX_SPEAKING_TURNS turns to speak. Players can PASS
+        to indicate they have nothing to add. Each statement is accompanied by
+        private thoughts (only visible in logs/viewer).
+
+        Uses split history caching: previous rounds are cached (identical for all
+        speakers of the same role), while current round history is dynamic.
+        """
+        MAX_SPEAKING_TURNS = 3
+
         self.state.current_phase = GamePhase.DISCUSSION
 
         self.log("\n" + "-" * 40)
@@ -363,27 +431,68 @@ class TraitorsGame:
         self.log("-" * 40)
 
         alive_players = self.state.alive_players
-        random.shuffle(alive_players)  # Randomize speaking order
+        passed_players: set[str] = set()
 
-        # Each player speaks once
-        for i, player in enumerate(alive_players):
-            agent = self.agents[player.name]
+        # Pre-build cacheable history for previous rounds (rounds 1 to N-1)
+        # This is identical for all speakers of the same role within this discussion phase
+        cached_previous_public = self._build_cached_previous_rounds_history(is_traitor=False)
+        cached_previous_traitor = self._build_cached_previous_rounds_history(is_traitor=True)
 
-            if i == 0:
-                prompt = "You're speaking first. Share your initial thoughts or suspicions."
-            else:
-                prompt = "Respond to what others have said or share your own observations."
+        for turn in range(1, MAX_SPEAKING_TURNS + 1):
+            # Get eligible speakers (not passed)
+            eligible = [p for p in alive_players if p.name not in passed_players]
 
-            statement = agent.generate_discussion(self.state, prompt)
+            if not eligible:
+                self.log(f"\n[All players have passed - ending discussion early]")
+                break
 
-            message = Message(
-                speaker=player.name,
-                content=statement,
-                round_num=self.state.current_round,
-            )
-            self.state.messages.append(message)
+            # Randomize speaking order each turn
+            random.shuffle(eligible)
 
-            self.log(f"\n{player.name}: {statement}")
+            self.log(f"\n--- Turn {turn} of {MAX_SPEAKING_TURNS} ---")
+
+            for player in eligible:
+                agent = self.agents[player.name]
+
+                if turn == 1:
+                    instruction = "Share your initial thoughts or suspicions."
+                else:
+                    instruction = "Respond to what others have said or share new observations."
+
+                # Pass appropriate cached history based on player role
+                cached_previous = cached_previous_traitor if player.is_traitor else cached_previous_public
+
+                statement, thoughts = agent.generate_combined_discussion(
+                    self.state,
+                    turn_number=turn,
+                    max_turns=MAX_SPEAKING_TURNS,
+                    instruction=instruction,
+                    cached_previous_rounds=cached_previous
+                )
+
+                # Check if player passed
+                if statement.upper() == "PASS":
+                    passed_players.add(player.name)
+                    self.log(f"\n{player.name}: [PASS]")
+                    if thoughts:
+                        role_tag = "[TRAITOR]" if player.is_traitor else "[FAITHFUL]"
+                        self.log(f"  {role_tag} (thinking: {thoughts})")
+                    continue
+
+                # Store the message with turn number and thoughts
+                message = Message(
+                    speaker=player.name,
+                    content=statement,
+                    round_num=self.state.current_round,
+                    turn_number=turn,
+                    thoughts=thoughts,
+                )
+                self.state.messages.append(message)
+
+                self.log(f"\n{player.name}: {statement}")
+                if thoughts:
+                    role_tag = "[TRAITOR]" if player.is_traitor else "[FAITHFUL]"
+                    self.log(f"  {role_tag} (thinking: {thoughts})")
 
     def _run_private_thoughts_phase(self) -> None:
         """Run the private thoughts phase where each player thinks before voting."""
@@ -417,8 +526,7 @@ class TraitorsGame:
         """Run the voting phase. Returns name of banished player or None."""
         self.state.current_phase = GamePhase.VOTING
 
-        # First, private thoughts
-        self._run_private_thoughts_phase()
+        # Note: Private thoughts are now included with discussion statements
 
         self.log("\n" + "-" * 40)
         self.log("VOTING PHASE - Who will be banished?")
@@ -473,20 +581,39 @@ class TraitorsGame:
             self.log(f"BANISHED: {banished_name}")
 
             # In finale, roles are NOT revealed (like the UK TV show)
+            role_revealed = not self.state.is_finale
             if self.state.is_finale:
                 self.log("(Role not revealed - this is the finale)")
             else:
                 self.log(f"They were a: {banished.role.value.upper()}")
             self.log(f"{'=' * 40}")
 
+            # Emit player eliminated event
+            self._emit_event(ev.player_eliminated_event(
+                round_num=self.state.current_round,
+                player_name=banished_name,
+                elimination_type="banished",
+                role=banished.role.value,
+                role_revealed=role_revealed,
+            ))
+
             return banished_name
 
         return None
 
     def _run_night_phase(self) -> Optional[str]:
-        """Run the night phase where traitors murder. Returns victim name or None."""
-        self.state.current_phase = GamePhase.NIGHT
+        """Run the night phase: traitors discuss then vote.
 
+        Two-phase approach:
+        1. Discussion phase - Traitors discuss strategy (for narrative)
+        2. Vote phase - Each traitor votes for a target (reliable outcome)
+        3. Result - Most votes wins, ties broken randomly
+
+        Returns victim name or None if no valid target.
+        """
+        DISCUSSION_MESSAGES = 3  # Total messages across all traitors
+
+        self.state.current_phase = GamePhase.NIGHT
         alive_traitors = self.state.alive_traitors
         alive_faithful = self.state.alive_faithful
 
@@ -497,48 +624,80 @@ class TraitorsGame:
         self.log("NIGHT PHASE - Traitors meet in secret...")
         self.log("-" * 40)
 
-        # Build cached traitor history once for all traitors
-        cached_traitor_history = self._build_cached_traitor_history()
+        # Solo traitor - skip discussion, go straight to vote
+        if len(alive_traitors) == 1:
+            traitor = alive_traitors[0]
+            agent = self.agents[traitor.name]
+            victim_name = agent.generate_murder_vote(self.state)
+            self.log(f"\n[TRAITOR] {traitor.name} (alone): I choose to kill {victim_name}.")
 
-        # Traitors discuss (if more than one)
-        if len(alive_traitors) > 1:
-            for traitor in alive_traitors:
-                agent = self.agents[traitor.name]
-                discussion = agent.generate_traitor_discussion(self.state, cached_history=cached_traitor_history)
+            message = Message(
+                speaker=traitor.name,
+                content=f"I choose to kill {victim_name}.",
+                round_num=self.state.current_round,
+                is_private=True,
+            )
+            self.state.messages.append(message)
 
-                message = Message(
-                    speaker=traitor.name,
-                    content=discussion,
+            if victim_name in self.state.players:
+                victim = self.state.players[victim_name]
+                victim.status = PlayerStatus.MURDERED
+                victim.eliminated_round = self.state.current_round
+
+                self.log(f"\n{'=' * 40}")
+                self.log(f"MURDERED: {victim_name}")
+                self.log("The faithful mourn their loss...")
+                self.log(f"{'=' * 40}")
+
+                # Emit player eliminated event
+                self._emit_event(ev.player_eliminated_event(
                     round_num=self.state.current_round,
-                    is_private=True,
-                )
-                self.state.messages.append(message)
+                    player_name=victim_name,
+                    elimination_type="murdered",
+                    role=victim.role.value,
+                    role_revealed=True,
+                ))
+                return victim_name
+            return None
 
-                self.log(f"\n[TRAITOR] {traitor.name}: {discussion}")
+        # PHASE 1: Discussion (multiple traitors)
+        self.log(f"\n[Traitors discuss strategy...]")
+        cached_history = self._build_cached_traitor_history()
 
-        # Traitors vote on victim - rebuild cached history to include discussion
-        cached_traitor_history = self._build_cached_traitor_history()
+        for msg_num in range(DISCUSSION_MESSAGES):
+            speaker = alive_traitors[msg_num % len(alive_traitors)]
+            agent = self.agents[speaker.name]
+
+            discussion = agent.generate_traitor_discussion(self.state, cached_history)
+
+            message = Message(
+                speaker=speaker.name,
+                content=discussion,
+                round_num=self.state.current_round,
+                is_private=True,
+            )
+            self.state.messages.append(message)
+            self.log(f"\n[TRAITOR] {speaker.name}: {discussion}")
+
+        # PHASE 2: Vote (after discussion)
+        self.log(f"\n[Traitors vote on target...]")
+        cached_history = self._build_cached_traitor_history()  # Rebuild with discussion
+
         murder_votes: dict[str, str] = {}
         for traitor in alive_traitors:
             agent = self.agents[traitor.name]
-            vote = agent.generate_murder_vote(self.state, cached_history=cached_traitor_history)
+            vote = agent.generate_murder_vote(self.state, cached_history)
             murder_votes[traitor.name] = vote
-            self.log(f"\n[MURDER VOTE] {traitor.name} votes to kill: {vote}")
+            self.log(f"[MURDER VOTE] {traitor.name} votes: {vote}")
 
-        # Count votes
+        # Count votes - most votes wins, ties broken randomly
         vote_counts = Counter(murder_votes.values())
-        if not vote_counts:
-            return None
-
         max_votes = max(vote_counts.values())
         top_voted = [name for name, count in vote_counts.items() if count == max_votes]
 
-        if len(top_voted) > 1:
-            victim_name = random.choice(top_voted)
-        else:
-            victim_name = top_voted[0]
+        victim_name = random.choice(top_voted) if len(top_voted) > 1 else top_voted[0]
 
-        # Murder the victim
+        # Execute murder
         if victim_name in self.state.players:
             victim = self.state.players[victim_name]
             victim.status = PlayerStatus.MURDERED
@@ -549,6 +708,14 @@ class TraitorsGame:
             self.log("The faithful mourn their loss...")
             self.log(f"{'=' * 40}")
 
+            # Emit player eliminated event
+            self._emit_event(ev.player_eliminated_event(
+                round_num=self.state.current_round,
+                player_name=victim_name,
+                elimination_type="murdered",
+                role=victim.role.value,
+                role_revealed=True,
+            ))
             return victim_name
 
         return None
@@ -589,11 +756,21 @@ class TraitorsGame:
             self.log(f"{'#' * 60}")
             self.log(f"Alive: {', '.join(p.name for p in self.state.alive_players)}")
 
+            # Emit round start event
+            self._emit_event(ev.round_start_event(
+                round_num=self.state.current_round,
+                alive_players=[p.name for p in self.state.alive_players],
+                alive_traitors=len(self.state.alive_traitors),
+                is_finale=self.state.is_finale,
+            ))
+
             # Discussion phase
+            self._emit_event(ev.phase_change_event(self.state.current_round, "discussion"))
             self._run_discussion_phase()
 
             if self.state.is_finale:
                 # FINALE: Voting without role reveal, then pouch vote
+                self._emit_event(ev.phase_change_event(self.state.current_round, "voting"))
                 self._run_finale_voting_phase()
 
                 # Check win condition after banishment
@@ -620,6 +797,7 @@ class TraitorsGame:
             else:
                 # REGULAR ROUNDS: Voting with role reveal, then murder
                 # (UK format: no early end vote - play through all rounds until finale)
+                self._emit_event(ev.phase_change_event(self.state.current_round, "voting"))
                 self._run_voting_phase()
 
                 # Check win condition after banishment
@@ -629,6 +807,7 @@ class TraitorsGame:
                     break
 
                 # Night phase (traitors murder) - only in regular rounds
+                self._emit_event(ev.phase_change_event(self.state.current_round, "night"))
                 self._run_night_phase()
 
                 # Check win condition after murder
@@ -648,6 +827,15 @@ class TraitorsGame:
                 self.state.winner = "traitors"
             else:
                 self.state.winner = "faithful"
+
+        # Emit game end event
+        self._emit_event(ev.game_end_event(
+            round_num=self.state.current_round,
+            winner=self.state.winner,
+            survivors=[p.name for p in self.state.alive_players],
+            traitors=[p.name for p in self.state.players.values() if p.is_traitor],
+            faithful=[p.name for p in self.state.players.values() if not p.is_traitor],
+        ))
 
         self._print_final_results()
 

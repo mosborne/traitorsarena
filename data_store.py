@@ -9,7 +9,7 @@ import os
 from dataclasses import asdict, is_dataclass
 from datetime import datetime
 from pathlib import Path
-from typing import Any
+from typing import Any, Optional
 
 
 def serialize_value(obj: Any) -> Any:
@@ -128,13 +128,13 @@ def save_game_json(run_dir: str, game_num: int, results: dict, game_log: list[st
     return json_path
 
 
-def _get_player_key(name: str, model: str | None) -> str:
+def _get_player_key(name: str, model: Optional[str]) -> str:
     """Create composite key for player+model stats."""
     return f"{name}|{model}" if model else name
 
 
 def save_run_json(run_dir: str, run_id: str, config: dict, games_data: list, contestants: list,
-                   pool_size: int | None = None) -> str:
+                   pool_size: Optional[int] = None) -> str:
     """
     Save run summary to JSON.
 

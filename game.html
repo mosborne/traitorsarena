@@ -64,6 +64,26 @@
             text-decoration: underline;
         }
 
+        .header-actions {
+            display: flex;
+            justify-content: center;
+            gap: 1.5rem;
+            margin-top: 1rem;
+        }
+
+        .llm-viewer-link {
+            color: var(--accent-green);
+            text-decoration: none;
+            padding: 0.5rem 1rem;
+            border: 1px solid var(--accent-green);
+            border-radius: 4px;
+            font-size: 0.9rem;
+        }
+
+        .llm-viewer-link:hover {
+            background: rgba(42, 157, 143, 0.2);
+        }
+
         section {
             margin: 2rem 0;
             padding: 2rem;
@@ -349,7 +369,10 @@
     <header>
         <h1 id="game-title">Loading...</h1>
         <p class="subtitle" id="game-subtitle"></p>
-        <a href="index.html" class="back-link" id="back-link">&larr; Back to run</a>
+        <div class="header-actions">
+            <a href="index.html" class="back-link" id="back-link">&larr; Back to run</a>
+            <a href="#" class="llm-viewer-link" id="llm-viewer-link">View LLM Interactions</a>
+        </div>
         <div class="nav-buttons">
             <a href="#" class="nav-btn disabled" id="prev-game">&larr; Previous Game</a>
             <a href="#" class="nav-btn disabled" id="next-game">Next Game &rarr;</a>
@@ -641,6 +664,7 @@
             }
 
             document.getElementById('back-link').href = `run.html?run=${runId}`;
+            document.getElementById('llm-viewer-link').href = `llm.html?run=${runId}&game=${gameNum}`;
 
             try {
                 const response = await fetch(`runs/${runId}/game_${gameNum}.json`);

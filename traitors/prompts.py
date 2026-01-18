@@ -147,6 +147,21 @@ Eliminated:
   {eliminated_str}
 {endgame_status}"""
 
+# =============================================================================
+# PLAYER CONTEXT TEMPLATE - Goes AFTER cached history in user message
+# =============================================================================
+
+# This template is used to inject player-specific information into the user message
+# AFTER the cached history block, enabling cache sharing across all players.
+PLAYER_CONTEXT_TEMPLATE = """=== YOUR IDENTITY ===
+You are {player_name}.
+Personality: {personality}
+
+{role_info}
+
+=== CURRENT GAME STATE ===
+{game_state}"""
+
 # Legacy template for backwards compatibility
 SYSTEM_PROMPT_TEMPLATE = """You are {player_name} in "The Traitors", a social deduction game.
 Personality: {personality}
@@ -201,10 +216,10 @@ Respond with your statement only (1-3 sentences, in character)."""
 PRIVATE_THOUGHTS_PROMPT = """{round_context}DISCUSSION HISTORY:
 {history}
 
-PRIVATE THOUGHTS (internal reasoning before voting)
-Players you can vote for: {voteable}
+PRIVATE THOUGHTS - Who do you suspect most?
+Players: {voteable}
 
-Who do you suspect and why? (2-4 sentences)"""
+(1 sentence max)"""
 
 VOTE_PROMPT = """DISCUSSION HISTORY:
 {history}
@@ -248,3 +263,23 @@ OUTCOMES:
 
 Maximize your expected prize money. Vote END or CONTINUE.
 Respond with only END or CONTINUE."""
+
+# =============================================================================
+# COMBINED DISCUSSION - Public statement + private thoughts in one response
+# =============================================================================
+
+COMBINED_DISCUSSION_PROMPT = """{round_context}DISCUSSION HISTORY:
+{history}
+
+ROUND {current_round} - PUBLIC DISCUSSION
+Players: {alive_names}
+Turn: {turn_number} of {max_turns}
+
+{instruction}
+
+If you have nothing new to add, respond with PASS as your statement.
+
+Format your response EXACTLY like this:
+<statement>[Your public statement OR "PASS"]</statement>
+<thoughts>[Brief: who you suspect and why]</thoughts>"""
+
