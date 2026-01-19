@@ -94,7 +94,7 @@
         }
 
         .stat-value {
-            font-size: 2.5rem;
+            font-size: 2rem;
             font-weight: bold;
             color: var(--text-light);
         }
@@ -281,12 +281,38 @@
             if (seconds < 60) return `${Math.round(seconds)}s`;
             const mins = Math.floor(seconds / 60);
             const secs = Math.round(seconds % 60);
-            return secs > 0 ? `${mins}m ${secs}s` : `${mins}m`;
+            if (mins >= 60) {
+                const hours = Math.floor(mins / 60);
+                const remainMins = mins % 60;
+                return remainMins > 0 ? `${hours}h\u00A0${remainMins}m` : `${hours}h`;
+            }
+            return secs > 0 ? `${mins}m\u00A0${secs}s` : `${mins}m`;
         }
 
         function formatCost(cost) {
             if (!cost || cost === 0) return '-';
-            return `$${cost.toFixed(4)}`;
+            return `$${cost.toFixed(2)}`;
+        }
+
+        function formatNumber(num) {
+            if (!num || num === 0) return '-';
+            if (num >= 1000000) return (num / 1000000).toFixed(1) + 'M';
+            if (num >= 1000) return (num / 1000).toFixed(1) + 'K';
+            return num.toLocaleString();
+        }
+
+        function formatModelName(model) {
+            if (!model) return '-';
+            const map = {
+                'claude-3-5-haiku-20241022': 'Haiku',
+                'claude-3-5-sonnet-20241022': 'Sonnet',
+                'claude-opus-4-20250514': 'Opus',
+                'llama3.2': 'Llama 3.2',
+                'llama3.2:latest': 'Llama 3.2',
+                'gemini-2.0-flash': 'Gemini 2.0 Flash',
+                'gemini-2.0-flash-001': 'Gemini 2.0 Flash',
+            };
+            return map[model] || model;
         }
 
         function renderStats(data) {
@@ -331,6 +357,31 @@
                 </div>
             ` : '';
 
+            // Model and token stats
+            const models = [...new Set(Object.values(data.contestant_stats || {})
+                .map(c => c.model).filter(Boolean))];
+            const modelDisplay = models.length === 1 ? formatModelName(models[0]) :
+                models.length > 1 ? `${models.length} models` : 'Unknown';
+
+            const tokenStats = stats.total_input_tokens ? `
+                <div class="stat-card">
+                    <div class="stat-value" style="font-size: 1.2rem;">${modelDisplay}</div>
+                    <div class="stat-label">Model</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value">${formatNumber(stats.total_input_tokens)}</div>
+                    <div class="stat-label">Input Tokens</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value">${formatNumber(stats.total_output_tokens)}</div>
+                    <div class="stat-label">Output Tokens</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value">${formatNumber(stats.total_cache_read_tokens)}</div>
+                    <div class="stat-label">Cache Hits</div>
+                </div>
+            ` : '';
+
             return `
                 <div class="stat-card">
                     <div class="stat-value">${stats.total_games || 0}</div>
@@ -358,23 +409,12 @@
                     <div class="stat-label">Traitors per Game</div>
                 </div>
                 ${costCards}
+                ${tokenStats}
             `;
         }
 
         let currentSort = { column: 'wins', ascending: false };
         let contestantData = null;
-
-        function formatModelName(model) {
-            if (!model) return '-';
-            const map = {
-                'claude-3-5-haiku-20241022': 'Haiku',
-                'claude-3-5-sonnet-20241022': 'Sonnet',
-                'claude-opus-4-20250514': 'Opus',
-                'llama3.2': 'Llama 3.2',
-                'llama3.2:latest': 'Llama 3.2',
-            };
-            return map[model] || model;
-        }
 
         function renderContestantsTable(data) {
             contestantData = data;
