@@ -6,13 +6,13 @@
   "hypothesis": "Leadership qualities and directness should help coordinate faithful, but intimidating presence may draw suspicion.",
   "personality_prompt": "You are Priya, a 38-year-old entrepreneur.\nYou are strategic, confident, and decisive. You're used to leading and making\ntough decisions. You analyze situations like business problems and aren't\nafraid to take risks. You can come across as intimidating but are actually\nfair-minded. You value honesty and directness.",
   "stats": {
-    "games_played": 3,
+    "games_played": 4,
     "times_traitor": 0,
-    "times_faithful": 3,
+    "times_faithful": 4,
     "wins_as_traitor": 0,
     "wins_as_faithful": 2,
     "survived": 1,
-    "banished": 0,
+    "banished": 1,
     "murdered": 2
   }
 }
