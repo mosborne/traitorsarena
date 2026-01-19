@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Player Guide - The Traitors</title>
+    <title>Player Stats - The Traitors</title>
     <style>
         :root {
             --bg-dark: #1a1a2e;
@@ -261,7 +261,7 @@
 </head>
 <body>
     <header>
-        <h1>PLAYER GUIDE</h1>
+        <h1>PLAYER STATS</h1>
         <p class="subtitle">AI Contestant Prompts & Strategy Documentation</p>
         <p class="back-link"><a href="index.html">Back to Game Runs</a></p>
     </header>
@@ -284,6 +284,10 @@
                     <th data-sort="faithful">Faithful</th>
                     <th data-sort="traitorWin">T Win%</th>
                     <th data-sort="faithfulWin">F Win%</th>
+                    <th data-sort="totalPrize">Total $</th>
+                    <th data-sort="prizePerGame">$/Game</th>
+                    <th data-sort="prizePerGameAsTraitor">$/G as T</th>
+                    <th data-sort="prizePerGameAsFaithful">$/G as F</th>
                 </tr>
             </thead>
             <tbody id="players-body">
@@ -315,7 +319,7 @@
             } catch (error) {
                 console.error('Failed to load players:', error);
                 document.getElementById('players-body').innerHTML = `
-                    <tr><td colspan="8" style="text-align: center; color: var(--accent-red); padding: 2rem;">
+                    <tr><td colspan="12" style="text-align: center; color: var(--accent-red); padding: 2rem;">
                         Failed to load player data. Make sure to run <code>python generate_players_json.py</code> first.
                     </td></tr>
                 `;
@@ -339,11 +343,35 @@
 
         function getStatValue(player, column) {
             // Handle nested stats object
-            const statsFields = ['games', 'survival', 'traitor', 'faithful', 'traitorWin', 'faithfulWin', 'banished', 'murdered'];
+            const statsFields = ['games', 'survival', 'traitor', 'faithful', 'traitorWin', 'faithfulWin', 'banished', 'murdered', 'totalPrize', 'prizeWhenTraitor', 'prizeWhenFaithful'];
             if (statsFields.includes(column)) {
                 return player.stats ? player.stats[column] : 0;
             }
+            // Computed fields
+            if (column === 'prizePerGame') {
+                const games = player.stats ? player.stats.games : 0;
+                const totalPrize = player.stats ? player.stats.totalPrize : 0;
+                return games > 0 ? totalPrize / games : 0;
+            }
+            if (column === 'prizePerGameAsTraitor') {
+                const traitorGames = player.stats ? player.stats.traitor : 0;
+                const prize = player.stats ? player.stats.prizeWhenTraitor : 0;
+                return traitorGames > 0 ? prize / traitorGames : 0;
+            }
+            if (column === 'prizePerGameAsFaithful') {
+                const faithfulGames = player.stats ? player.stats.faithful : 0;
+                const prize = player.stats ? player.stats.prizeWhenFaithful : 0;
+                return faithfulGames > 0 ? prize / faithfulGames : 0;
+            }
             return player[column];
+        }
+
+        function formatCurrency(amount) {
+            return '$' + amount.toLocaleString('en-US');
+        }
+
+        function formatCurrencyDecimal(amount) {
+            return '$' + amount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
         }
 
         function renderTable() {
@@ -363,6 +391,10 @@
             tbody.innerHTML = sorted.map(p => {
                 const s = p.stats || {};
                 const games = s.games || 0;
+                const totalPrize = s.totalPrize || 0;
+                const prizePerGame = games > 0 ? totalPrize / games : 0;
+                const prizePerGameAsT = s.traitor > 0 ? (s.prizeWhenTraitor || 0) / s.traitor : 0;
+                const prizePerGameAsF = s.faithful > 0 ? (s.prizeWhenFaithful || 0) / s.faithful : 0;
                 return `
                 <tr class="player-row" data-player="${escapeHtml(p.name)}" id="player-${escapeHtml(p.name)}">
                     <td class="player-name-cell"><span class="expand-icon">\u25B6</span>${escapeHtml(p.name)}</td>
@@ -373,9 +405,13 @@
                     <td class="faithful-text">${games > 0 ? s.faithful : '<span class="no-data">-</span>'}</td>
                     <td class="traitor-text">${games > 0 ? s.traitorWin + '%' : '<span class="no-data">-</span>'}</td>
                     <td class="faithful-text">${games > 0 ? s.faithfulWin + '%' : '<span class="no-data">-</span>'}</td>
+                    <td>${games > 0 ? formatCurrency(totalPrize) : '<span class="no-data">-</span>'}</td>
+                    <td>${games > 0 ? formatCurrency(Math.round(prizePerGame)) : '<span class="no-data">-</span>'}</td>
+                    <td>${games > 0 && s.traitor > 0 ? formatCurrency(Math.round(prizePerGameAsT)) : '<span class="no-data">-</span>'}</td>
+                    <td>${games > 0 && s.faithful > 0 ? formatCurrency(Math.round(prizePerGameAsF)) : '<span class="no-data">-</span>'}</td>
                 </tr>
                 <tr class="player-details-row" data-details="${escapeHtml(p.name)}">
-                    <td colspan="8">
+                    <td colspan="12">
                         <div class="player-details-content">
                             <div class="player-meta-info">
                                 File: ${escapeHtml(p.file)} | Created: ${escapeHtml(p.created)}
@@ -402,12 +438,12 @@
                 </tr>
             `}).join('');
 
-            setupInteractions();
+            setupRowInteractions();
             updateSortIndicators();
         }
 
-        function setupInteractions() {
-            // Row expand/collapse
+        function setupRowInteractions() {
+            // Row expand/collapse - called after each render since rows are re-created
             document.querySelectorAll('.player-row').forEach(row => {
                 row.addEventListener('click', () => {
                     const name = row.dataset.player;
@@ -429,8 +465,10 @@
                     }
                 });
             });
+        }
 
-            // Column sorting
+        function setupHeaderSorting() {
+            // Column sorting - called ONCE on page load since headers persist
             document.querySelectorAll('.players-table th').forEach(th => {
                 th.addEventListener('click', (e) => {
                     e.stopPropagation();
@@ -464,6 +502,7 @@
 
         document.addEventListener('DOMContentLoaded', () => {
             loadPlayers().then(() => {
+                setupHeaderSorting();
                 handleHash();
             });
         });

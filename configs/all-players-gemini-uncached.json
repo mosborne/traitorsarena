@@ -1,0 +1,11 @@
+{
+  "name": "all-players",
+  "description": "Uses all 30 players from prompts directory (19 randomly selected per game)",
+  "provider": "gemini",
+  "default_model": "gemini-2.0-flash-lite",
+  "enable_caching": false,
+  "num_games": 20,
+  "num_traitors": 3,
+  "finale_round": 8,
+  "player_pool": "all"
+}

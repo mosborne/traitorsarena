@@ -50,6 +50,30 @@ def load_prompt_files(prompts_dir: Path) -> dict:
     return players
 
 
+def aggregate_role_prizes_from_games(runs_dir: Path) -> dict:
+    """Read game_*.json files to get role-specific prize data."""
+    role_prizes = {}  # name -> {"traitor": 0, "faithful": 0}
+
+    for game_json in runs_dir.glob("*/game_*.json"):
+        try:
+            with open(game_json) as f:
+                game = json.load(f)
+
+            prize_dist = game.get("prize_distribution", {})
+            players = game.get("players", {})
+
+            for name, prize in prize_dist.items():
+                if name not in role_prizes:
+                    role_prizes[name] = {"traitor": 0, "faithful": 0}
+
+                role = players.get(name, {}).get("role", "faithful")
+                role_prizes[name][role] += prize
+        except (json.JSONDecodeError, KeyError) as e:
+            print(f"Warning: Could not load {game_json}: {e}")
+
+    return role_prizes
+
+
 def aggregate_stats_from_runs(runs_dir: Path) -> dict:
     """Aggregate contestant stats from all run.json files.
 
@@ -79,6 +103,8 @@ def aggregate_stats_from_runs(runs_dir: Path) -> dict:
                         "banished": 0,
                         "murdered": 0,
                         "totalPrize": 0,
+                        "prizeWhenTraitor": 0,
+                        "prizeWhenFaithful": 0,
                     }
 
                 agg = aggregated[name]
@@ -163,6 +189,10 @@ def main():
     run_stats = aggregate_stats_from_runs(runs_dir)
     print(f"  Found stats for {len(run_stats)} players across runs")
 
+    print("Aggregating role-specific prizes from games...")
+    role_prizes = aggregate_role_prizes_from_games(runs_dir)
+    print(f"  Found role-specific prizes for {len(role_prizes)} players")
+
     # Merge stats into player definitions
     # For players with multiple versions, merge stats by name
     final_players = []
@@ -184,10 +214,18 @@ def main():
                 "banished": 0,
                 "murdered": 0,
                 "totalPrize": 0,
+                "prizeWhenTraitor": 0,
+                "prizeWhenFaithful": 0,
                 "survival": 0,
                 "traitorWin": 0,
                 "faithfulWin": 0,
             }
+
+        # Merge role-specific prizes
+        if name in role_prizes:
+            rp = role_prizes[name]
+            stats["prizeWhenTraitor"] = rp.get("traitor", 0)
+            stats["prizeWhenFaithful"] = rp.get("faithful", 0)
 
         final_players.append({
             "name": player["name"],
@@ -206,6 +244,9 @@ def main():
                 "faithfulWin": stats["faithfulWin"],
                 "banished": stats["banished"],
                 "murdered": stats["murdered"],
+                "totalPrize": stats["totalPrize"],
+                "prizeWhenTraitor": stats["prizeWhenTraitor"],
+                "prizeWhenFaithful": stats["prizeWhenFaithful"],
             }
         })
 

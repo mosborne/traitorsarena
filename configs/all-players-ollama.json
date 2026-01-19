@@ -1,0 +1,10 @@
+{
+  "name": "all-players-ollama",
+  "description": "Uses all 30 players from prompts directory (19 randomly selected per game)",
+  "provider": "ollama",
+  "default_model": "llama3.2",
+  "num_games": 20,
+  "num_traitors": 3,
+  "finale_round": 8,
+  "player_pool": "all"
+}

@@ -246,7 +246,7 @@
         <h1>THE TRAITORS</h1>
         <p class="subtitle">LLM-Powered Game Simulator</p>
         <p style="margin-top: 1rem;">
-            <a href="players.html" style="color: var(--accent-gold); text-decoration: none; border: 1px solid var(--accent-gold); padding: 0.3rem 0.8rem; border-radius: 4px; font-size: 0.9rem; margin-right: 0.5rem;">Player Guide</a>
+            <a href="players.html" style="color: var(--accent-gold); text-decoration: none; border: 1px solid var(--accent-gold); padding: 0.3rem 0.8rem; border-radius: 4px; font-size: 0.9rem; margin-right: 0.5rem;">Player Stats</a>
             <a href="changelog.html" style="color: var(--accent-gold); text-decoration: none; border: 1px solid var(--accent-gold); padding: 0.3rem 0.8rem; border-radius: 4px; font-size: 0.9rem;">Prompt Changelog</a>
         </p>
     </header>
@@ -316,12 +316,17 @@
             if (seconds < 60) return `${Math.round(seconds)}s`;
             const mins = Math.floor(seconds / 60);
             const secs = Math.round(seconds % 60);
-            return secs > 0 ? `${mins}m ${secs}s` : `${mins}m`;
+            if (mins >= 60) {
+                const hours = Math.floor(mins / 60);
+                const remainMins = mins % 60;
+                return remainMins > 0 ? `${hours}h\u00A0${remainMins}m` : `${hours}h`;
+            }
+            return secs > 0 ? `${mins}m\u00A0${secs}s` : `${mins}m`;
         }
 
         function formatCost(cost) {
             if (!cost || cost === 0) return '-';
-            return `$${cost.toFixed(4)}`;
+            return `$${cost.toFixed(2)}`;
         }
 
         function renderRun(run) {

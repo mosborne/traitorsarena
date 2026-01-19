@@ -63,6 +63,7 @@ class Vote:
     voter: str
     target: str
     round_num: int
+    thoughts: str = ""  # Private thoughts/reasoning (only shown in logs/viewer)
 
 
 @dataclass

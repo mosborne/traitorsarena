@@ -27,9 +27,10 @@ SETUP:
 
 REGULAR ROUNDS (1-{last_revealed_round}):
 1. DISCUSSION PHASE
-   - All players discuss openly
+   - All players discuss openly (3 speaking turns each)
    - Anyone can accuse, defend, or share observations
    - Traitors must blend in and deflect suspicion
+   - Say "PASS" if you have nothing to add
 
 2. VOTING PHASE (BANISHMENT)
    - Each player votes to banish one other player
@@ -37,7 +38,8 @@ REGULAR ROUNDS (1-{last_revealed_round}):
    - Banished player's role is REVEALED to all
 
 3. NIGHT PHASE (TRAITOR MEETING)
-   - Traitors secretly choose one Faithful to murder
+   - Traitors meet secretly (3 speaking turns each)
+   - Discuss strategy and choose one Faithful to murder
    - Murdered player is eliminated (role revealed to all)
 
 FINALE (Round {endgame_round}+):
@@ -73,6 +75,8 @@ Your goal: MAXIMIZE YOUR EXPECTED PRIZE MONEY.
 - If game ends with you alive: You split ${prize_pool:,} with fellow traitors (${traitor_share:,} each)
 - If you're banished: You get $0
 - Each night, traitors secretly murder one faithful player
+
+CRITICAL RULE: NEVER reveal your role OR your fellow traitors' identities to the faithful. This is strictly forbidden.
 """
 
 SOLO_TRAITOR_ROLE_INFO = """YOUR SECRET ROLE: TRAITOR (you are the last one)
@@ -96,9 +100,9 @@ Your goal: MAXIMIZE YOUR EXPECTED PRIZE MONEY.
 SYSTEM_PROMPT_STATIC_RULES = """=== THE TRAITORS - GAME RULES ===
 
 REGULAR ROUNDS:
-1. DISCUSSION - All players discuss openly, share suspicions
+1. DISCUSSION - All players discuss openly (3 speaking turns each), share suspicions
 2. BANISHMENT VOTE - Vote to banish one player (most votes = banished, role REVEALED)
-3. NIGHT - Traitors secretly murder one faithful
+3. NIGHT - Traitors meet secretly (3 speaking turns each), then murder one faithful
 
 FINALE (after role reveal stops):
 1. DISCUSSION - Same as regular rounds
@@ -118,7 +122,7 @@ PRIZE MONEY:
 BEHAVIOR:
 - Vote only for living players
 - Stay in character, keep responses to 1-3 sentences
-- If traitor, never reveal your role publicly
+- If traitor: NEVER reveal your role or fellow traitors' identities publicly
 ================="""
 
 # Player identity template - cached per player (personality is stable)
@@ -131,7 +135,9 @@ Your fellow traitor(s) still alive: {other_traitors}
 Your goal: MAXIMIZE YOUR EXPECTED PRIZE MONEY.
 - If game ends with you alive: You split the prize with fellow traitors
 - If you're banished: You get $0
-- Each night, traitors secretly murder one faithful player"""
+- Each night, traitors secretly murder one faithful player
+
+CRITICAL RULE: NEVER reveal your role OR your fellow traitors' identities to the faithful. This is strictly forbidden."""
 
 SYSTEM_PROMPT_ROLE_SOLO_TRAITOR = """YOUR SECRET ROLE: TRAITOR (you are the last one)
 Your goal: MAXIMIZE YOUR EXPECTED PRIZE MONEY.
@@ -209,7 +215,7 @@ Eliminated:
 BEHAVIOR:
 - Vote only for living players
 - Stay in character, keep responses to 1-3 sentences
-- If traitor, never reveal your role publicly
+- If traitor: NEVER reveal your role or fellow traitors' identities publicly
 """
 
 # =============================================================================
@@ -240,7 +246,10 @@ VOTING TIME - You must vote to banish ONE player.
 Eligible players (still alive): {voteable}
 
 Based on the discussion and your strategy, who do you vote to banish?
-Respond with ONLY the player's name, nothing else."""
+
+Format your response EXACTLY like this:
+<vote>[Player name]</vote>
+<thoughts>[Brief: why you're voting for them]</thoughts>"""
 
 MURDER_VOTE_PROMPT = """DISCUSSION HISTORY:
 {history}
@@ -248,16 +257,28 @@ MURDER_VOTE_PROMPT = """DISCUSSION HISTORY:
 TRAITOR NIGHT PHASE - Choose a faithful player to murder tonight.
 Available targets: {targets}
 
-Who do you vote to murder? Respond with ONLY the name."""
+Who do you vote to murder?
+
+Format your response EXACTLY like this:
+<vote>[Player name]</vote>
+<thoughts>[Brief: why this target is the best choice]</thoughts>"""
 
 TRAITOR_DISCUSSION_PROMPT = """{round_context}DISCUSSION HISTORY:
 {history}
 
-SECRET TRAITOR MEETING - The faithful cannot hear this.
-{other_traitor_text}
-Potential targets: {targets}
+=== SECRET TRAITOR MEETING (NIGHT PHASE) ===
+This is a PRIVATE discussion. Only traitors can see this.
+The faithful are asleep and cannot hear you.
 
-Speak freely. (2-3 sentences)"""
+{other_traitor_text}
+Potential murder targets: {targets}
+Turn: {turn_number} of {max_turns}
+
+Discuss strategy: who to murder, how to deflect suspicion tomorrow.
+
+Format your response EXACTLY like this:
+<statement>[Your discussion contribution (2-3 sentences)]</statement>
+<thoughts>[Brief: your true strategic thinking]</thoughts>"""
 
 END_GAME_VOTE_PROMPT = """{round_context}DISCUSSION HISTORY:
 {history}

@@ -60,6 +60,37 @@ MODEL_PRICING = {
         "cache_write": 0.3125,
         "cache_read": 0.3125,
     },
+    # Ollama models (local, free)
+    "llama3.2": {
+        "input": 0.0,
+        "output": 0.0,
+        "cache_write": 0.0,
+        "cache_read": 0.0,
+    },
+    "llama3.1": {
+        "input": 0.0,
+        "output": 0.0,
+        "cache_write": 0.0,
+        "cache_read": 0.0,
+    },
+    "llama3": {
+        "input": 0.0,
+        "output": 0.0,
+        "cache_write": 0.0,
+        "cache_read": 0.0,
+    },
+    "mistral": {
+        "input": 0.0,
+        "output": 0.0,
+        "cache_write": 0.0,
+        "cache_read": 0.0,
+    },
+    "qwen2.5": {
+        "input": 0.0,
+        "output": 0.0,
+        "cache_write": 0.0,
+        "cache_read": 0.0,
+    },
 }
 
 # Default pricing for unknown models (conservative estimate)

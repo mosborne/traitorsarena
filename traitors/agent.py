@@ -26,6 +26,20 @@ def parse_combined_response(response: str) -> tuple[str, str]:
     return statement, thoughts
 
 
+def parse_vote_response(response: str) -> tuple[str, str]:
+    """Parse a vote response into vote target and thoughts.
+
+    Returns (vote_target, thoughts) tuple.
+    """
+    vote_match = re.search(r'<vote>\s*(.*?)\s*</vote>', response, re.DOTALL)
+    thoughts_match = re.search(r'<thoughts>\s*(.*?)\s*</thoughts>', response, re.DOTALL)
+
+    vote = vote_match.group(1).strip() if vote_match else response.strip()
+    thoughts = thoughts_match.group(1).strip() if thoughts_match else ""
+
+    return vote, thoughts
+
+
 class Agent:
     """An LLM-powered contestant in The Traitors game."""
 
@@ -610,12 +624,15 @@ Players: {', '.join(voteable)}
         self._log_interaction(game_state, "private_thoughts", system, user_message_for_log, result, usage=usage, duration_ms=duration_ms)
         return result
 
-    def generate_vote(self, game_state: GameState, cached_history: Optional[str] = None) -> str:
+    def generate_vote(self, game_state: GameState, cached_history: Optional[str] = None) -> tuple[str, str]:
         """Generate a vote for who to banish.
 
         Args:
             game_state: Current game state
             cached_history: Optional pre-formatted history shared across all voting players
+
+        Returns:
+            Tuple of (vote_target, thoughts)
         """
         # Static system prompt (same for all players - enables cache sharing)
         system = self._build_static_system_prompt()
@@ -636,7 +653,10 @@ VOTING TIME - You must vote to banish ONE player.
 Eligible players (still alive): {', '.join(voteable)}
 
 Based on the discussion and your strategy, who do you vote to banish?
-Respond with ONLY the player's name, nothing else."""
+
+Format your response EXACTLY like this:
+<vote>[Player name]</vote>
+<thoughts>[Brief: why you're voting for them]</thoughts>"""
 
         # User message: [cached history] + [context + prompt]
         if cached_history:
@@ -654,30 +674,36 @@ Respond with ONLY the player's name, nothing else."""
         start_time = time.time()
         response = self.client.messages.create(
             model=self.model,
-            max_tokens=50,
+            max_tokens=150,
             system=system,
             messages=[{"role": "user", "content": user_content}]
         )
         duration_ms = (time.time() - start_time) * 1000
 
-        vote = response.content[0].text.strip()
+        result = response.content[0].text.strip()
         usage = self._extract_usage(response)
-        self._log_interaction(game_state, "vote", system, user_message_for_log, vote, usage=usage, duration_ms=duration_ms)
+        self._log_interaction(game_state, "vote", system, user_message_for_log, result, usage=usage, duration_ms=duration_ms)
+
+        # Parse vote and thoughts from response
+        vote, thoughts = parse_vote_response(result)
 
         # Validate the vote is a valid player name
         for name in voteable:
             if name.lower() in vote.lower():
-                return name
+                return name, thoughts
 
         # Fallback to first available player if parsing failed
-        return voteable[0] if voteable else ""
+        return (voteable[0] if voteable else "", thoughts)
 
-    def generate_murder_vote(self, game_state: GameState, cached_history: Optional[str] = None) -> str:
+    def generate_murder_vote(self, game_state: GameState, cached_history: Optional[str] = None) -> tuple[str, str]:
         """Generate a vote for who to murder (traitors only).
 
         Args:
             game_state: Current game state
             cached_history: Optional pre-formatted history shared across traitors
+
+        Returns:
+            Tuple of (vote_target, thoughts)
         """
         if not self.player.is_traitor:
             raise ValueError("Only traitors can vote to murder")
@@ -700,7 +726,11 @@ Respond with ONLY the player's name, nothing else."""
 TRAITOR NIGHT PHASE - Choose a faithful player to murder tonight.
 Available targets: {', '.join(targets)}
 
-Who do you vote to murder? Respond with ONLY the name."""
+Who do you vote to murder?
+
+Format your response EXACTLY like this:
+<vote>[Player name]</vote>
+<thoughts>[Brief: why this target is the best choice]</thoughts>"""
 
         # User message: [cached history] + [context + prompt]
         if cached_history:
@@ -717,29 +747,43 @@ Who do you vote to murder? Respond with ONLY the name."""
         start_time = time.time()
         response = self.client.messages.create(
             model=self.model,
-            max_tokens=50,
+            max_tokens=150,
             system=system,
             messages=[{"role": "user", "content": user_content}]
         )
         duration_ms = (time.time() - start_time) * 1000
 
-        vote = response.content[0].text.strip()
+        result = response.content[0].text.strip()
         usage = self._extract_usage(response)
-        self._log_interaction(game_state, "murder_vote", system, user_message_for_log, vote, usage=usage, duration_ms=duration_ms)
+        self._log_interaction(game_state, "murder_vote", system, user_message_for_log, result, usage=usage, duration_ms=duration_ms)
+
+        # Parse vote and thoughts from response
+        vote, thoughts = parse_vote_response(result)
 
         # Validate the vote
         for name in targets:
             if name.lower() in vote.lower():
-                return name
+                return name, thoughts
 
-        return targets[0] if targets else ""
+        return (targets[0] if targets else "", thoughts)
 
-    def generate_traitor_discussion(self, game_state: GameState, cached_history: Optional[str] = None) -> str:
+    def generate_traitor_discussion(
+        self,
+        game_state: GameState,
+        cached_history: Optional[str] = None,
+        turn_number: int = 1,
+        max_turns: int = 3
+    ) -> tuple[str, str]:
         """Generate private traitor discussion (night phase).
 
         Args:
             game_state: Current game state
             cached_history: Optional pre-formatted history shared across traitors
+            turn_number: Current speaking turn (1 to max_turns)
+            max_turns: Maximum speaking turns per traitor
+
+        Returns:
+            Tuple of (discussion_statement, thoughts)
         """
         if not self.player.is_traitor:
             raise ValueError("Only traitors can participate in traitor discussion")
@@ -766,11 +810,19 @@ Who do you vote to murder? Respond with ONLY the name."""
         traitor_prompt = f"""{round_context}DISCUSSION HISTORY:
 {history}
 
-SECRET TRAITOR MEETING - The faithful cannot hear this.
-{other_traitor_text}
-Potential targets: {', '.join(targets)}
+=== SECRET TRAITOR MEETING (NIGHT PHASE) ===
+This is a PRIVATE discussion. Only traitors can see this.
+The faithful are asleep and cannot hear you.
 
-Speak freely. (2-3 sentences)"""
+{other_traitor_text}
+Potential murder targets: {', '.join(targets)}
+Turn: {turn_number} of {max_turns}
+
+Discuss strategy: who to murder, how to deflect suspicion tomorrow.
+
+Format your response EXACTLY like this:
+<statement>[Your discussion contribution (2-3 sentences)]</statement>
+<thoughts>[Brief: your true strategic thinking]</thoughts>"""
 
         # User message: [cached history] + [context + prompt]
         if cached_history:
@@ -787,7 +839,7 @@ Speak freely. (2-3 sentences)"""
         start_time = time.time()
         response = self.client.messages.create(
             model=self.model,
-            max_tokens=200,
+            max_tokens=250,
             system=system,
             messages=[{"role": "user", "content": user_content}]
         )
@@ -796,7 +848,10 @@ Speak freely. (2-3 sentences)"""
         result = response.content[0].text.strip()
         usage = self._extract_usage(response)
         self._log_interaction(game_state, "traitor_discussion", system, user_message_for_log, result, usage=usage, duration_ms=duration_ms)
-        return result
+
+        # Parse statement and thoughts
+        statement, thoughts = parse_combined_response(result)
+        return statement, thoughts
 
     def generate_end_game_vote(self, game_state: GameState, cached_history: Optional[str] = None) -> bool:
         """Generate a vote on whether to end the game or continue playing.
@@ -1087,7 +1142,7 @@ class OpenAICompatibleAgent(Agent):
         self._log_interaction(game_state, "private_thoughts", system, user_message, result, model=self.model, usage=usage, duration_ms=duration_ms)
         return result
 
-    def generate_vote(self, game_state: GameState, cached_history: Optional[str] = None) -> str:
+    def generate_vote(self, game_state: GameState, cached_history: Optional[str] = None) -> tuple[str, str]:
         """Generate a vote for who to banish."""
         system = self._build_system_prompt(game_state)
         history = cached_history if cached_history is not None else self._format_conversation_history(game_state)
@@ -1099,17 +1154,20 @@ class OpenAICompatibleAgent(Agent):
             voteable=', '.join(voteable)
         )
 
-        vote, usage, duration_ms = self._call_llm(system, user_message, 50)
-        self._log_interaction(game_state, "vote", system, user_message, vote, model=self.model, usage=usage, duration_ms=duration_ms)
+        result, usage, duration_ms = self._call_llm(system, user_message, 150)
+        self._log_interaction(game_state, "vote", system, user_message, result, model=self.model, usage=usage, duration_ms=duration_ms)
+
+        # Parse vote and thoughts from response
+        vote, thoughts = parse_vote_response(result)
 
         # Validate the vote is a valid player name
         for name in voteable:
             if name.lower() in vote.lower():
-                return name
+                return name, thoughts
 
-        return voteable[0] if voteable else ""
+        return (voteable[0] if voteable else "", thoughts)
 
-    def generate_murder_vote(self, game_state: GameState, cached_history: Optional[str] = None) -> str:
+    def generate_murder_vote(self, game_state: GameState, cached_history: Optional[str] = None) -> tuple[str, str]:
         """Generate a vote for who to murder (traitors only)."""
         if not self.player.is_traitor:
             raise ValueError("Only traitors can vote to murder")
@@ -1124,16 +1182,25 @@ class OpenAICompatibleAgent(Agent):
             targets=', '.join(targets)
         )
 
-        vote, usage, duration_ms = self._call_llm(system, user_message, 50)
-        self._log_interaction(game_state, "murder_vote", system, user_message, vote, model=self.model, usage=usage, duration_ms=duration_ms)
+        result, usage, duration_ms = self._call_llm(system, user_message, 150)
+        self._log_interaction(game_state, "murder_vote", system, user_message, result, model=self.model, usage=usage, duration_ms=duration_ms)
+
+        # Parse vote and thoughts from response
+        vote, thoughts = parse_vote_response(result)
 
         for name in targets:
             if name.lower() in vote.lower():
-                return name
+                return name, thoughts
 
-        return targets[0] if targets else ""
+        return (targets[0] if targets else "", thoughts)
 
-    def generate_traitor_discussion(self, game_state: GameState, cached_history: Optional[str] = None) -> str:
+    def generate_traitor_discussion(
+        self,
+        game_state: GameState,
+        cached_history: Optional[str] = None,
+        turn_number: int = 1,
+        max_turns: int = 3
+    ) -> tuple[str, str]:
         """Generate private traitor discussion (night phase)."""
         if not self.player.is_traitor:
             raise ValueError("Only traitors can participate in traitor discussion")
@@ -1154,12 +1221,17 @@ class OpenAICompatibleAgent(Agent):
             round_context=round_context,
             history=history,
             other_traitor_text=other_traitor_text,
-            targets=', '.join(targets)
+            targets=', '.join(targets),
+            turn_number=turn_number,
+            max_turns=max_turns
         )
 
-        result, usage, duration_ms = self._call_llm(system, user_message, 200)
+        result, usage, duration_ms = self._call_llm(system, user_message, 250)
         self._log_interaction(game_state, "traitor_discussion", system, user_message, result, model=self.model, usage=usage, duration_ms=duration_ms)
-        return result
+
+        # Parse statement and thoughts
+        statement, thoughts = parse_combined_response(result)
+        return statement, thoughts
 
     def generate_end_game_vote(self, game_state: GameState, cached_history: Optional[str] = None) -> bool:
         """Generate a vote on whether to end the game or continue."""
@@ -1471,7 +1543,7 @@ class GeminiAgent(Agent):
         self._log_interaction(game_state, "private_thoughts", system, user_message, result, model=self.model, usage=usage, duration_ms=duration_ms)
         return result
 
-    def generate_vote(self, game_state: GameState, cached_history: Optional[str] = None) -> str:
+    def generate_vote(self, game_state: GameState, cached_history: Optional[str] = None) -> tuple[str, str]:
         """Generate a vote for who to banish."""
         system = self._build_system_prompt(game_state)
         history = cached_history if cached_history is not None else self._format_conversation_history(game_state)
@@ -1483,17 +1555,20 @@ class GeminiAgent(Agent):
             voteable=', '.join(voteable)
         )
 
-        vote, usage, duration_ms = self._call_llm(system, user_message, 50, cached_history=cached_history)
-        self._log_interaction(game_state, "vote", system, user_message, vote, model=self.model, usage=usage, duration_ms=duration_ms)
+        result, usage, duration_ms = self._call_llm(system, user_message, 150, cached_history=cached_history)
+        self._log_interaction(game_state, "vote", system, user_message, result, model=self.model, usage=usage, duration_ms=duration_ms)
+
+        # Parse vote and thoughts from response
+        vote, thoughts = parse_vote_response(result)
 
         # Validate the vote is a valid player name
         for name in voteable:
             if name.lower() in vote.lower():
-                return name
+                return name, thoughts
 
-        return voteable[0] if voteable else ""
+        return (voteable[0] if voteable else "", thoughts)
 
-    def generate_murder_vote(self, game_state: GameState, cached_history: Optional[str] = None) -> str:
+    def generate_murder_vote(self, game_state: GameState, cached_history: Optional[str] = None) -> tuple[str, str]:
         """Generate a vote for who to murder (traitors only)."""
         if not self.player.is_traitor:
             raise ValueError("Only traitors can vote to murder")
@@ -1508,16 +1583,25 @@ class GeminiAgent(Agent):
             targets=', '.join(targets)
         )
 
-        vote, usage, duration_ms = self._call_llm(system, user_message, 50, cached_history=cached_history)
-        self._log_interaction(game_state, "murder_vote", system, user_message, vote, model=self.model, usage=usage, duration_ms=duration_ms)
+        result, usage, duration_ms = self._call_llm(system, user_message, 150, cached_history=cached_history)
+        self._log_interaction(game_state, "murder_vote", system, user_message, result, model=self.model, usage=usage, duration_ms=duration_ms)
+
+        # Parse vote and thoughts from response
+        vote, thoughts = parse_vote_response(result)
 
         for name in targets:
             if name.lower() in vote.lower():
-                return name
+                return name, thoughts
 
-        return targets[0] if targets else ""
+        return (targets[0] if targets else "", thoughts)
 
-    def generate_traitor_discussion(self, game_state: GameState, cached_history: Optional[str] = None) -> str:
+    def generate_traitor_discussion(
+        self,
+        game_state: GameState,
+        cached_history: Optional[str] = None,
+        turn_number: int = 1,
+        max_turns: int = 3
+    ) -> tuple[str, str]:
         """Generate private traitor discussion (night phase)."""
         if not self.player.is_traitor:
             raise ValueError("Only traitors can participate in traitor discussion")
@@ -1538,12 +1622,17 @@ class GeminiAgent(Agent):
             round_context=round_context,
             history=history,
             other_traitor_text=other_traitor_text,
-            targets=', '.join(targets)
+            targets=', '.join(targets),
+            turn_number=turn_number,
+            max_turns=max_turns
         )
 
-        result, usage, duration_ms = self._call_llm(system, user_message, 200, cached_history=cached_history)
+        result, usage, duration_ms = self._call_llm(system, user_message, 250, cached_history=cached_history)
         self._log_interaction(game_state, "traitor_discussion", system, user_message, result, model=self.model, usage=usage, duration_ms=duration_ms)
-        return result
+
+        # Parse statement and thoughts
+        statement, thoughts = parse_combined_response(result)
+        return statement, thoughts
 
     def generate_end_game_vote(self, game_state: GameState, cached_history: Optional[str] = None) -> bool:
         """Generate a vote on whether to end the game or continue."""
@@ -1663,19 +1752,27 @@ class TestAgent(Agent):
         """Return empty thoughts."""
         return ""
 
-    def generate_vote(self, game_state: GameState, cached_history: Optional[str] = None) -> str:
+    def generate_vote(self, game_state: GameState, cached_history: Optional[str] = None) -> tuple[str, str]:
         """Vote for a random alive player (not self)."""
         candidates = [p.name for p in game_state.alive_players if p.name != self.player.name]
-        return random.choice(candidates) if candidates else self.player.name
+        vote = random.choice(candidates) if candidates else self.player.name
+        return vote, ""  # Empty thoughts for test agent
 
-    def generate_murder_vote(self, game_state: GameState, cached_history: Optional[str] = None) -> str:
+    def generate_murder_vote(self, game_state: GameState, cached_history: Optional[str] = None) -> tuple[str, str]:
         """Vote to murder a random faithful player."""
         faithful = [p.name for p in game_state.alive_faithful]
-        return random.choice(faithful) if faithful else ""
+        vote = random.choice(faithful) if faithful else ""
+        return vote, ""  # Empty thoughts for test agent
 
-    def generate_traitor_discussion(self, game_state: GameState, cached_history: Optional[str] = None) -> str:
+    def generate_traitor_discussion(
+        self,
+        game_state: GameState,
+        cached_history: Optional[str] = None,
+        turn_number: int = 1,
+        max_turns: int = 3
+    ) -> tuple[str, str]:
         """Return empty traitor discussion."""
-        return ""
+        return "", ""  # Empty statement and thoughts for test agent
 
     def generate_end_game_vote(self, game_state: GameState, cached_history: Optional[str] = None) -> bool:
         """Random vote on whether to end the game."""

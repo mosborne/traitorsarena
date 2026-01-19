@@ -22,6 +22,7 @@ import sys
 from pathlib import Path
 
 from data_store import save_game_json, save_run_json, update_runs_index
+from run_games import generate_run_analysis
 from typing import Optional
 
 from rich.console import Console, Group
@@ -52,8 +53,38 @@ DEFAULT_MODELS = {
     "test": None,
 }
 from traitors.events import EventType, GameEvent, APICallEvent
+import re
 
 console = Console()
+
+
+def clean_content(text: str) -> str:
+    """Remove XML-style and markdown-style tags from LLM responses.
+
+    Handles various malformed tag styles:
+    - <statement>...</statement>
+    - [statement]...[/statement]
+    - **Statement:** ...
+    - **thoughts:**
+    - etc.
+    """
+    if not text:
+        return ""
+
+    # Remove XML-style tags (various bracket styles)
+    text = re.sub(r'</?(?:statement|statements|thoughts|vote|stament)s?>', '', text, flags=re.IGNORECASE)
+    text = re.sub(r'\[/?(?:statement|statements|thoughts|vote|stament|pass)s?\]', '', text, flags=re.IGNORECASE)
+
+    # Remove markdown bold tags around tag names
+    text = re.sub(r'\*\*(?:Statement|Thoughts|Vote|PASS)s?:?\*\*\s*', '', text, flags=re.IGNORECASE)
+
+    # Remove standalone tag-like patterns
+    text = re.sub(r'\*\s+(?:thoughts|statement):?\*\s*', '', text, flags=re.IGNORECASE)
+
+    # Remove malformed mixed tags like <thoughts]>
+    text = re.sub(r'<\w+\]>', '', text)
+
+    return text.strip()
 
 # UK Traitors format: always 19 players per game
 PLAYERS_PER_GAME = 19
@@ -479,8 +510,8 @@ class RichGameDisplay:
 
         for i, entry in enumerate(recent):
             player = entry.get("player", "")
-            content = entry.get("content", "")
-            thoughts = entry.get("thoughts", "")
+            content = clean_content(entry.get("content", ""))
+            thoughts = clean_content(entry.get("thoughts", ""))
             entry_type = entry.get("type", "")
             is_pass = entry.get("is_pass", False)
 
@@ -533,6 +564,48 @@ class RichGameDisplay:
     def __rich__(self) -> Layout:
         """Called by Rich Live on each refresh."""
         return self.render()
+
+
+def ensure_ollama_running() -> bool:
+    """Check if Ollama is running, and start it if not. Returns True if ready."""
+    import subprocess
+    import socket
+    import time
+
+    def is_ollama_running():
+        """Check if Ollama server is responding."""
+        try:
+            with socket.create_connection(("localhost", 11434), timeout=1):
+                return True
+        except (socket.error, socket.timeout):
+            return False
+
+    if is_ollama_running():
+        return True
+
+    console.print("[yellow]Ollama not running. Starting...[/]")
+
+    # Try to start ollama serve in background
+    try:
+        subprocess.Popen(
+            ["ollama", "serve"],
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+            start_new_session=True,
+        )
+    except FileNotFoundError:
+        console.print("[red]Error: 'ollama' command not found. Install from https://ollama.ai[/]")
+        return False
+
+    # Wait for it to be ready (up to 10 seconds)
+    for i in range(20):
+        time.sleep(0.5)
+        if is_ollama_running():
+            console.print("[green]Ollama started.[/]")
+            return True
+
+    console.print("[red]Error: Ollama failed to start within 10 seconds.[/]")
+    return False
 
 
 def check_balance_warning(balance: Optional[float], estimated_cost: float = 0.25) -> None:
@@ -620,6 +693,75 @@ def run_game_with_display(
 
     game_duration_sec = time.time() - game_start_time
     return results, game_cost, game_duration_sec, game_log
+
+
+def render_run_summary(
+    num_games: int,
+    faithful_wins: int,
+    traitor_wins: int,
+    total_cost: float,
+    total_duration: float,
+    avg_rounds: float,
+    contestant_stats: dict,
+) -> Panel:
+    """Render a Rich Panel with run summary statistics."""
+    # Calculate win rate
+    win_rate = (faithful_wins / num_games * 100) if num_games > 0 else 0
+
+    # Build summary text
+    summary_lines = [
+        f"[bold]Games:[/] {num_games}",
+        f"[bold]Faithful Wins:[/] [green]{faithful_wins}[/]  |  [bold]Traitor Wins:[/] [red]{traitor_wins}[/]",
+        f"[bold]Faithful Win Rate:[/] {win_rate:.0f}%",
+        f"[bold]Avg Rounds:[/] {avg_rounds:.1f}",
+    ]
+
+    if total_cost > 0:
+        summary_lines.append(f"[bold]Total Cost:[/] ${total_cost:.4f}")
+
+    if total_duration > 0:
+        duration_min = total_duration / 60
+        summary_lines.append(f"[bold]Total Duration:[/] {duration_min:.1f} min")
+
+    # Build top earners table
+    if contestant_stats:
+        # Sort by total_prize descending
+        sorted_stats = sorted(
+            contestant_stats.items(),
+            key=lambda x: x[1].get("total_prize", 0),
+            reverse=True
+        )[:5]
+
+        if sorted_stats and sorted_stats[0][1].get("total_prize", 0) > 0:
+            summary_lines.append("")
+            summary_lines.append("[bold]Top 5 Earners:[/]")
+
+            table = Table(show_header=True, header_style="bold", box=None, padding=(0, 1))
+            table.add_column("Player", style="cyan")
+            table.add_column("Prize", justify="right", style="yellow")
+            table.add_column("Wins", justify="right")
+            table.add_column("Games", justify="right")
+
+            for key, stats in sorted_stats:
+                name = stats.get("name", key)
+                prize = stats.get("total_prize", 0)
+                wins = stats.get("wins", 0)
+                games = stats.get("games_played", 0)
+                table.add_row(name, f"£{prize:,}", str(wins), str(games))
+
+            # Create group with text and table
+            text_content = "\n".join(summary_lines)
+            return Panel(
+                Group(Text.from_markup(text_content), table),
+                title="Run Summary",
+                border_style="blue",
+            )
+
+    return Panel(
+        "\n".join(summary_lines),
+        title="Run Summary",
+        border_style="blue",
+    )
 
 
 def main():
@@ -712,6 +854,9 @@ def main():
             console.print("[dim]Tip: Set ANTHROPIC_ADMIN_KEY to see spending data[/]")
     elif provider == "gemini":
         console.print("[dim]Tip: View Gemini usage at https://aistudio.google.com/usage[/]")
+    elif provider == "ollama":
+        if not ensure_ollama_running():
+            sys.exit(1)
     console.print()
 
     # Determine number of games (CLI arg takes precedence over config)
@@ -741,6 +886,10 @@ def main():
         console.print(f"[dim]Saving to {run_dir}/[/]")
         console.print()
 
+    # Track win tallies
+    faithful_wins = 0
+    traitor_wins = 0
+
     for game_num in range(1, num_games + 1):
         if num_games > 1:
             console.print(f"\n[bold cyan]Game {game_num}/{num_games}[/]")
@@ -765,6 +914,12 @@ def main():
             enable_caching=enable_caching,
         )
 
+        # Track wins
+        if results["winner"] == "faithful":
+            faithful_wins += 1
+        else:
+            traitor_wins += 1
+
         # Track costs and durations
         run_total_cost += game_cost
         run_total_duration += game_duration
@@ -785,11 +940,62 @@ def main():
             update_runs_index("runs", "data")
             console.print(f"[dim]Saved game {game_num} to {run_dir}/[/]")
 
+        # Show progress for multi-game runs
+        if num_games > 1:
+            console.print(f"[dim]Progress: Faithful {faithful_wins}, Traitors {traitor_wins}[/]")
+
         console.print()
 
-    # Print final URL if saved
+    # Generate analysis and display summary after run completes
     if args.save:
+        import os
+        # Load run.json to get stats
+        run_json_path = run_dir / "run.json"
+        if run_json_path.exists():
+            with open(run_json_path) as f:
+                run_data = json.load(f)
+
+            # Generate AI analysis if ANTHROPIC_API_KEY is set
+            if os.environ.get("ANTHROPIC_API_KEY") and not args.test_mode:
+                console.print("[dim]Generating run analysis with Claude Opus...[/]")
+                try:
+                    analysis = generate_run_analysis(run_data["stats"], run_data["contestant_stats"])
+                    run_data["analysis"] = analysis
+                    with open(run_json_path, "w") as f:
+                        json.dump(run_data, f, indent=2)
+                    console.print("[dim]Analysis saved.[/]")
+                except Exception as e:
+                    console.print(f"[yellow]Analysis generation failed: {e}[/]")
+
+            # Display run summary
+            avg_rounds = run_data["stats"].get("avg_rounds", 0)
+            contestant_stats = run_data.get("contestant_stats", {})
+            summary_panel = render_run_summary(
+                num_games=num_games,
+                faithful_wins=faithful_wins,
+                traitor_wins=traitor_wins,
+                total_cost=run_total_cost,
+                total_duration=run_total_duration,
+                avg_rounds=avg_rounds,
+                contestant_stats=contestant_stats,
+            )
+            console.print(summary_panel)
+
         console.print(f"[bold]View results:[/] run.html?run={run_id}")
+
+    elif num_games > 1:
+        # Display summary for multi-game runs even without --save
+        avg_rounds = sum(len(g.get("rounds", [])) for g in games_data) / num_games if games_data else 0
+        summary_panel = render_run_summary(
+            num_games=num_games,
+            faithful_wins=faithful_wins,
+            traitor_wins=traitor_wins,
+            total_cost=run_total_cost,
+            total_duration=run_total_duration,
+            avg_rounds=avg_rounds,
+            contestant_stats={},  # No stats available without --save
+        )
+        console.print(summary_panel)
 
 
 if __name__ == "__main__":

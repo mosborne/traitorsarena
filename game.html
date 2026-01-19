@@ -259,6 +259,32 @@
             color: var(--accent-green);
         }
 
+        .inline-thought {
+            margin-top: 4px;
+            margin-left: 20px;
+            padding: 6px 10px;
+            border-radius: 4px;
+            font-style: italic;
+            font-size: 0.9em;
+            opacity: 0.9;
+        }
+
+        .inline-thought .thought-icon {
+            margin-right: 6px;
+        }
+
+        .inline-thought.traitor-thought {
+            background: rgba(233, 69, 96, 0.1);
+            border-left: 3px solid var(--accent-red);
+            color: var(--accent-red);
+        }
+
+        .inline-thought.faithful-thought {
+            background: rgba(42, 157, 143, 0.1);
+            border-left: 3px solid var(--accent-green);
+            color: var(--accent-green);
+        }
+
         .vote-breakdown {
             margin: 0.75rem 0;
             padding: 0.75rem;
@@ -424,6 +450,21 @@
             return div.innerHTML;
         }
 
+        function cleanContent(text) {
+            if (!text) return '';
+            // Remove XML-style tags for statement/thoughts/vote (various bracket styles)
+            return text
+                .replace(/<\/?(?:statement|statements|thoughts|vote|stament)s?>/gi, '')
+                .replace(/\[\/?(?:statement|statements|thoughts|vote|stament|pass)s?\]/gi, '')
+                .replace(/<thoughts\]>/gi, '')  // malformed tag
+                .replace(/<\w+\]>/g, '')  // other malformed tags
+                // Remove markdown bold tags around tag names
+                .replace(/\*\*(?:Statement|Thoughts|Vote|PASS)s?:?\*\*\s*/gi, '')
+                // Remove standalone tag-like patterns like "* thoughts:*"
+                .replace(/\*\s+(?:thoughts|statement):?\*\s*/gi, '')
+                .trim();
+        }
+
         function formatModelName(model) {
             if (!model) return '';
             const map = {
@@ -507,11 +548,25 @@
             }).join('');
         }
 
-        function renderMessage(msg) {
+        function renderInlineThought(msg, traitors) {
+            const isTraitor = traitors.includes(msg.speaker || msg.name);
+            const thoughtClass = isTraitor ? 'traitor-thought' : 'faithful-thought';
+            return `
+                <div class="inline-thought ${thoughtClass}">
+                    <span class="thought-icon">💭</span>
+                    <span class="thought-content">${escapeHtml(msg.thoughts)}</span>
+                </div>
+            `;
+        }
+
+        function renderMessage(msg, traitors = []) {
+            const thoughtsHtml = msg.thoughts ? renderInlineThought(msg, traitors) : '';
+            const content = cleanContent(msg.content || msg.message);
             return `
                 <div class="message">
                     <span class="speaker">${escapeHtml(msg.speaker || msg.name)}:</span>
-                    <div class="content">${escapeHtml(msg.content || msg.message)}</div>
+                    <div class="content">${escapeHtml(content)}</div>
+                    ${thoughtsHtml}
                 </div>
             `;
         }
@@ -529,7 +584,7 @@
             `;
         }
 
-        function renderVotes(votes) {
+        function renderVotes(votes, traitors = []) {
             if (!votes || votes.length === 0) return '';
 
             // Group votes by target
@@ -540,7 +595,7 @@
                 voteCounts[target].push(vote.voter || vote.name);
             });
 
-            const voteHtml = Object.entries(voteCounts)
+            const voteCountsHtml = Object.entries(voteCounts)
                 .sort((a, b) => b[1].length - a[1].length)
                 .map(([target, voters]) => `
                     <div class="vote-breakdown">
@@ -548,10 +603,34 @@
                     </div>
                 `).join('');
 
+            // Render individual votes with thoughts
+            const individualVotesHtml = votes.map(vote => {
+                const voter = vote.voter || vote.name;
+                const target = vote.target || vote.vote;
+                const thoughts = cleanContent(vote.thoughts || '');
+                const isTraitor = traitors.includes(voter);
+                const thoughtClass = isTraitor ? 'traitor-thought' : 'faithful-thought';
+
+                let html = `<div class="vote-item" style="margin: 0.5rem 0;">`;
+                html += `<span class="voter-name" style="font-weight: bold;">${escapeHtml(voter)}</span> ➜ <span class="vote-target">${escapeHtml(target)}</span>`;
+                if (thoughts) {
+                    html += `
+                        <div class="inline-thought ${thoughtClass}">
+                            <span class="thought-icon">💭</span>
+                            <span class="thought-content">${escapeHtml(thoughts)}</span>
+                        </div>
+                    `;
+                }
+                html += `</div>`;
+                return html;
+            }).join('');
+
             return `
                 <div class="voting-outcome">
-                    <h4>Voting Results</h4>
-                    ${voteHtml}
+                    <h4>Vote Summary</h4>
+                    ${voteCountsHtml}
+                    <h4 style="margin-top: 1rem;">Individual Votes</h4>
+                    ${individualVotesHtml}
                 </div>
             `;
         }
@@ -598,7 +677,7 @@
             // Discussion phase - only public messages
             if (publicMessages.length > 0) {
                 html += '<div class="phase-header">Discussion Phase</div>';
-                html += publicMessages.map(renderMessage).join('');
+                html += publicMessages.map(msg => renderMessage(msg, traitors)).join('');
             }
 
             // Private thoughts
@@ -610,7 +689,7 @@
             // Voting
             if (votes.length > 0) {
                 html += '<div class="phase-header">Voting Phase</div>';
-                html += renderVotes(votes);
+                html += renderVotes(votes, traitors);
             }
 
             // Banishment
@@ -639,12 +718,17 @@
 
                 // Render traitor discussions
                 if (traitorDiscussions.length > 0) {
-                    html += traitorDiscussions.map(msg => `
-                        <div class="message traitor-message">
-                            <span class="speaker traitor-text">${escapeHtml(msg.speaker)}:</span>
-                            <div class="content">${escapeHtml(msg.content)}</div>
-                        </div>
-                    `).join('');
+                    html += traitorDiscussions.map(msg => {
+                        const thoughtsHtml = msg.thoughts ? renderInlineThought(msg, traitors) : '';
+                        const content = cleanContent(msg.content);
+                        return `
+                            <div class="message traitor-message">
+                                <span class="speaker traitor-text">${escapeHtml(msg.speaker)}:</span>
+                                <div class="content">${escapeHtml(content)}</div>
+                                ${thoughtsHtml}
+                            </div>
+                        `;
+                    }).join('');
                 }
 
                 // Render murder outcome

@@ -371,17 +371,21 @@ class TraitorsGame:
         for player in alive_players:
             agent = self.agents[player.name]
             cached_history = cached_traitor_history if player.is_traitor else cached_public_history
-            vote_target = agent.generate_vote(self.state, cached_history=cached_history)
+            vote_target, thoughts = agent.generate_vote(self.state, cached_history=cached_history)
             votes[player.name] = vote_target
 
             vote = Vote(
                 voter=player.name,
                 target=vote_target,
                 round_num=self.state.current_round,
+                thoughts=thoughts,
             )
             self.state.votes.append(vote)
 
             self.log(f"  {player.name} votes for: {vote_target}")
+            if thoughts:
+                role_tag = "[TRAITOR]" if player.is_traitor else "[FAITHFUL]"
+                self.log(f"    {role_tag} (thinking: {thoughts})")
 
             # Emit vote cast event
             self._emit_event(ev.vote_cast_event(
@@ -572,7 +576,7 @@ class TraitorsGame:
         """Run the voting phase. Returns name of banished player or None."""
         self.state.current_phase = GamePhase.VOTING
 
-        # Note: Private thoughts are now included with discussion statements
+        # Note: Private thoughts are now included with votes
 
         self.log("\n" + "-" * 40)
         self.log("VOTING PHASE - Who will be banished?")
@@ -589,17 +593,21 @@ class TraitorsGame:
             agent = self.agents[player.name]
             # Use appropriate cached history based on role
             cached_history = cached_traitor_history if player.is_traitor else cached_public_history
-            vote_target = agent.generate_vote(self.state, cached_history=cached_history)
+            vote_target, thoughts = agent.generate_vote(self.state, cached_history=cached_history)
             votes[player.name] = vote_target
 
             vote = Vote(
                 voter=player.name,
                 target=vote_target,
                 round_num=self.state.current_round,
+                thoughts=thoughts,
             )
             self.state.votes.append(vote)
 
             self.log(f"  {player.name} votes for: {vote_target}")
+            if thoughts:
+                role_tag = "[TRAITOR]" if player.is_traitor else "[FAITHFUL]"
+                self.log(f"    {role_tag} (thinking: {thoughts})")
 
             # Emit vote cast event
             self._emit_event(ev.vote_cast_event(
@@ -665,7 +673,7 @@ class TraitorsGame:
 
         Returns victim name or None if no valid target.
         """
-        DISCUSSION_MESSAGES = 3  # Total messages across all traitors
+        TURNS_PER_TRAITOR = 3  # Each traitor gets 3 speaking turns
 
         self.state.current_phase = GamePhase.NIGHT
         alive_traitors = self.state.alive_traitors
@@ -682,14 +690,17 @@ class TraitorsGame:
         if len(alive_traitors) == 1:
             traitor = alive_traitors[0]
             agent = self.agents[traitor.name]
-            victim_name = agent.generate_murder_vote(self.state)
+            victim_name, thoughts = agent.generate_murder_vote(self.state)
             self.log(f"\n[TRAITOR] {traitor.name} (alone): I choose to kill {victim_name}.")
+            if thoughts:
+                self.log(f"  (thinking: {thoughts})")
 
             message = Message(
                 speaker=traitor.name,
                 content=f"I choose to kill {victim_name}.",
                 round_num=self.state.current_round,
                 is_private=True,
+                thoughts=thoughts,
             )
             self.state.messages.append(message)
 
@@ -714,24 +725,35 @@ class TraitorsGame:
                 return victim_name
             return None
 
-        # PHASE 1: Discussion (multiple traitors)
+        # PHASE 1: Discussion (multiple traitors - each gets TURNS_PER_TRAITOR speaking turns)
         self.log(f"\n[Traitors discuss strategy...]")
-        cached_history = self._build_cached_traitor_history()
+        max_turns = TURNS_PER_TRAITOR
 
-        for msg_num in range(DISCUSSION_MESSAGES):
-            speaker = alive_traitors[msg_num % len(alive_traitors)]
-            agent = self.agents[speaker.name]
+        for turn in range(1, max_turns + 1):
+            # Rebuild cached history each turn to include previous traitor messages
+            cached_history = self._build_cached_traitor_history()
 
-            discussion = agent.generate_traitor_discussion(self.state, cached_history)
+            for speaker in alive_traitors:
+                agent = self.agents[speaker.name]
 
-            message = Message(
-                speaker=speaker.name,
-                content=discussion,
-                round_num=self.state.current_round,
-                is_private=True,
-            )
-            self.state.messages.append(message)
-            self.log(f"\n[TRAITOR] {speaker.name}: {discussion}")
+                discussion, thoughts = agent.generate_traitor_discussion(
+                    self.state,
+                    cached_history,
+                    turn_number=turn,
+                    max_turns=max_turns
+                )
+
+                message = Message(
+                    speaker=speaker.name,
+                    content=discussion,
+                    round_num=self.state.current_round,
+                    is_private=True,
+                    thoughts=thoughts,
+                )
+                self.state.messages.append(message)
+                self.log(f"\n[TRAITOR] {speaker.name}: {discussion}")
+                if thoughts:
+                    self.log(f"  (thinking: {thoughts})")
 
         # PHASE 2: Vote (after discussion)
         self.log(f"\n[Traitors vote on target...]")
@@ -740,9 +762,11 @@ class TraitorsGame:
         murder_votes: dict[str, str] = {}
         for traitor in alive_traitors:
             agent = self.agents[traitor.name]
-            vote = agent.generate_murder_vote(self.state, cached_history)
+            vote, thoughts = agent.generate_murder_vote(self.state, cached_history)
             murder_votes[traitor.name] = vote
             self.log(f"[MURDER VOTE] {traitor.name} votes: {vote}")
+            if thoughts:
+                self.log(f"  (thinking: {thoughts})")
 
             # Emit vote cast event for murder
             self._emit_event(ev.vote_cast_event(
