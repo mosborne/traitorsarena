@@ -644,8 +644,8 @@ def main():
     parser.add_argument(
         "--num-games", "-n",
         type=int,
-        default=1,
-        help="Number of games to run (default: 1)"
+        default=None,
+        help="Number of games to run (default: from config or 1)"
     )
     parser.add_argument(
         "--verbose", "-v",
@@ -714,8 +714,11 @@ def main():
         console.print("[dim]Tip: View Gemini usage at https://aistudio.google.com/usage[/]")
     console.print()
 
+    # Determine number of games (CLI arg takes precedence over config)
+    num_games = args.num_games if args.num_games else config.get("num_games", 1)
+
     # Check balance and warn if low
-    estimated_total = 0.25 * args.num_games
+    estimated_total = 0.25 * num_games
     check_balance_warning(args.balance, estimated_total)
 
     # Track cumulative balance across games
@@ -738,9 +741,9 @@ def main():
         console.print(f"[dim]Saving to {run_dir}/[/]")
         console.print()
 
-    for game_num in range(1, args.num_games + 1):
-        if args.num_games > 1:
-            console.print(f"\n[bold cyan]Game {game_num}/{args.num_games}[/]")
+    for game_num in range(1, num_games + 1):
+        if num_games > 1:
+            console.print(f"\n[bold cyan]Game {game_num}/{num_games}[/]")
 
         # Select contestants for this game
         if len(contestant_pool) > PLAYERS_PER_GAME:
