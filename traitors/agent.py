@@ -1,6 +1,7 @@
 """LLM-powered agent for playing The Traitors."""
 
 import anthropic
+import logging
 import random
 import re
 import time
@@ -10,6 +11,11 @@ from typing import Callable, Optional, Union
 from .types import Player, GameState, Message, Role, PlayerStatus, LLMInteraction
 from .cost import TokenUsage
 from . import prompts
+from .api_utils import retry_with_backoff, log_vote_parsing_failure
+from .base_agent import BaseAgent
+
+# Configure module logger
+logger = logging.getLogger(__name__)
 
 
 def parse_combined_response(response: str) -> tuple[str, str]:
@@ -40,8 +46,8 @@ def parse_vote_response(response: str) -> tuple[str, str]:
     return vote, thoughts
 
 
-class Agent:
-    """An LLM-powered contestant in The Traitors game."""
+class Agent(BaseAgent):
+    """An LLM-powered contestant in The Traitors game using Anthropic's Claude API."""
 
     DEFAULT_MODEL = "claude-3-5-haiku-20241022"
 
@@ -440,6 +446,77 @@ Eliminated:
             cache_read_tokens=getattr(usage, 'cache_read_input_tokens', 0) or 0,
         )
 
+    def _call_api_with_retry(
+        self,
+        system: str,
+        messages: list,
+        max_tokens: int,
+    ) -> tuple:
+        """Call the Anthropic API with retry logic for transient errors.
+
+        Returns:
+            tuple: (response, duration_ms)
+        """
+        @retry_with_backoff(
+            max_retries=3,
+            initial_delay=1.0,
+            max_delay=30.0,
+            on_retry=lambda e, attempt, delay: logger.info(
+                f"Retry {attempt}/3 for {self.player.name}: {type(e).__name__}"
+            ),
+        )
+        def make_request():
+            return self.client.messages.create(
+                model=self.model,
+                max_tokens=max_tokens,
+                system=system,
+                messages=messages,
+            )
+
+        start_time = time.time()
+        response = make_request()
+        duration_ms = (time.time() - start_time) * 1000
+        return response, duration_ms
+
+    def _validate_vote(
+        self,
+        raw_response: str,
+        parsed_vote: str,
+        valid_candidates: list[str],
+        action_type: str = "vote",
+    ) -> str:
+        """Validate a parsed vote against valid candidates.
+
+        If the parsed vote doesn't match any candidate, logs the failure
+        and returns a fallback (first candidate).
+
+        Args:
+            raw_response: The raw LLM response for logging
+            parsed_vote: The extracted vote string
+            valid_candidates: List of valid vote targets
+            action_type: Type of vote for logging
+
+        Returns:
+            A valid candidate name
+        """
+        # Try to match the parsed vote to a valid candidate
+        for name in valid_candidates:
+            if name.lower() in parsed_vote.lower():
+                return name
+
+        # No match found - log the failure and use fallback
+        fallback = valid_candidates[0] if valid_candidates else ""
+        if fallback:
+            log_vote_parsing_failure(
+                raw_response=raw_response,
+                parsed_vote=parsed_vote,
+                valid_candidates=valid_candidates,
+                fallback_used=fallback,
+                player_name=self.player.name,
+                action_type=action_type,
+            )
+        return fallback
+
     def generate_discussion(self, game_state: GameState, instruction: str = "") -> str:
         """Generate a discussion statement from this agent.
 
@@ -467,14 +544,11 @@ Respond with your statement only (1-3 sentences, in character)."""
 
         user_message = f"{player_context}\n\n{discussion_prompt}"
 
-        start_time = time.time()
-        response = self.client.messages.create(
-            model=self.model,
-            max_tokens=200,
+        response, duration_ms = self._call_api_with_retry(
             system=system,
-            messages=[{"role": "user", "content": user_message}]
+            messages=[{"role": "user", "content": user_message}],
+            max_tokens=200,
         )
-        duration_ms = (time.time() - start_time) * 1000
 
         result = response.content[0].text.strip()
         usage = self._extract_usage(response)
@@ -554,14 +628,11 @@ Format your response EXACTLY like this:
 {discussion_prompt}"""
             user_message_for_log = user_content
 
-        start_time = time.time()
-        response = self.client.messages.create(
-            model=self.model,
-            max_tokens=200,
+        response, duration_ms = self._call_api_with_retry(
             system=system,
-            messages=[{"role": "user", "content": user_content}]
+            messages=[{"role": "user", "content": user_content}],
+            max_tokens=200,
         )
-        duration_ms = (time.time() - start_time) * 1000
 
         result = response.content[0].text.strip()
         usage = self._extract_usage(response)
@@ -610,14 +681,11 @@ Players: {', '.join(voteable)}
             user_content = f"{player_context}\n\n{thoughts_prompt}"
             user_message_for_log = user_content
 
-        start_time = time.time()
-        response = self.client.messages.create(
-            model=self.model,
-            max_tokens=100,
+        response, duration_ms = self._call_api_with_retry(
             system=system,
-            messages=[{"role": "user", "content": user_content}]
+            messages=[{"role": "user", "content": user_content}],
+            max_tokens=100,
         )
-        duration_ms = (time.time() - start_time) * 1000
 
         result = response.content[0].text.strip()
         usage = self._extract_usage(response)
@@ -671,14 +739,11 @@ Format your response EXACTLY like this:
             user_content = f"{player_context}\n\n{vote_prompt}"
             user_message_for_log = user_content
 
-        start_time = time.time()
-        response = self.client.messages.create(
-            model=self.model,
-            max_tokens=150,
+        response, duration_ms = self._call_api_with_retry(
             system=system,
-            messages=[{"role": "user", "content": user_content}]
+            messages=[{"role": "user", "content": user_content}],
+            max_tokens=150,
         )
-        duration_ms = (time.time() - start_time) * 1000
 
         result = response.content[0].text.strip()
         usage = self._extract_usage(response)
@@ -687,13 +752,9 @@ Format your response EXACTLY like this:
         # Parse vote and thoughts from response
         vote, thoughts = parse_vote_response(result)
 
-        # Validate the vote is a valid player name
-        for name in voteable:
-            if name.lower() in vote.lower():
-                return name, thoughts
-
-        # Fallback to first available player if parsing failed
-        return (voteable[0] if voteable else "", thoughts)
+        # Validate the vote (logs if fallback is used)
+        validated_vote = self._validate_vote(result, vote, voteable, action_type="vote")
+        return validated_vote, thoughts
 
     def generate_murder_vote(self, game_state: GameState, cached_history: Optional[str] = None) -> tuple[str, str]:
         """Generate a vote for who to murder (traitors only).
@@ -744,14 +805,11 @@ Format your response EXACTLY like this:
             user_content = f"{player_context}\n\n{murder_prompt}"
             user_message_for_log = user_content
 
-        start_time = time.time()
-        response = self.client.messages.create(
-            model=self.model,
-            max_tokens=150,
+        response, duration_ms = self._call_api_with_retry(
             system=system,
-            messages=[{"role": "user", "content": user_content}]
+            messages=[{"role": "user", "content": user_content}],
+            max_tokens=150,
         )
-        duration_ms = (time.time() - start_time) * 1000
 
         result = response.content[0].text.strip()
         usage = self._extract_usage(response)
@@ -760,12 +818,9 @@ Format your response EXACTLY like this:
         # Parse vote and thoughts from response
         vote, thoughts = parse_vote_response(result)
 
-        # Validate the vote
-        for name in targets:
-            if name.lower() in vote.lower():
-                return name, thoughts
-
-        return (targets[0] if targets else "", thoughts)
+        # Validate the vote (logs if fallback is used)
+        validated_vote = self._validate_vote(result, vote, targets, action_type="murder_vote")
+        return validated_vote, thoughts
 
     def generate_traitor_discussion(
         self,
@@ -836,14 +891,11 @@ Format your response EXACTLY like this:
             user_content = f"{player_context}\n\n{traitor_prompt}"
             user_message_for_log = user_content
 
-        start_time = time.time()
-        response = self.client.messages.create(
-            model=self.model,
-            max_tokens=250,
+        response, duration_ms = self._call_api_with_retry(
             system=system,
-            messages=[{"role": "user", "content": user_content}]
+            messages=[{"role": "user", "content": user_content}],
+            max_tokens=250,
         )
-        duration_ms = (time.time() - start_time) * 1000
 
         result = response.content[0].text.strip()
         usage = self._extract_usage(response)
@@ -916,14 +968,11 @@ Respond with only END or CONTINUE."""
             user_content = f"{player_context}\n\n{end_game_prompt}"
             user_message_for_log = user_content
 
-        start_time = time.time()
-        response = self.client.messages.create(
-            model=self.model,
-            max_tokens=20,
+        response, duration_ms = self._call_api_with_retry(
             system=system,
-            messages=[{"role": "user", "content": user_content}]
+            messages=[{"role": "user", "content": user_content}],
+            max_tokens=20,
         )
-        duration_ms = (time.time() - start_time) * 1000
 
         vote_text = response.content[0].text.strip().upper()
         usage = self._extract_usage(response)
@@ -996,14 +1045,11 @@ Respond with exactly one word: END_GAME or BANISH_AGAIN"""
             user_content = f"{player_context}\n\n{finale_prompt}"
             user_message_for_log = user_content
 
-        start_time = time.time()
-        response = self.client.messages.create(
-            model=self.model,
-            max_tokens=20,
+        response, duration_ms = self._call_api_with_retry(
             system=system,
-            messages=[{"role": "user", "content": user_content}]
+            messages=[{"role": "user", "content": user_content}],
+            max_tokens=20,
         )
-        duration_ms = (time.time() - start_time) * 1000
 
         choice_text = response.content[0].text.strip().upper()
         usage = self._extract_usage(response)
@@ -1015,7 +1061,7 @@ Respond with exactly one word: END_GAME or BANISH_AGAIN"""
         return "END_GAME"
 
 
-class OpenAICompatibleAgent(Agent):
+class OpenAICompatibleAgent(BaseAgent):
     """Agent using any OpenAI-compatible API (Ollama, Gemini, etc.).
 
     This base class works with any API that follows the OpenAI chat completions format.
@@ -1039,16 +1085,27 @@ class OpenAICompatibleAgent(Agent):
         self.client = OpenAI(base_url=base_url, api_key=api_key)
 
     def _call_llm(self, system: str, user_message: str, max_tokens: int) -> tuple[str, Optional[TokenUsage], float]:
-        """Call the OpenAI-compatible LLM API. Returns (text, usage, duration_ms)."""
-        start_time = time.time()
-        response = self.client.chat.completions.create(
-            model=self.model,
-            max_tokens=max_tokens,
-            messages=[
-                {"role": "system", "content": system},
-                {"role": "user", "content": user_message}
-            ]
+        """Call the OpenAI-compatible LLM API with retry logic. Returns (text, usage, duration_ms)."""
+        @retry_with_backoff(
+            max_retries=3,
+            initial_delay=1.0,
+            max_delay=30.0,
+            on_retry=lambda e, attempt, delay: logger.info(
+                f"Retry {attempt}/3 for {self.player.name}: {type(e).__name__}"
+            ),
         )
+        def make_request():
+            return self.client.chat.completions.create(
+                model=self.model,
+                max_tokens=max_tokens,
+                messages=[
+                    {"role": "system", "content": system},
+                    {"role": "user", "content": user_message}
+                ]
+            )
+
+        start_time = time.time()
+        response = make_request()
         duration_ms = (time.time() - start_time) * 1000
 
         # Extract usage from OpenAI format
@@ -1160,12 +1217,9 @@ class OpenAICompatibleAgent(Agent):
         # Parse vote and thoughts from response
         vote, thoughts = parse_vote_response(result)
 
-        # Validate the vote is a valid player name
-        for name in voteable:
-            if name.lower() in vote.lower():
-                return name, thoughts
-
-        return (voteable[0] if voteable else "", thoughts)
+        # Validate the vote (logs if fallback is used)
+        validated_vote = self._validate_vote(result, vote, voteable, action_type="vote")
+        return validated_vote, thoughts
 
     def generate_murder_vote(self, game_state: GameState, cached_history: Optional[str] = None) -> tuple[str, str]:
         """Generate a vote for who to murder (traitors only)."""
@@ -1188,11 +1242,9 @@ class OpenAICompatibleAgent(Agent):
         # Parse vote and thoughts from response
         vote, thoughts = parse_vote_response(result)
 
-        for name in targets:
-            if name.lower() in vote.lower():
-                return name, thoughts
-
-        return (targets[0] if targets else "", thoughts)
+        # Validate the vote (logs if fallback is used)
+        validated_vote = self._validate_vote(result, vote, targets, action_type="murder_vote")
+        return validated_vote, thoughts
 
     def generate_traitor_discussion(
         self,
@@ -1339,7 +1391,7 @@ class OllamaAgent(OpenAICompatibleAgent):
         )
 
 
-class GeminiAgent(Agent):
+class GeminiAgent(BaseAgent):
     """Agent using Google Gemini via native SDK with context caching.
 
     Uses the native google-genai SDK for access to context caching,
@@ -1411,7 +1463,7 @@ class GeminiAgent(Agent):
         max_tokens: int,
         cached_history: Optional[str] = None
     ) -> tuple[str, Optional[TokenUsage], float]:
-        """Call the Gemini LLM API with optional caching.
+        """Call the Gemini LLM API with optional caching and retry logic.
 
         Args:
             system: System prompt
@@ -1424,35 +1476,44 @@ class GeminiAgent(Agent):
         """
         from google.genai import types
 
-        start_time = time.time()
-
         # Try to use caching if enabled and history provided
         cache_name = None
         if cached_history and self._cache_manager:
             cache_name = self._cache_manager.get_or_create_cache(system, cached_history)
 
-        if cache_name:
-            # Use cached content - only send the dynamic part
-            response = self.client.models.generate_content(
-                model=self.model,
-                contents=user_message,
-                config=types.GenerateContentConfig(
-                    cached_content=cache_name,
-                    max_output_tokens=max_tokens,
+        @retry_with_backoff(
+            max_retries=3,
+            initial_delay=1.0,
+            max_delay=30.0,
+            on_retry=lambda e, attempt, delay: logger.info(
+                f"Retry {attempt}/3 for {self.player.name}: {type(e).__name__}"
+            ),
+        )
+        def make_request():
+            if cache_name:
+                # Use cached content - only send the dynamic part
+                return self.client.models.generate_content(
+                    model=self.model,
+                    contents=user_message,
+                    config=types.GenerateContentConfig(
+                        cached_content=cache_name,
+                        max_output_tokens=max_tokens,
+                    )
                 )
-            )
-        else:
-            # No caching - send full request
-            full_content = f"{cached_history}\n\n{user_message}" if cached_history else user_message
-            response = self.client.models.generate_content(
-                model=self.model,
-                contents=full_content,
-                config=types.GenerateContentConfig(
-                    system_instruction=system,
-                    max_output_tokens=max_tokens,
+            else:
+                # No caching - send full request
+                full_content = f"{cached_history}\n\n{user_message}" if cached_history else user_message
+                return self.client.models.generate_content(
+                    model=self.model,
+                    contents=full_content,
+                    config=types.GenerateContentConfig(
+                        system_instruction=system,
+                        max_output_tokens=max_tokens,
+                    )
                 )
-            )
 
+        start_time = time.time()
+        response = make_request()
         duration_ms = (time.time() - start_time) * 1000
 
         # Extract response text
@@ -1561,12 +1622,9 @@ class GeminiAgent(Agent):
         # Parse vote and thoughts from response
         vote, thoughts = parse_vote_response(result)
 
-        # Validate the vote is a valid player name
-        for name in voteable:
-            if name.lower() in vote.lower():
-                return name, thoughts
-
-        return (voteable[0] if voteable else "", thoughts)
+        # Validate the vote (logs if fallback is used)
+        validated_vote = self._validate_vote(result, vote, voteable, action_type="vote")
+        return validated_vote, thoughts
 
     def generate_murder_vote(self, game_state: GameState, cached_history: Optional[str] = None) -> tuple[str, str]:
         """Generate a vote for who to murder (traitors only)."""
@@ -1589,11 +1647,9 @@ class GeminiAgent(Agent):
         # Parse vote and thoughts from response
         vote, thoughts = parse_vote_response(result)
 
-        for name in targets:
-            if name.lower() in vote.lower():
-                return name, thoughts
-
-        return (targets[0] if targets else "", thoughts)
+        # Validate the vote (logs if fallback is used)
+        validated_vote = self._validate_vote(result, vote, targets, action_type="murder_vote")
+        return validated_vote, thoughts
 
     def generate_traitor_discussion(
         self,
@@ -1717,7 +1773,7 @@ Respond with exactly one word: END_GAME or BANISH_AGAIN"""
             self._cache_manager.cleanup()
 
 
-class TestAgent(Agent):
+class TestAgent(BaseAgent):
     """A test agent that returns random decisions without calling the LLM.
 
     Useful for quickly testing game mechanics without API costs.
@@ -1726,6 +1782,8 @@ class TestAgent(Agent):
     def __init__(self, player: Player, client: Optional[anthropic.Anthropic] = None):
         self.player = player
         self.client = None  # Don't need the client
+        self.model = "test-mode"
+        self.api_callback = None
 
     def generate_discussion(self, game_state: GameState, instruction: str = "") -> str:
         """Return empty discussion."""

@@ -438,48 +438,54 @@
                 </tr>
             `}).join('');
 
-            setupRowInteractions();
             updateSortIndicators();
         }
 
-        function setupRowInteractions() {
-            // Row expand/collapse - called after each render since rows are re-created
-            document.querySelectorAll('.player-row').forEach(row => {
-                row.addEventListener('click', () => {
-                    const name = row.dataset.player;
-                    const details = document.querySelector(`[data-details="${name}"]`);
-                    const wasExpanded = details.classList.contains('expanded');
+        function setupTableEventDelegation() {
+            // Use event delegation on the table - single listener handles all rows
+            // This prevents memory leaks from re-adding listeners on each render
+            const table = document.getElementById('players-table');
 
-                    // Close all other expanded rows
-                    document.querySelectorAll('.player-details-row.expanded').forEach(r => {
-                        r.classList.remove('expanded');
-                    });
-                    document.querySelectorAll('.player-row.expanded').forEach(r => {
-                        r.classList.remove('expanded');
-                    });
+            // Row expand/collapse via delegation on tbody
+            table.addEventListener('click', (e) => {
+                // Check if click was on a player row (not header or details)
+                const row = e.target.closest('.player-row');
+                if (!row) return;
 
-                    // Toggle this row
-                    if (!wasExpanded) {
-                        details.classList.add('expanded');
-                        row.classList.add('expanded');
-                    }
+                const name = row.dataset.player;
+                const details = document.querySelector(`[data-details="${name}"]`);
+                if (!details) return;
+
+                const wasExpanded = details.classList.contains('expanded');
+
+                // Close all other expanded rows
+                document.querySelectorAll('.player-details-row.expanded').forEach(r => {
+                    r.classList.remove('expanded');
                 });
+                document.querySelectorAll('.player-row.expanded').forEach(r => {
+                    r.classList.remove('expanded');
+                });
+
+                // Toggle this row
+                if (!wasExpanded) {
+                    details.classList.add('expanded');
+                    row.classList.add('expanded');
+                }
             });
-        }
 
-        function setupHeaderSorting() {
-            // Column sorting - called ONCE on page load since headers persist
-            document.querySelectorAll('.players-table th').forEach(th => {
-                th.addEventListener('click', (e) => {
-                    e.stopPropagation();
-                    const col = th.dataset.sort;
-                    if (currentSort.column === col) {
-                        currentSort.ascending = !currentSort.ascending;
-                    } else {
-                        currentSort = { column: col, ascending: col === 'name' };
-                    }
-                    renderTable();
-                });
+            // Column sorting via delegation on thead
+            const thead = table.querySelector('thead');
+            thead.addEventListener('click', (e) => {
+                const th = e.target.closest('th[data-sort]');
+                if (!th) return;
+
+                const col = th.dataset.sort;
+                if (currentSort.column === col) {
+                    currentSort.ascending = !currentSort.ascending;
+                } else {
+                    currentSort = { column: col, ascending: col === 'name' };
+                }
+                renderTable();
             });
         }
 
@@ -501,8 +507,10 @@
         }
 
         document.addEventListener('DOMContentLoaded', () => {
+            // Set up event delegation ONCE before loading data
+            setupTableEventDelegation();
+
             loadPlayers().then(() => {
-                setupHeaderSorting();
                 handleHash();
             });
         });
