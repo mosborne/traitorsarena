@@ -439,8 +439,16 @@
             const params = new URLSearchParams(window.location.search);
             return {
                 runId: params.get('run'),
-                gameNum: parseInt(params.get('game')) || 1
+                gameNum: parseInt(params.get('game')) || 1,
+                archiveId: params.get('archive')
             };
+        }
+
+        function getRunPath(runId, archiveId) {
+            if (archiveId) {
+                return `data/archives/${archiveId}/runs/${runId}`;
+            }
+            return `runs/${runId}`;
         }
 
         function escapeHtml(text) {
@@ -759,7 +767,7 @@
         }
 
         async function loadGame() {
-            const { runId, gameNum } = getParams();
+            const { runId, gameNum, archiveId } = getParams();
 
             if (!runId) {
                 document.getElementById('game-title').textContent = 'Error';
@@ -767,17 +775,27 @@
                 return;
             }
 
-            document.getElementById('back-link').href = `run.html?run=${runId}`;
-            document.getElementById('llm-viewer-link').href = `llm.html?run=${runId}&game=${gameNum}`;
+            // Update back link based on archive context
+            const backLink = document.getElementById('back-link');
+            if (archiveId) {
+                backLink.href = `run.html?archive=${archiveId}&run=${runId}`;
+                document.getElementById('llm-viewer-link').href = `llm.html?archive=${archiveId}&run=${runId}&game=${gameNum}`;
+            } else {
+                backLink.href = `run.html?run=${runId}`;
+                document.getElementById('llm-viewer-link').href = `llm.html?run=${runId}&game=${gameNum}`;
+            }
+
+            const runPath = getRunPath(runId, archiveId);
 
             try {
-                const response = await fetch(`runs/${runId}/game_${gameNum}.json`);
+                const response = await fetch(`${runPath}/game_${gameNum}.json`);
                 if (!response.ok) throw new Error('Game not found');
 
                 const data = await response.json();
 
                 // Update header
-                document.getElementById('game-title').textContent = `Game ${gameNum}`;
+                const titlePrefix = archiveId ? '[Archived] ' : '';
+                document.getElementById('game-title').textContent = `${titlePrefix}Game ${gameNum}`;
                 document.getElementById('game-subtitle').textContent = `${data.rounds_played} rounds - ${data.winner === 'traitors' ? 'Traitor' : 'Faithful'} Victory`;
                 document.title = `Game ${gameNum} - The Traitors`;
 
@@ -794,7 +812,7 @@
                 document.getElementById('transcript').innerHTML = renderTranscript(data);
 
                 // Navigation
-                setupNavigation(runId, gameNum);
+                setupNavigation(runId, gameNum, archiveId);
 
             } catch (error) {
                 console.error('Error loading game:', error);
@@ -805,9 +823,11 @@
             }
         }
 
-        async function setupNavigation(runId, currentGame) {
+        async function setupNavigation(runId, currentGame, archiveId) {
+            const runPath = getRunPath(runId, archiveId);
+
             try {
-                const response = await fetch(`runs/${runId}/run.json`);
+                const response = await fetch(`${runPath}/run.json`);
                 if (!response.ok) return;
 
                 const runData = await response.json();
@@ -816,13 +836,15 @@
                 const prevBtn = document.getElementById('prev-game');
                 const nextBtn = document.getElementById('next-game');
 
+                const archiveParam = archiveId ? `archive=${archiveId}&` : '';
+
                 if (currentGame > 1) {
-                    prevBtn.href = `game.html?run=${runId}&game=${currentGame - 1}`;
+                    prevBtn.href = `game.html?${archiveParam}run=${runId}&game=${currentGame - 1}`;
                     prevBtn.classList.remove('disabled');
                 }
 
                 if (currentGame < games.length) {
-                    nextBtn.href = `game.html?run=${runId}&game=${currentGame + 1}`;
+                    nextBtn.href = `game.html?${archiveParam}run=${runId}&game=${currentGame + 1}`;
                     nextBtn.classList.remove('disabled');
                 }
             } catch (error) {

@@ -264,6 +264,12 @@
         <h1>PLAYER STATS</h1>
         <p class="subtitle">AI Contestant Prompts & Strategy Documentation</p>
         <p class="back-link"><a href="index.html">Back to Game Runs</a></p>
+        <div class="season-selector" style="margin-top: 1rem;">
+            <label for="season-select" style="color: var(--accent-gold); margin-right: 0.5rem;">Season:</label>
+            <select id="season-select" style="background: var(--bg-card); color: var(--text-light); border: 1px solid var(--accent-gold); padding: 0.3rem 0.8rem; border-radius: 4px; cursor: pointer;">
+                <option value="current">Current Season</option>
+            </select>
+        </div>
     </header>
 
     <div class="container">
@@ -304,17 +310,46 @@
     <script>
         let players = [];
         let currentSort = { column: 'name', ascending: true };
+        let currentSeason = 'current';
+        let archives = [];
 
-        async function loadPlayers() {
+        async function loadArchives() {
             try {
-                const response = await fetch('data/players.json');
+                const response = await fetch('data/archives.json');
+                if (!response.ok) return;
+                const data = await response.json();
+                archives = data.archives || [];
+
+                // Populate season selector
+                const select = document.getElementById('season-select');
+                archives.forEach(archive => {
+                    const option = document.createElement('option');
+                    option.value = archive.id;
+                    option.textContent = archive.name;
+                    select.appendChild(option);
+                });
+            } catch (error) {
+                console.error('Failed to load archives:', error);
+            }
+        }
+
+        async function loadPlayers(seasonId = 'current') {
+            currentSeason = seasonId;
+            const url = seasonId === 'current'
+                ? 'data/players.json'
+                : `data/archives/${seasonId}/players.json`;
+
+            try {
+                const response = await fetch(url);
                 if (!response.ok) {
                     throw new Error(`HTTP error! status: ${response.status}`);
                 }
                 const data = await response.json();
                 players = data.players;
                 renderTable();
-                document.getElementById('player-count').textContent = `${players.length} players documented`;
+
+                const seasonLabel = seasonId === 'current' ? '' : ` (${archives.find(a => a.id === seasonId)?.name || seasonId})`;
+                document.getElementById('player-count').textContent = `${players.length} players documented${seasonLabel}`;
                 document.getElementById('last-updated').textContent = `Last updated: ${new Date(data.updated).toLocaleString()}`;
             } catch (error) {
                 console.error('Failed to load players:', error);
@@ -506,13 +541,20 @@
             }
         }
 
-        document.addEventListener('DOMContentLoaded', () => {
+        document.addEventListener('DOMContentLoaded', async () => {
             // Set up event delegation ONCE before loading data
             setupTableEventDelegation();
 
-            loadPlayers().then(() => {
-                handleHash();
+            // Set up season selector
+            const seasonSelect = document.getElementById('season-select');
+            seasonSelect.addEventListener('change', (e) => {
+                loadPlayers(e.target.value);
             });
+
+            // Load archives first, then players
+            await loadArchives();
+            await loadPlayers();
+            handleHash();
         });
 
         window.addEventListener('hashchange', handleHash);

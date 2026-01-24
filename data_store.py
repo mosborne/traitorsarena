@@ -380,3 +380,224 @@ def update_runs_index(runs_dir: str = "runs", data_dir: str = "data") -> str:
         json.dump(index_data, f, indent=2)
 
     return index_path
+
+
+def load_archives_index(data_dir: str = "data") -> dict:
+    """
+    Load the archives index file.
+
+    Returns:
+        Dict with 'updated' timestamp and 'archives' list
+    """
+    index_path = os.path.join(data_dir, "archives.json")
+    if os.path.exists(index_path):
+        with open(index_path) as f:
+            return json.load(f)
+    return {"updated": None, "archives": []}
+
+
+def save_archives_index(data: dict, data_dir: str = "data") -> str:
+    """
+    Save the archives index file.
+
+    Args:
+        data: Archives index data
+        data_dir: Directory to save the index
+
+    Returns:
+        Path to the saved file
+    """
+    data["updated"] = datetime.now().isoformat()
+    index_path = os.path.join(data_dir, "archives.json")
+    with open(index_path, "w") as f:
+        json.dump(data, f, indent=2)
+    return index_path
+
+
+def create_archive(
+    archive_id: str,
+    name: str,
+    description: str = "",
+    keep_players: Optional[list[str]] = None,
+    runs_dir: str = "runs",
+    data_dir: str = "data",
+) -> dict:
+    """
+    Create an archive from current runs and player stats.
+
+    This function:
+    1. Creates archive directory structure
+    2. Copies current runs.json content to season.json
+    3. Copies current players.json to archive
+    4. Moves run folders to archive
+    5. Adds entry to archives.json
+    6. Clears runs.json
+    7. Resets player stats (keeping specified players' stats)
+
+    Args:
+        archive_id: Unique identifier for the archive (e.g., "season-1")
+        name: Human-readable name (e.g., "Season 1: Initial Testing")
+        description: Optional description
+        keep_players: List of player names whose stats should be preserved
+        runs_dir: Directory containing run folders
+        data_dir: Directory containing data files
+
+    Returns:
+        Dict with archive metadata
+    """
+    import shutil
+
+    keep_players = keep_players or []
+
+    # Load current data
+    runs_index_path = os.path.join(data_dir, "runs.json")
+    players_path = os.path.join(data_dir, "players.json")
+
+    if not os.path.exists(runs_index_path):
+        raise FileNotFoundError(f"No runs.json found at {runs_index_path}")
+
+    with open(runs_index_path) as f:
+        runs_data = json.load(f)
+
+    players_data = None
+    if os.path.exists(players_path):
+        with open(players_path) as f:
+            players_data = json.load(f)
+
+    runs = runs_data.get("runs", [])
+    if not runs:
+        raise ValueError("No runs to archive")
+
+    # Calculate archive stats
+    total_games = sum(r.get("total_games", 0) for r in runs)
+    timestamps = [r.get("timestamp") for r in runs if r.get("timestamp")]
+    date_range = {
+        "start": min(timestamps) if timestamps else None,
+        "end": max(timestamps) if timestamps else None,
+    }
+
+    # Create archive directory structure
+    archive_dir = os.path.join(data_dir, "archives", archive_id)
+    archive_runs_dir = os.path.join(archive_dir, "runs")
+    os.makedirs(archive_runs_dir, exist_ok=True)
+
+    # Create season.json (archive metadata + run index)
+    season_data = {
+        "id": archive_id,
+        "name": name,
+        "description": description,
+        "created": datetime.now().isoformat(),
+        "runs": runs,
+    }
+    season_path = os.path.join(archive_dir, "season.json")
+    with open(season_path, "w") as f:
+        json.dump(season_data, f, indent=2)
+
+    # Copy players.json to archive
+    if players_data:
+        archive_players_path = os.path.join(archive_dir, "players.json")
+        with open(archive_players_path, "w") as f:
+            json.dump(players_data, f, indent=2)
+
+    # Move run folders to archive
+    for run in runs:
+        run_id = run.get("id")
+        if run_id:
+            src_path = os.path.join(runs_dir, run_id)
+            dst_path = os.path.join(archive_runs_dir, run_id)
+            if os.path.exists(src_path):
+                shutil.move(src_path, dst_path)
+
+    # Update archives.json
+    archives_index = load_archives_index(data_dir)
+    archive_entry = {
+        "id": archive_id,
+        "name": name,
+        "description": description,
+        "created": datetime.now().isoformat(),
+        "run_count": len(runs),
+        "total_games": total_games,
+        "date_range": date_range,
+    }
+    archives_index["archives"].insert(0, archive_entry)  # Newest first
+    save_archives_index(archives_index, data_dir)
+
+    # Clear runs.json
+    with open(runs_index_path, "w") as f:
+        json.dump({"updated": datetime.now().isoformat(), "runs": []}, f, indent=2)
+
+    # Reset player stats (keeping specified players)
+    if players_data:
+        for player in players_data.get("players", []):
+            player_name = player.get("name", "")
+            if player_name not in keep_players:
+                # Reset stats to zero
+                player["stats"] = {
+                    "games": 0,
+                    "traitor": 0,
+                    "faithful": 0,
+                    "survival": 0,
+                    "traitorWin": 0,
+                    "faithfulWin": 0,
+                    "banished": 0,
+                    "murdered": 0,
+                    "totalPrize": 0,
+                    "prizeWhenTraitor": 0,
+                    "prizeWhenFaithful": 0,
+                }
+        players_data["updated"] = datetime.now().isoformat()
+        with open(players_path, "w") as f:
+            json.dump(players_data, f, indent=2)
+
+    return archive_entry
+
+
+def list_archives(data_dir: str = "data") -> list[dict]:
+    """
+    List all archives.
+
+    Returns:
+        List of archive metadata dicts
+    """
+    archives_index = load_archives_index(data_dir)
+    return archives_index.get("archives", [])
+
+
+def get_archive(archive_id: str, data_dir: str = "data") -> Optional[dict]:
+    """
+    Get archive metadata and runs by ID.
+
+    Args:
+        archive_id: Archive identifier
+
+    Returns:
+        Dict with archive data including runs, or None if not found
+    """
+    archive_dir = os.path.join(data_dir, "archives", archive_id)
+    season_path = os.path.join(archive_dir, "season.json")
+
+    if not os.path.exists(season_path):
+        return None
+
+    with open(season_path) as f:
+        return json.load(f)
+
+
+def get_archive_players(archive_id: str, data_dir: str = "data") -> Optional[dict]:
+    """
+    Get player stats for an archived season.
+
+    Args:
+        archive_id: Archive identifier
+
+    Returns:
+        Dict with player data, or None if not found
+    """
+    archive_dir = os.path.join(data_dir, "archives", archive_id)
+    players_path = os.path.join(archive_dir, "players.json")
+
+    if not os.path.exists(players_path):
+        return None
+
+    with open(players_path) as f:
+        return json.load(f)

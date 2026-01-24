@@ -471,3 +471,63 @@ code {
 .run-stat-label {
     font-size: 0.8rem;
 }
+
+/* ============================================================
+   Archive Items
+   ============================================================ */
+.archive-item {
+    background: rgba(255,255,255,0.05);
+    padding: 1.5rem;
+    border-radius: var(--border-radius-sm);
+    margin-bottom: 1rem;
+    transition: background var(--transition-fast);
+    border: 1px solid rgba(255,255,255,0.1);
+}
+
+.archive-item:hover {
+    background: rgba(255,255,255,0.1);
+    border-color: var(--accent-gold);
+}
+
+.archive-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.75rem;
+}
+
+.archive-title {
+    color: var(--accent-gold);
+    text-decoration: none;
+    font-size: 1.3rem;
+    font-weight: bold;
+}
+
+.archive-title:hover {
+    text-decoration: underline;
+}
+
+/* ============================================================
+   Season Selector
+   ============================================================ */
+.season-selector {
+    margin-top: 1rem;
+}
+
+.season-selector select {
+    background: var(--bg-card);
+    color: var(--text-light);
+    border: 1px solid var(--accent-gold);
+    padding: 0.3rem 0.8rem;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+.season-selector select:hover {
+    background: rgba(255,255,255,0.05);
+}
+
+.season-selector select:focus {
+    outline: none;
+    border-color: var(--accent-green);
+}

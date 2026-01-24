@@ -468,8 +468,16 @@
             return {
                 runId: params.get('run'),
                 gameNum: parseInt(params.get('game')) || 1,
-                player: params.get('player') || ''
+                player: params.get('player') || '',
+                archiveId: params.get('archive')
             };
+        }
+
+        function getRunPath(runId, archiveId) {
+            if (archiveId) {
+                return `data/archives/${archiveId}/runs/${runId}`;
+            }
+            return `runs/${runId}`;
         }
 
         function getUniquePlayers(interactions) {
@@ -753,7 +761,7 @@
         }
 
         async function loadInteractions() {
-            const { runId, gameNum, player } = getParams();
+            const { runId, gameNum, player, archiveId } = getParams();
 
             if (!runId) {
                 document.getElementById('main-content').innerHTML = '<div class="error">No run ID specified</div>';
@@ -761,20 +769,24 @@
                 return;
             }
 
-            // Update back link
-            document.getElementById('back-to-game').href = `game.html?run=${runId}&game=${gameNum}`;
+            // Update back link based on archive context
+            const archiveParam = archiveId ? `archive=${archiveId}&` : '';
+            document.getElementById('back-to-game').href = `game.html?${archiveParam}run=${runId}&game=${gameNum}`;
 
             // Set initial title (will be updated by rerender if player is set)
+            const titlePrefix = archiveId ? '[Archived] ' : '';
             if (player) {
-                document.getElementById('page-title').textContent = `${player}'s Interactions - Game ${gameNum}`;
+                document.getElementById('page-title').textContent = `${titlePrefix}${player}'s Interactions - Game ${gameNum}`;
                 document.title = `${player}'s Interactions - Game ${gameNum} - The Traitors`;
             } else {
-                document.getElementById('page-title').textContent = `LLM Interactions - Game ${gameNum}`;
+                document.getElementById('page-title').textContent = `${titlePrefix}LLM Interactions - Game ${gameNum}`;
                 document.title = `LLM Interactions - Game ${gameNum} - The Traitors`;
             }
 
+            const runPath = getRunPath(runId, archiveId);
+
             try {
-                const response = await fetch(`runs/${runId}/game_${gameNum}.json`);
+                const response = await fetch(`${runPath}/game_${gameNum}.json`);
                 if (!response.ok) throw new Error('Game not found');
 
                 const data = await response.json();

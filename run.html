@@ -223,7 +223,7 @@
     <header>
         <h1 id="run-title">Loading...</h1>
         <p class="subtitle" id="run-config"></p>
-        <a href="index.html" class="back-link">&larr; Back to all runs</a>
+        <a href="index.html" class="back-link" id="back-link">&larr; Back to all runs</a>
     </header>
 
     <div class="container">
@@ -263,6 +263,18 @@
         function getRunId() {
             const params = new URLSearchParams(window.location.search);
             return params.get('run');
+        }
+
+        function getArchiveId() {
+            const params = new URLSearchParams(window.location.search);
+            return params.get('archive');
+        }
+
+        function getRunPath(runId, archiveId) {
+            if (archiveId) {
+                return `data/archives/${archiveId}/runs/${runId}`;
+            }
+            return `runs/${runId}`;
         }
 
         function formatDate(timestamp) {
@@ -517,7 +529,7 @@
             }
         }
 
-        function renderGames(data, runId) {
+        function renderGames(data, runId, archiveId) {
             const games = data.games || [];
             const gamesCosts = data.games_costs || [];
             const gamesDurations = data.games_durations || [];
@@ -530,9 +542,14 @@
             const isLegacy = data.legacy === true;
 
             return games.map((gameNum, index) => {
-                const gameUrl = isLegacy
-                    ? `runs/${runId}/game_${gameNum}.html`
-                    : `game.html?run=${runId}&game=${gameNum}`;
+                let gameUrl;
+                if (isLegacy) {
+                    gameUrl = `runs/${runId}/game_${gameNum}.html`;
+                } else if (archiveId) {
+                    gameUrl = `game.html?archive=${archiveId}&run=${runId}&game=${gameNum}`;
+                } else {
+                    gameUrl = `game.html?run=${runId}&game=${gameNum}`;
+                }
 
                 const cost = gamesCosts[index];
                 const duration = gamesDurations[index];
@@ -556,6 +573,7 @@
 
         async function loadRun() {
             const runId = getRunId();
+            const archiveId = getArchiveId();
 
             if (!runId) {
                 document.getElementById('run-title').textContent = 'Error';
@@ -563,15 +581,28 @@
                 return;
             }
 
+            // Update back link based on archive context
+            const backLink = document.getElementById('back-link');
+            if (archiveId) {
+                backLink.href = `archives.html?archive=${archiveId}`;
+                backLink.textContent = '\u2190 Back to archive';
+            }
+
+            const runPath = getRunPath(runId, archiveId);
+
             try {
-                const response = await fetch(`runs/${runId}/run.json`);
+                const response = await fetch(`${runPath}/run.json`);
                 if (!response.ok) throw new Error('Run not found');
 
                 const data = await response.json();
 
                 // Update header
                 document.getElementById('run-title').textContent = formatDate(data.timestamp);
-                document.getElementById('run-config').textContent = `${data.config_name}${data.config_description ? ' - ' + data.config_description : ''}`;
+                let configText = `${data.config_name}${data.config_description ? ' - ' + data.config_description : ''}`;
+                if (archiveId) {
+                    configText = `[Archived] ${configText}`;
+                }
+                document.getElementById('run-config').textContent = configText;
                 document.title = `Run ${runId} - The Traitors`;
 
                 // Update stats
@@ -585,7 +616,7 @@
                 setupTableSorting();
 
                 // Update games
-                document.getElementById('games-grid').innerHTML = renderGames(data, runId);
+                document.getElementById('games-grid').innerHTML = renderGames(data, runId, archiveId);
 
             } catch (error) {
                 console.error('Error loading run:', error);

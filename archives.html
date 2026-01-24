@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Archives - The Traitors</title>
+    <link rel="stylesheet" href="styles.css">
+    <style>
+        /* Page-specific overrides */
+        header { padding: 3rem 0; }
+        h1 { font-size: 3rem; }
+        .subtitle { font-size: 1.2rem; }
+
+        .no-archives {
+            text-align: center;
+            color: var(--text-muted);
+            padding: 2rem;
+            font-style: italic;
+        }
+
+        .archive-item {
+            background: rgba(255,255,255,0.05);
+            padding: 1.5rem;
+            border-radius: var(--border-radius-sm);
+            margin-bottom: 1rem;
+            transition: background var(--transition-fast);
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .archive-item:hover {
+            background: rgba(255,255,255,0.1);
+            border-color: var(--accent-gold);
+        }
+
+        .archive-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.75rem;
+        }
+
+        .archive-title {
+            color: var(--accent-gold);
+            text-decoration: none;
+            font-size: 1.3rem;
+            font-weight: bold;
+        }
+
+        .archive-title:hover {
+            text-decoration: underline;
+        }
+
+        .archive-description {
+            font-size: 0.9rem;
+            color: var(--text-light);
+            margin-bottom: 1rem;
+        }
+
+        .archive-meta {
+            display: flex;
+            gap: 1.5rem;
+            color: var(--text-muted);
+            font-size: 0.9rem;
+            margin-bottom: 1rem;
+        }
+
+        .archive-stats {
+            display: flex;
+            gap: 2rem;
+            color: var(--text-muted);
+            padding-top: 1rem;
+            border-top: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .archive-stat {
+            text-align: center;
+        }
+
+        .archive-stat-value {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: var(--text-light);
+        }
+
+        .archive-stat-label {
+            font-size: 0.8rem;
+        }
+
+        /* Archive runs list (when viewing a specific archive) */
+        .runs-section {
+            display: none;
+        }
+
+        .runs-section.visible {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>ARCHIVES</h1>
+        <p class="subtitle">Historical Seasons & Past Game Runs</p>
+        <p class="header-nav">
+            <a href="index.html">Current Season</a>
+            <a href="players.html">Player Stats</a>
+        </p>
+    </header>
+
+    <div class="container">
+        <section id="archives-section">
+            <h2>Archived Seasons</h2>
+            <p style="margin-bottom: 1.5rem;">Each archive contains a complete snapshot of game runs and player statistics from a past season.</p>
+
+            <div id="archives-list">
+                <div class="loading">Loading archives...</div>
+            </div>
+        </section>
+
+        <section id="runs-section" class="runs-section">
+            <h2 id="runs-title">Runs</h2>
+            <p class="back-link" style="margin-bottom: 1.5rem;"><a href="#" onclick="showArchivesList(); return false;">&larr; Back to archives</a></p>
+            <ul class="runs-list" id="runs-list"></ul>
+        </section>
+    </div>
+
+    <footer>
+        <p>The Traitors LLM Simulator - Powered by Claude AI</p>
+        <p>Each contestant is controlled by an AI agent with a unique personality prompt.</p>
+    </footer>
+
+    <script src="utils.js"></script>
+    <script>
+        let currentArchive = null;
+
+        function renderArchive(archive) {
+            const dateRange = archive.date_range || {};
+            const startDate = dateRange.start ? new Date(dateRange.start).toLocaleDateString('en-US', { month: 'short', year: 'numeric' }) : '';
+            const endDate = dateRange.end ? new Date(dateRange.end).toLocaleDateString('en-US', { month: 'short', year: 'numeric' }) : '';
+            const dateStr = startDate && endDate ? `${startDate} - ${endDate}` : (startDate || endDate || 'Unknown');
+
+            return `
+                <div class="archive-item">
+                    <div class="archive-header">
+                        <a href="#" class="archive-title" onclick="loadArchiveRuns('${escapeHtml(archive.id)}'); return false;">${escapeHtml(archive.name)}</a>
+                    </div>
+                    ${archive.description ? `<div class="archive-description">${escapeHtml(archive.description)}</div>` : ''}
+                    <div class="archive-meta">
+                        <span>Created: ${formatDate(archive.created)}</span>
+                        <span>Period: ${dateStr}</span>
+                    </div>
+                    <div class="archive-stats">
+                        <div class="archive-stat">
+                            <div class="archive-stat-value">${archive.run_count || 0}</div>
+                            <div class="archive-stat-label">Runs</div>
+                        </div>
+                        <div class="archive-stat">
+                            <div class="archive-stat-value">${archive.total_games || 0}</div>
+                            <div class="archive-stat-label">Games</div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function renderRun(run, archiveId) {
+            const traitorRate = run.total_games > 0
+                ? Math.round((run.traitor_wins / run.total_games) * 100)
+                : 0;
+
+            const contestants = run.contestants || [];
+            const displayContestants = contestants.slice(0, 6).join(', ');
+            const moreCount = contestants.length - 6;
+            const contestantsText = moreCount > 0
+                ? `${displayContestants} +${moreCount} more`
+                : displayContestants;
+
+            const runUrl = `run.html?archive=${archiveId}&run=${run.id}`;
+
+            const hasCostData = run.total_cost_usd && run.total_cost_usd > 0;
+            const costDurationHtml = hasCostData ? `
+                        <div class="run-stat">
+                            <div class="run-stat-value" style="color: var(--accent-gold);">${formatCost(run.total_cost_usd)}</div>
+                            <div class="run-stat-label">Total Cost</div>
+                        </div>
+                        <div class="run-stat">
+                            <div class="run-stat-value" style="color: var(--text-muted);">${formatDuration(run.total_duration_sec)}</div>
+                            <div class="run-stat-label">Duration</div>
+                        </div>
+            ` : '';
+
+            return `
+                <li class="run-item">
+                    <div class="run-header">
+                        <a href="${runUrl}" class="run-title">${formatDate(run.timestamp)}</a>
+                        <div class="run-badges">
+                            <span class="badge config">${escapeHtml(run.config_name)}</span>
+                        </div>
+                    </div>
+                    <div class="run-meta">
+                        <span class="meta-item">
+                            <span class="meta-icon">*</span>
+                            ${contestants.length} contestants (${run.num_traitors || 3} traitors)
+                        </span>
+                        <span class="meta-item">
+                            <span class="meta-icon">#</span>
+                            ${run.total_games} games, ~${(run.avg_rounds || 0).toFixed(1)} rounds avg
+                        </span>
+                    </div>
+                    <div class="run-description">${escapeHtml(run.config_description || '')}</div>
+                    <div class="run-contestants">${escapeHtml(contestantsText)}</div>
+                    <div class="run-stats">
+                        <div class="run-stat">
+                            <div class="run-stat-value traitor-text">${run.traitor_wins}</div>
+                            <div class="run-stat-label">Traitor Wins</div>
+                        </div>
+                        <div class="run-stat">
+                            <div class="run-stat-value faithful-text">${run.faithful_wins}</div>
+                            <div class="run-stat-label">Faithful Wins</div>
+                        </div>
+                        <div class="run-stat">
+                            <div class="run-stat-value" style="color: var(--accent-red);">${traitorRate}%</div>
+                            <div class="run-stat-label">Traitor Rate</div>
+                        </div>
+                        ${costDurationHtml}
+                    </div>
+                </li>
+            `;
+        }
+
+        async function loadArchives() {
+            const archivesList = document.getElementById('archives-list');
+
+            try {
+                const data = await fetchJSON('data/archives.json');
+
+                if (!data.archives || data.archives.length === 0) {
+                    archivesList.innerHTML = '<div class="no-archives">No archives yet. Use <code>python archive.py create</code> to archive the current season.</div>';
+                    return;
+                }
+
+                archivesList.innerHTML = data.archives.map(renderArchive).join('');
+            } catch (error) {
+                console.error('Error loading archives:', error);
+                archivesList.innerHTML = '<div class="no-archives">Failed to load archives. Make sure you\'re running from a web server.</div>';
+            }
+        }
+
+        async function loadArchiveRuns(archiveId) {
+            const runsSection = document.getElementById('runs-section');
+            const archivesSection = document.getElementById('archives-section');
+            const runsList = document.getElementById('runs-list');
+            const runsTitle = document.getElementById('runs-title');
+
+            try {
+                const data = await fetchJSON(`data/archives/${archiveId}/season.json`);
+                currentArchive = data;
+
+                runsTitle.textContent = data.name;
+                archivesSection.style.display = 'none';
+                runsSection.classList.add('visible');
+
+                if (!data.runs || data.runs.length === 0) {
+                    runsList.innerHTML = '<li class="no-archives">No runs in this archive.</li>';
+                    return;
+                }
+
+                runsList.innerHTML = data.runs.map(run => renderRun(run, archiveId)).join('');
+
+                // Update URL without reloading
+                history.pushState({ archive: archiveId }, '', `?archive=${archiveId}`);
+            } catch (error) {
+                console.error('Error loading archive runs:', error);
+                runsList.innerHTML = '<li class="no-archives">Failed to load archive runs.</li>';
+            }
+        }
+
+        function showArchivesList() {
+            const runsSection = document.getElementById('runs-section');
+            const archivesSection = document.getElementById('archives-section');
+
+            runsSection.classList.remove('visible');
+            archivesSection.style.display = 'block';
+            currentArchive = null;
+
+            // Update URL
+            history.pushState({}, '', 'archives.html');
+        }
+
+        // Handle browser back/forward
+        window.addEventListener('popstate', (event) => {
+            if (event.state && event.state.archive) {
+                loadArchiveRuns(event.state.archive);
+            } else {
+                showArchivesList();
+            }
+        });
+
+        // Initial load
+        document.addEventListener('DOMContentLoaded', () => {
+            // Check if archive is specified in URL
+            const params = new URLSearchParams(window.location.search);
+            const archiveId = params.get('archive');
+
+            if (archiveId) {
+                loadArchiveRuns(archiveId);
+            }
+
+            loadArchives();
+        });
+    </script>
+</body>
+</html>
